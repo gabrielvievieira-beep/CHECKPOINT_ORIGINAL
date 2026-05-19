@@ -3293,15 +3293,6 @@ tr[data-turno="ADM"] .flw-rt-turno-label{ color: rgba(255,255,255,.82); }
 
         google.script.run
             .withSuccessHandler(function(dataDia) {
-                // ── DSR: filtra colaboradores de folga da escala 6x2 ──────
-                // Para dias de hoje: registrarDSRDoDia() garante gravação no BQ
-                const _diaEhHoje = (diaStr === new Date().toISOString().split('T')[0]);
-                if (_diaEhHoje) {
-                    google.script.run
-                        .withSuccessHandler(function() {})
-                        .withFailureHandler(function() {})
-                        .registrarDSRDoDia();
-                }
                 // Fase 1 concluída — mostrar dados imediatamente (sem DSR)
                 registrosPresenca = (dataDia || []).filter(r =>
                     (r.status_presenca || '').trim() !== 'DSR - Escala'

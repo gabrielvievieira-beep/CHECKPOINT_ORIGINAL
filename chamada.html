@@ -4039,12 +4039,6 @@ function carregarDados() {
       const lista = (regs || []).filter(r =>
         (r.escala || '').toUpperCase().trim() !== turmaFolga
       );
-      // Garante gravação DSR no BQ (idempotente, silencioso)
-      google.script.run
-        .withSuccessHandler(function() {})
-        .withFailureHandler(function() {})
-        .registrarDSRDoDia();
-
       const areas    = [...new Set(lista.map(r => normalizarAreaCha(r.area)).filter(Boolean))].sort();
       const gestores = [...new Set(lista.map(r => r.gestor || '').filter(Boolean))].sort();
       const turnos   = [...new Set(lista.map(r => r.turno  || '').filter(Boolean))].sort();
