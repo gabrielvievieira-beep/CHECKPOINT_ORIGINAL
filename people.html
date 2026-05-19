@@ -1,0 +1,1187 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>People Analytics — Checkpoint BA01</title>
+  <?!= include('style') ?>
+  <style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:#070d1f;color:#e2e8f0;font-family:'Inter','Segoe UI',system-ui,sans-serif;min-height:100vh;overflow-x:hidden}
+
+/* ── Variables ──────────────────────────────────────── */
+:root{
+  --gold:#FFD700;--gold2:#f59e0b;
+  --green:#10b981;--red:#ef4444;--amber:#f59e0b;
+  --blue:#38bdf8;--purple:#818cf8;
+  --surface:#0d0d0d;
+  --card:linear-gradient(145deg, #0d0d0d 0%, #161616 55%);
+  --border:rgba(255,255,255,.12);
+  --text-dim:rgba(255,255,255,.28);
+}
+
+/* ── TOPBAR ─────────────────────────────────────────── */
+.ppl-topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 28px;height:54px;
+  background:rgba(5,10,25,.98);
+  border-bottom:1px solid rgba(255,255,255,.04);
+  position:sticky;top:0;z-index:300;
+  backdrop-filter:blur(20px);
+}
+.ppl-topbar::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent 0%,rgba(255,215,0,.45) 40%,rgba(255,215,0,.45) 60%,transparent 100%);
+}
+
+.ppl-tb-left{display:flex;align-items:center;gap:14px}
+.ppl-tb-right{display:flex;align-items:center;gap:8px}
+.ppl-tb-logo{
+  width:34px;height:34px;border-radius:9px;
+  background:rgba(255,215,0,.1);
+  border:1px solid rgba(255,215,0,.18);
+  display:flex;align-items:center;justify-content:center;font-size:16px;
+}
+.ppl-tb-brand{font-size:15px;font-weight:800;letter-spacing:-.3px}
+.ppl-tb-brand em{color:var(--gold);font-style:normal}
+.ppl-tb-badge{
+  padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;
+  background:rgba(255,215,0,.06);border:1px solid rgba(255,215,0,.18);
+  color:rgba(255,215,0,.75);display:flex;align-items:center;gap:5px
+}
+.ppl-tb-badge::before{
+  content:'';width:5px;height:5px;border-radius:50%;
+  background:var(--gold);animation:pulse 2s infinite
+}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.8)}}
+.ppl-tb-sep{width:1px;height:18px;background:rgba(255,255,255,.07);flex-shrink:0}
+.ppl-clock{font-size:11px;font-weight:600;color:rgba(255,255,255,.25);font-variant-numeric:tabular-nums;letter-spacing:.5px}
+.ppl-btn{
+  display:flex;align-items:center;gap:6px;
+  padding:0 13px;height:30px;border-radius:7px;
+  font-size:11px;font-weight:600;cursor:pointer;border:none;
+  font-family:inherit;transition:all .18s;
+}
+.ppl-btn svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+.ppl-btn-ghost{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);color:#cbd5e1}
+.ppl-btn-ghost:hover{background:rgba(255,255,255,.09);color:#fff}
+.ppl-btn-gold{background:linear-gradient(135deg,#FFD700,#f59e0b);color:#111;font-weight:800}
+.ppl-btn-gold:hover{filter:brightness(1.1);transform:translateY(-1px)}
+.ppl-btn-outline{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);color:rgba(255,255,255,.55)}
+.ppl-btn-outline:hover{background:#FFD700;color:#000;border-color:#FFD700}
+.ppl-btn-sheets{background:rgba(52,168,83,.1);border:1px solid rgba(52,168,83,.3);color:#34a853}
+.ppl-btn-sheets:hover{background:rgba(52,168,83,.18);color:#4ade80}
+.ppl-btn-sheets.loading{opacity:.55;pointer-events:none}
+.user-chip{font-size:11px;color:rgba(255,255,255,.28);font-weight:500;padding:0 8px}
+
+/* ── COMMAND BAR ─────────────────────────────────────── */
+.cmd-bar{
+  background:rgba(5,10,25,.97);
+  border-bottom:1px solid rgba(255,255,255,.04);
+  padding:12px 28px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+}
+.cmd-group{display:flex;flex-direction:column;gap:3px}
+.cmd-label{font-size:9px;font-weight:800;color:var(--text-dim);text-transform:uppercase;letter-spacing:.08em}
+.cmd-input,.cmd-sel{
+  padding:7px 11px;
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:8px;color:#e2e8f0;font-size:12px;
+  font-family:inherit;outline:none;transition:all .18s;color-scheme:dark;
+}
+.cmd-input:focus,.cmd-sel:focus{border-color:rgba(255,215,0,.3);background:rgba(255,215,0,.03)}
+.cmd-sel option{background:#0d1630}
+.cmd-sep{width:1px;height:28px;background:rgba(255,255,255,.06);align-self:flex-end;margin-bottom:2px}
+.cmd-search{
+  display:flex;align-items:center;gap:8px;
+  padding:7px 11px;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+  border-radius:8px;transition:all .18s;min-width:220px;
+}
+.cmd-search:focus-within{border-color:rgba(255,215,0,.3);background:rgba(255,215,0,.03)}
+.cmd-search svg{width:12px;height:12px;fill:none;stroke:rgba(255,255,255,.2);stroke-width:2.2;stroke-linecap:round;flex-shrink:0}
+.cmd-search input{flex:1;background:none;border:none;outline:none;color:#e2e8f0;font-size:12px;font-family:inherit}
+.cmd-search input::placeholder{color:rgba(255,255,255,.18)}
+
+/* Score pills */
+.score-pills{display:flex;gap:4px}
+.score-pill{
+  padding:5px 11px;border-radius:20px;font-size:10.5px;font-weight:700;
+  cursor:pointer;border:1px solid transparent;transition:all .15s;
+  background:rgba(255,255,255,.04);color:rgba(255,255,255,.3);
+}
+.score-pill:hover{color:rgba(255,255,255,.6)}
+.score-pill.sp-active[data-score="TODOS"] {background:rgba(255,215,0,.1);border-color:rgba(255,215,0,.28);color:var(--gold)}
+.score-pill.sp-active[data-score="CRITICO"]{background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.28);color:#f87171}
+.score-pill.sp-active[data-score="RISCO"]  {background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.28);color:#fbbf24}
+.score-pill.sp-active[data-score="BOM"]    {background:rgba(74,222,128,.1);border-color:rgba(74,222,128,.28);color:#4ade80}
+
+/* ── MAIN LAYOUT ─────────────────────────────────────── */
+.ppl-main{padding:20px 28px 60px;display:flex;flex-direction:column;gap:18px}
+
+/* ── HERO ROW ────────────────────────────────────────── */
+.hero-row{display:flex;flex-direction:row;gap:18px;align-items:stretch}
+
+/* Gauge card */
+.gauge-card{
+  background:rgba(13,13,13,0.97);border:1px solid rgba(255,255,255,.12);
+  border-radius:18px;padding:24px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  position:relative;overflow:hidden;
+}
+.gauge-card::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 50% 0%,rgba(255,215,0,.04) 0%,transparent 70%);
+  pointer-events:none;
+}
+.gauge-label{font-size:10px;font-weight:800;color:var(--text-dim);text-transform:uppercase;letter-spacing:.1em;margin-bottom:16px}
+.gauge-svg-wrap{position:relative;width:170px;height:100px}
+.gauge-svg{width:170px;height:100px;overflow:visible}
+.gauge-track{fill:none;stroke:rgba(255,255,255,.06);stroke-width:10;stroke-linecap:round}
+.gauge-fill{fill:none;stroke-width:10;stroke-linecap:round;transition:stroke-dasharray 1.4s cubic-bezier(.4,0,.2,1)}
+.gauge-num{
+  position:absolute;bottom:0;left:50%;transform:translateX(-50%);
+  font-size:32px;font-weight:900;font-variant-numeric:tabular-nums;
+  letter-spacing:-1px;line-height:1;
+}
+.gauge-band{
+  font-size:10px;font-weight:700;padding:3px 10px;border-radius:12px;
+  margin-top:10px;
+}
+.band-otimo,.band-bom,.band-risco,.band-critico{
+  background:rgba(255,255,255,.05);
+  color:rgba(255,255,255,.5);
+  border:1px solid rgba(255,255,255,.09);
+}
+
+/* Gauge sub info */
+.gauge-sub{margin-top:14px;display:flex;gap:20px}
+.gauge-sub-item{text-align:center}
+.gauge-sub-n{font-size:17px;font-weight:800;font-variant-numeric:tabular-nums}
+.gauge-sub-l{font-size:9px;color:var(--text-dim);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-top:2px}
+
+/* Distribution bar under gauge */
+.dist-bar{margin-top:14px;width:100%;height:6px;border-radius:6px;overflow:hidden;display:flex;gap:1px}
+.dist-seg{height:100%;border-radius:2px;transition:width .9s}
+
+/* ── KPI STRIP ───────────────────────────────────────── */
+.kpi-strip{display:flex;flex-direction:column;gap:8px;flex:1;min-width:0}
+.kpi-card{
+  background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);
+  border-radius:12px;padding:12px 14px;
+  display:flex;align-items:center;gap:12px;
+  cursor:pointer;transition:all .18s;
+  position:relative;overflow:hidden;
+}
+.kpi-card::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:2px 0 0 2px;
+}
+.kc-gold::before,.kc-green::before,.kc-red::before,.kc-purple::before{
+  background:linear-gradient(180deg,rgba(255,215,0,.5),rgba(255,215,0,.15));
+}
+.kpi-card:hover{
+  background:rgba(255,255,255,.04);
+  border-color:rgba(255,255,255,.1);
+  transform:translateY(-2px);
+  box-shadow:0 8px 32px rgba(0,0,0,.35);
+}
+.kpi-card-ico{
+  width:40px;height:40px;border-radius:11px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+}
+.kpi-card-ico svg{width:18px;height:18px}
+.kci-gold,.kci-green,.kci-red,.kci-purple{
+  background:rgba(255,255,255,.06);
+  color:rgba(255,255,255,.55);
+}
+.kpi-card-body{flex:1;min-width:0}
+.kpi-card-n{font-size:22px;font-weight:900;font-variant-numeric:tabular-nums;letter-spacing:-.5px;line-height:1;margin-bottom:3px}
+.kpi-card-l{font-size:10px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpi-card-bar{height:3px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden;margin-top:6px}
+.kpi-card-fill{height:100%;border-radius:3px;transition:width .9s;width:0%}
+.kpi-card-arr{flex-shrink:0;opacity:.18;transition:opacity .18s}
+.kpi-card-arr svg{width:14px;height:14px;stroke:currentColor}
+.kpi-card:hover .kpi-card-arr{opacity:.55}
+
+/* ── ANALYSIS ROW ────────────────────────────────────── */
+.analysis-row{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+
+/* Panel shared */
+.panel{
+  background:rgba(13,13,13,0.97);border:1px solid rgba(255,255,255,.12);
+  border-radius:16px;overflow:hidden;
+}
+.panel-hdr{
+  padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.05);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.panel-title{font-size:12px;font-weight:800;color:#f1f5f9;letter-spacing:.02em}
+.panel-sub{font-size:10px;color:var(--text-dim);font-weight:600}
+.panel-body{padding:14px 18px}
+
+/* Gestor ranking bars */
+.gestor-list{display:flex;flex-direction:column;gap:10px;max-height:320px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.08) transparent}
+.gestor-row{display:flex;align-items:center;gap:10px}
+.gestor-rank{
+  width:20px;height:20px;border-radius:5px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:9px;font-weight:800;
+}
+.gr-1{background:rgba(255,215,0,.18);color:var(--gold)}
+.gr-2{background:rgba(203,213,225,.1);color:#cbd5e1}
+.gr-3{background:rgba(180,120,60,.15);color:#c97a3a}
+.gr-n{background:rgba(255,255,255,.05);color:var(--text-dim)}
+.gr-bad{background:rgba(239,68,68,.12);color:#f87171}
+
+.gestor-info{flex:1;min-width:0}
+.gestor-nome{font-size:11px;font-weight:700;color:#e2e8f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gestor-meta{font-size:9.5px;color:var(--text-dim);margin-top:1px}
+.gestor-bar-wrap{width:90px;height:5px;background:rgba(255,255,255,.06);border-radius:5px;overflow:hidden;flex-shrink:0}
+.gestor-bar{height:100%;border-radius:5px;transition:width .8s}
+.gestor-pct{font-size:11px;font-weight:800;font-variant-numeric:tabular-nums;min-width:38px;text-align:right}
+
+/* Turno / Área grid inside panel */
+.turno-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.turno-item{
+  background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);
+  border-radius:12px;padding:12px 14px;
+}
+.turno-item-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.turno-badge{padding:2px 8px;border-radius:10px;font-size:10px;font-weight:800}
+.trn-T1,.trn-T2,.trn-T3,.trn-T4,.trn-ADM,.trn-def{
+  background:rgba(255,255,255,.06);
+  color:rgba(255,255,255,.45);
+  border:1px solid rgba(255,255,255,.09);
+}
+.turno-pct-n{font-size:20px;font-weight:900;font-variant-numeric:tabular-nums}
+.turno-pct-l{font-size:9px;color:var(--text-dim);font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-top:1px}
+.turno-mini-bar{height:4px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden;margin-top:8px}
+.turno-mini-fill{height:100%;border-radius:4px;transition:width .8s}
+
+/* ── TABLE SECTION ───────────────────────────────────── */
+.table-panel{
+  background:rgba(13,13,13,0.97);border:1px solid rgba(255,255,255,.12);
+  border-radius:16px;overflow:hidden;
+}
+.table-toolbar{
+  padding:14px 20px;border-bottom:1px solid rgba(255,255,255,.04);
+  display:flex;align-items:center;justify-content:space-between;gap:14px;
+}
+.table-title-block{display:flex;flex-direction:column;gap:2px}
+.table-title{font-size:13px;font-weight:800;color:#f1f5f9}
+.table-subtitle{font-size:10px;color:var(--text-dim)}
+.table-meta{font-size:11px;color:var(--text-dim)}
+.table-meta strong{color:rgba(255,215,0,.7);font-weight:700}
+
+.tbl-scroll{overflow-x:auto;max-height:480px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.08) transparent}
+table.ppl-tbl{width:100%;border-collapse:collapse;min-width:780px}
+table.ppl-tbl thead{position:sticky;top:0;z-index:10;background:rgba(8,15,35,.98)}
+table.ppl-tbl th{
+  padding:9px 14px;text-align:left;
+  font-size:10px;font-weight:800;color:var(--text-dim);
+  border-bottom:1px solid rgba(255,255,255,.05);
+  text-transform:uppercase;letter-spacing:.07em;
+  cursor:pointer;user-select:none;white-space:nowrap;transition:color .15s;
+}
+table.ppl-tbl th:hover{color:rgba(255,215,0,.6)}
+table.ppl-tbl th.th-sorted{color:var(--gold)}
+table.ppl-tbl th .si{opacity:.25;font-size:8px;margin-left:3px}
+table.ppl-tbl th.th-sorted .si{opacity:1}
+table.ppl-tbl td{
+  padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.03);
+  font-size:12px;vertical-align:middle;
+}
+table.ppl-tbl tbody tr{transition:background .1s;position:relative}
+table.ppl-tbl tbody tr:hover td{background:rgba(255,215,0,.018)}
+table.ppl-tbl tbody tr:last-child td{border-bottom:none}
+
+/* Left accent bar per row */
+.tbl-accent{
+  width:3px;height:100%;position:absolute;left:0;top:0;
+  border-radius:0 2px 2px 0;
+}
+
+/* Coluna nome */
+.tbl-nome-wrap{display:flex;align-items:center;gap:10px}
+.tbl-av{
+  width:30px;height:30px;border-radius:8px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;font-weight:800;color:#fff;
+}
+.tbl-av-pres{background:rgba(16,185,129,.2);color:#34d399}
+.tbl-av-risco{background:rgba(251,191,36,.2);color:#fbbf24}
+.tbl-av-crit{background:rgba(239,68,68,.2);color:#f87171}
+.tbl-av-sem{background:rgba(148,163,184,.08);color:rgba(148,163,184,.4)}
+
+.tbl-nome strong{font-size:12px;color:#f1f5f9;font-weight:700;display:block;line-height:1.2}
+.tbl-nome span{font-size:10px;color:var(--text-dim)}
+
+/* % cell */
+.tbl-pct-cell{display:flex;flex-direction:column;gap:4px;min-width:110px}
+.tbl-pct-row{display:flex;align-items:center;justify-content:space-between}
+.tbl-pct-n{font-size:12px;font-weight:800;font-variant-numeric:tabular-nums}
+.tbl-pct-tag{font-size:9px;font-weight:700;padding:1px 6px;border-radius:6px}
+.tag-otimo  {background:rgba(74,222,128,.1);color:#4ade80}
+.tag-bom    {background:rgba(251,191,36,.1);color:#fbbf24}
+.tag-risco  {background:rgba(245,158,11,.1);color:#f59e0b}
+.tag-critico{background:rgba(239,68,68,.1);color:#f87171}
+.tbl-pct-bar-wrap{height:3px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden}
+.tbl-pct-bar{height:100%;border-radius:3px}
+.bar-otimo  {background:linear-gradient(90deg,#4ade80,#22d3ee)}
+.bar-bom    {background:linear-gradient(90deg,#86efac,#4ade80)}
+.bar-risco  {background:linear-gradient(90deg,#fbbf24,#f59e0b)}
+.bar-critico{background:linear-gradient(90deg,#f87171,#ef4444)}
+
+.tbl-num{font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;text-align:center}
+.tbl-dim{font-size:11px;color:rgba(255,255,255,.35)}
+
+/* rank chip */
+.tbl-rank{
+  width:22px;height:22px;border-radius:6px;
+  display:inline-flex;align-items:center;justify-content:center;
+  font-size:9px;font-weight:800;
+}
+.tbl-rank.r-top{background:rgba(255,215,0,.15);color:var(--gold);border:1px solid rgba(255,215,0,.25)}
+.tbl-rank.r-mid{background:rgba(255,255,255,.05);color:rgba(255,255,255,.3)}
+.tbl-rank.r-low{background:rgba(239,68,68,.1);color:#f87171}
+
+/* ── Toast & Overlay ─────────────────────────────────── */
+.ppl-overlay{
+  display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,.7);z-index:900;
+  align-items:center;justify-content:center;backdrop-filter:blur(6px);
+}
+.ppl-overlay.show{display:flex}
+.ppl-load-box{
+  background:rgba(12,20,45,.99);border:1px solid rgba(255,255,255,.08);
+  border-radius:18px;padding:36px 52px;text-align:center;
+  box-shadow:0 24px 80px rgba(0,0,0,.6);
+}
+.ppl-spinner{
+  width:40px;height:40px;border:3px solid rgba(255,255,255,.06);
+  border-top-color:var(--gold);border-radius:50%;
+  animation:spin .75s linear infinite;margin:0 auto 14px;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ppl-load-msg{font-size:13px;color:rgba(255,255,255,.4);font-weight:600}
+.ppl-load-sub{font-size:11px;color:rgba(255,255,255,.18);margin-top:4px}
+
+.ppl-toast{
+  position:fixed;bottom:24px;right:24px;z-index:9999;
+  padding:11px 18px;border-radius:12px;font-weight:600;font-size:12px;
+  display:flex;align-items:center;gap:9px;
+  box-shadow:0 8px 32px rgba(0,0,0,.5);min-width:200px;
+  opacity:0;transform:translateY(10px);transition:all .28s;pointer-events:none;
+}
+.ppl-toast.show{opacity:1;transform:translateY(0)}
+.ppl-toast.success{background:rgba(16,185,129,.14);border:1px solid rgba(16,185,129,.3);color:#34d399}
+.ppl-toast.error  {background:rgba(239,68,68,.14);border:1px solid rgba(239,68,68,.3);color:#f87171}
+.ppl-toast.info   {background:rgba(56,189,248,.14);border:1px solid rgba(56,189,248,.3);color:#38bdf8}
+
+/* Empty */
+.ppl-empty{text-align:center;padding:64px 20px;color:var(--text-dim);font-size:13px}
+.ppl-empty-ico{display:flex;justify-content:center;margin-bottom:12px}
+
+@media(max-width:1100px){
+  .hero-row{flex-direction:column}
+  .analysis-row{grid-template-columns:1fr}
+}
+
+/* ── Design System Override Block ───────────────────── */
+/* Card & panel standardization */
+.ppl-btn {
+  background: rgba(255,255,255,.07);
+  color: rgba(255,255,255,.55);
+  border: 1px solid rgba(255,255,255,.14);
+}
+.ppl-btn:hover:not(.ppl-btn-gold):not(.ppl-btn-sheets) {
+  background: rgba(255,255,255,.11);
+  color: rgba(255,255,255,.8);
+}
+/* Primary action buttons on hover */
+.ppl-btn-gold:hover {
+  background: #FFD700;
+  color: #000;
+}
+/* Hover state for icons/SVG in buttons */
+.ppl-btn svg {
+  stroke: #ffffff;
+}
+.ppl-btn-gold svg {
+  stroke: #000;
+}
+
+/* ─── MOBILE ──────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .ppl-topbar { padding: 0 12px; height: 52px; }
+  .ppl-tb-left { gap: 8px; }
+  .ppl-tb-right { gap: 5px; }
+  .ppl-tb-badge { display: none; }
+  .ppl-tb-sep { display: none; }
+  .ppl-btn { padding: 6px 9px; font-size: 11px; gap: 3px; }
+  .ppl-btn svg { width: 12px; height: 12px; }
+  .ppl-main { padding: 12px 12px 40px; gap: 12px; }
+  .hero-row { flex-direction: column; }
+  .gauge-card { padding: 16px; }
+  .kpi-strip { flex-direction: row; flex-wrap: wrap; }
+  .kpi-card { flex: 1 1 calc(50% - 4px); min-width: 0; }
+  .ppl-filter-bar, .filter-row { flex-wrap: wrap; gap: 8px; }
+  .ppl-filter-bar select, .filter-row select,
+  .ppl-filter-bar input, .filter-row input { flex: 1 1 calc(50% - 8px); min-width: 0; font-size: 12px; }
+  .ppl-tbl-wrap, div:has(> table.ppl-tbl) { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table.ppl-tbl { min-width: 640px; }
+}
+@media (max-width: 480px) {
+  .ppl-tb-brand { font-size: 13px; }
+  .kpi-card { flex: 1 1 100%; }
+  .ppl-filter-bar select, .filter-row select,
+  .ppl-filter-bar input, .filter-row input { flex: 1 1 100%; }
+  .ppl-btn-ghost span:last-child { display: none; }
+  .ppl-btn { padding: 6px 8px; }
+}
+
+  /* ── Botão Menu Principal ─────────────────────────────────── */
+  #btnMenuHome {
+    height: 42px !important;
+    font-size: 14px !important;
+    padding: 0 22px !important;
+    font-weight: 700 !important;
+    border-radius: 10px !important;
+  }
+  #btnMenuHome svg { width: 16px !important; height: 16px !important; }
+  </style>
+</head>
+<body>
+
+<!-- ── OVERLAY ───────────────────────────────────────── -->
+<div class="ppl-overlay" id="pplOverlay"></div>
+
+<!-- ── TOAST ─────────────────────────────────────────── -->
+<div class="ppl-toast" id="pplToast"><span id="pplToastMsg"></span></div>
+
+<!-- ── TOPBAR ────────────────────────────────────────── -->
+<div class="ppl-topbar">
+  <div class="ppl-tb-left">
+    <div class="ppl-tb-logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;color:var(--gold)"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+    <div class="ppl-tb-brand">People <em>Analytics</em></div>
+    <div class="ppl-tb-sep"></div>
+    <div class="ppl-tb-badge">Monitoramento ao vivo</div>
+  </div>
+  <div class="ppl-tb-right">
+    <span class="user-chip" id="pplNomeUser"></span>
+    <div class="ppl-clock" id="pplClock"></div>
+    <div class="ppl-tb-sep"></div>
+    <button class="ppl-btn ppl-btn-outline" onclick="exportarCSV()" title="Baixar CSV">
+      <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      CSV
+    </button>
+    <button class="ppl-btn ppl-btn-sheets" id="pplSheetsBtn" onclick="exportarSheets()" title="Abrir no Google Planilhas">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="9" x2="9" y2="21"/><line x1="15" y1="9" x2="15" y2="21"/></svg>
+      Google Planilhas
+    </button>
+    <button class="ppl-btn ppl-btn-ghost" id="btnMenuHome" onclick="navegar('')">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+      Menu
+    </button>
+  </div>
+</div>
+
+<!-- ── COMMAND BAR ───────────────────────────────────── -->
+<div class="cmd-bar">
+  <div class="cmd-group">
+    <span class="cmd-label">Data início</span>
+    <input type="date" class="cmd-input" id="filDtInicio"/>
+  </div>
+  <div class="cmd-group">
+    <span class="cmd-label">Data fim</span>
+    <input type="date" class="cmd-input" id="filDtFim"/>
+  </div>
+  <button class="ppl-btn ppl-btn-gold" onclick="carregarDados()" style="align-self:flex-end;height:33px;padding:0 16px;font-size:12px">
+    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    Buscar
+  </button>
+  <div class="cmd-sep"></div>
+  <div class="cmd-group">
+    <span class="cmd-label">Área</span>
+    <select class="cmd-sel" id="filArea" onchange="aplicarFiltros()">
+      <option value="">Todas as áreas</option>
+    </select>
+  </div>
+  <div class="cmd-group">
+    <span class="cmd-label">Setor</span>
+    <select class="cmd-sel" id="filSetor" onchange="aplicarFiltros()">
+      <option value="">Todos os setores</option>
+    </select>
+  </div>
+  <div class="cmd-group">
+    <span class="cmd-label">Turno</span>
+    <select class="cmd-sel" id="filTurno" onchange="aplicarFiltros()">
+      <option value="">Todos os turnos</option>
+    </select>
+  </div>
+  <div class="cmd-group">
+    <span class="cmd-label">Gestor</span>
+    <select class="cmd-sel" id="filGestor" onchange="aplicarFiltros()" style="min-width:190px">
+      <option value="">Todos os gestores</option>
+    </select>
+  </div>
+  <div class="cmd-sep"></div>
+  <div class="cmd-group">
+    <span class="cmd-label">Faixa</span>
+    <div class="score-pills">
+      <button class="score-pill sp-active" data-score="TODOS"   onclick="filtrarScore(this)">Todos</button>
+      <button class="score-pill"           data-score="CRITICO" onclick="filtrarScore(this)">✕ Crítico &lt;80%</button>
+      <button class="score-pill"           data-score="RISCO"   onclick="filtrarScore(this)">⚠ Risco &lt;95%</button>
+      <button class="score-pill"           data-score="BOM"     onclick="filtrarScore(this)">✓ Bom ≥95%</button>
+    </div>
+  </div>
+  <div class="cmd-search" style="margin-left:auto">
+    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="text" id="filBusca" placeholder="Colaborador ou gestor..." autocomplete="off" oninput="aplicarFiltros()"/>
+  </div>
+</div>
+
+<!-- ── MAIN ──────────────────────────────────────────── -->
+<div class="ppl-main">
+
+  <!-- HERO ROW -->
+  <div class="hero-row">
+
+    <!-- Gauge -->
+    <div class="gauge-card">
+      <div class="gauge-label">Presenteísmo Geral</div>
+      <div class="gauge-svg-wrap">
+        <svg class="gauge-svg" viewBox="0 0 170 100">
+          <!-- arc track: 180° semicircle, cx=85, cy=95, r=70 -->
+          <path class="gauge-track"
+            d="M 15 95 A 70 70 0 0 1 155 95"
+            stroke-dasharray="none"/>
+          <path class="gauge-fill" id="gaugeFill"
+            d="M 15 95 A 70 70 0 0 1 155 95"
+            stroke="var(--gold)"
+            stroke-dasharray="0 220"
+            style="transition:stroke-dasharray 1.4s cubic-bezier(.4,0,.2,1)"/>
+        </svg>
+        <div class="gauge-num" id="gaugeNum" style="color:var(--gold)">—</div>
+      </div>
+      <div class="gauge-band band-critico" id="gaugeBand">Aguardando dados</div>
+      <div class="gauge-sub">
+        <div class="gauge-sub-item">
+          <div class="gauge-sub-n" style="color:rgba(255,255,255,.7)" id="gTotalOtimo">—</div>
+          <div class="gauge-sub-l">Ótimos ≥95%</div>
+        </div>
+        <div class="gauge-sub-item">
+          <div class="gauge-sub-n" style="color:rgba(255,255,255,.7)" id="gTotalRisco">—</div>
+          <div class="gauge-sub-l">Risco 80-95%</div>
+        </div>
+        <div class="gauge-sub-item">
+          <div class="gauge-sub-n" style="color:rgba(255,255,255,.7)" id="gTotalCrit">—</div>
+          <div class="gauge-sub-l">Críticos &lt;80%</div>
+        </div>
+      </div>
+      <div class="dist-bar" id="distBar" style="margin-top:16px">
+        <div class="dist-seg" id="distOtimo" style="background:rgba(255,215,0,.7);width:0%"></div>
+        <div class="dist-seg" id="distRisco" style="background:rgba(255,215,0,.35);width:0%"></div>
+        <div class="dist-seg" id="distCrit"  style="background:rgba(255,215,0,.15);width:0%"></div>
+      </div>
+    </div>
+
+    <!-- KPI strip — 4 cards vertical -->
+    <div class="kpi-strip">
+      <div class="kpi-card kc-gold" onclick="window.scrollTo({top:document.querySelector('.table-panel').offsetTop-80,behavior:'smooth'})" title="Ver todos os colaboradores">
+        <div class="kpi-card-ico kci-gold">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <div class="kpi-card-body">
+          <div class="kpi-card-n" id="kpiTotal" style="color:#e2e8f0">—</div>
+          <div class="kpi-card-l">Total de Colaboradores</div>
+        </div>
+        <div class="kpi-card-arr">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+      </div>
+      <div class="kpi-card kc-green" onclick="window.scrollTo({top:document.querySelector('.table-panel').offsetTop-80,behavior:'smooth'})" title="Ver colaboradores com bom presenteísmo">
+        <div class="kpi-card-ico kci-green">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="kpi-card-body">
+          <div class="kpi-card-n" id="kpiPresentes" style="color:#e2e8f0">—</div>
+          <div class="kpi-card-l">Dias Presentes (soma)</div>
+          <div class="kpi-card-bar"><div class="kpi-card-fill" id="kpiPresentesBar" style="background:rgba(255,215,0,.4)"></div></div>
+        </div>
+        <div class="kpi-card-arr">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+      </div>
+      <div class="kpi-card kc-red" onclick="document.querySelector('[data-score=CRITICO]').click()" title="Ver colaboradores críticos">
+        <div class="kpi-card-ico kci-red">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+        </div>
+        <div class="kpi-card-body">
+          <div class="kpi-card-n" id="kpiFaltas" style="color:#e2e8f0">—</div>
+          <div class="kpi-card-l">Total de Faltas</div>
+        </div>
+        <div class="kpi-card-arr">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+      </div>
+      <div class="kpi-card kc-purple" onclick="document.getElementById('pplTbody').scrollIntoView({behavior:'smooth'})" title="Ver tabela completa">
+        <div class="kpi-card-ico kci-purple">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        </div>
+        <div class="kpi-card-body">
+          <div class="kpi-card-n" id="kpiDiasUteis" style="color:#e2e8f0">—</div>
+          <div class="kpi-card-l">Dias Úteis (soma)</div>
+        </div>
+        <div class="kpi-card-arr">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ANALYSIS ROW -->
+  <div class="analysis-row">
+
+    <!-- Ranking gestores -->
+    <div class="panel">
+      <div class="panel-hdr">
+        <div>
+          <div class="panel-title">Ranking por Gestor</div>
+          <div class="panel-sub">Ordenado por % presenteísmo</div>
+        </div>
+        <span id="gestorCount" style="font-size:10px;color:var(--text-dim)"></span>
+      </div>
+      <div class="panel-body">
+        <div class="gestor-list" id="gestorList">
+          <div class="ppl-empty"><span class="ppl-empty-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:32px;height:32px;opacity:.3"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span>Busque um período para ver os dados.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Por turno -->
+    <div class="panel">
+      <div class="panel-hdr">
+        <div>
+          <div class="panel-title">Presenteísmo por Turno</div>
+          <div class="panel-sub">Média do período selecionado</div>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="turno-grid" id="turnoGrid">
+          <div class="ppl-empty" style="grid-column:1/-1"><span class="ppl-empty-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:32px;height:32px;opacity:.3"><circle cx="12" cy="12" r="9"/><polyline points="12 6 12 12 16 14"/></svg></span>Aguardando dados</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- TABLE -->
+  <div class="table-panel">
+    <div class="table-toolbar">
+      <div class="table-title-block">
+        <span class="table-title">Colaboradores — Presenteísmo individual</span>
+        <span class="table-subtitle" id="tableSubtitle">Selecione um período e clique em Buscar</span>
+      </div>
+      <span class="table-meta" id="pplCount">—</span>
+    </div>
+    <div class="tbl-scroll">
+      <table class="ppl-tbl">
+        <thead>
+          <tr>
+            <th style="width:38px;text-align:center">#</th>
+            <th onclick="sortBy('colaborador')" id="th-colaborador">Colaborador <span class="si">↕</span></th>
+            <th onclick="sortBy('gestor')"      id="th-gestor">Gestor <span class="si">↕</span></th>
+            <th onclick="sortBy('setor')"       id="th-setor">Setor <span class="si">↕</span></th>
+            <th onclick="sortBy('turno')"       id="th-turno">Turno <span class="si">↕</span></th>
+            <th onclick="sortBy('dias_uteis')"  id="th-dias_uteis"    style="text-align:center">D. Úteis <span class="si">↕</span></th>
+            <th onclick="sortBy('dias_presentes')" id="th-dias_presentes" style="text-align:center">Presentes <span class="si">↕</span></th>
+            <th onclick="sortBy('dias_faltas')" id="th-dias_faltas"   style="text-align:center">Faltas <span class="si">↕</span></th>
+            <th onclick="sortBy('percentual_presenteismo')" id="th-percentual_presenteismo" class="th-sorted">% Presenteísmo <span class="si">↑</span></th>
+          </tr>
+        </thead>
+        <tbody id="pplTbody">
+          <tr><td colspan="9"><div class="ppl-empty"><span class="ppl-empty-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:32px;height:32px;opacity:.3"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span>Selecione um período e clique em Buscar.</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div><!-- /ppl-main -->
+
+<script>
+const SCRIPT_URL = '<?= scriptUrl ?>';
+
+// ── State ────────────────────────────────────────────────
+let todosOsDados   = [];
+let dadosFiltrados = [];
+let scoreFiltro    = 'TODOS';
+let sortCol        = 'percentual_presenteismo';
+let sortAsc        = true;
+let toastTimer;
+
+// ── Init ──────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  iniciarRelogio();
+  const hoje = new Date();
+  const prim = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+  document.getElementById('filDtInicio').value = prim.toISOString().split('T')[0];
+  document.getElementById('filDtFim').value    = hoje.toISOString().split('T')[0];
+  try {
+    google.script.run
+      .withSuccessHandler(e => {
+        if (e) document.getElementById('pplNomeUser').textContent = e.split('@')[0].replace('.', ' ');
+      }).getUsuarioEmail();
+  } catch(e) {}
+  carregarDados();
+});
+
+function navegar(pg) {
+  window.top.location.href = SCRIPT_URL + (pg ? '?page=' + pg : '');
+}
+
+// ── Relógio ───────────────────────────────────────────────
+function iniciarRelogio() {
+  const tick = () => {
+    const el = document.getElementById('pplClock');
+    if (!el) return;
+    const n = new Date(), p = v => String(v).padStart(2,'0');
+    el.textContent = p(n.getHours())+':'+p(n.getMinutes())+':'+p(n.getSeconds());
+  };
+  tick(); setInterval(tick, 1000);
+}
+
+// ── Carregar ──────────────────────────────────────────────
+function carregarDados() {
+  const dtI = document.getElementById('filDtInicio').value;
+  const dtF = document.getElementById('filDtFim').value;
+  if (!dtI || !dtF) { mostrarToast('Selecione as datas de início e fim','error'); return; }
+  if (dtI > dtF)    { mostrarToast('Data início deve ser anterior à data fim','error'); return; }
+  mostrarLoading('Consultando BigQuery...');
+  google.script.run
+    .withSuccessHandler(data => {
+      esconderLoading();
+      todosOsDados = data || [];
+      popularFiltrosDaResposta();
+      aplicarFiltros();
+      mostrarToast(`${todosOsDados.length} colaboradores carregados`,'success');
+    })
+    .withFailureHandler(err => {
+      esconderLoading();
+      mostrarToast('Erro: ' + (err.message || err),'error');
+    })
+    .getPresenteismoPeriodo(dtI, dtF, {});
+}
+
+// ── Filtros populados ─────────────────────────────────────
+function popularFiltrosDaResposta() {
+  const areas   = [...new Set(todosOsDados.map(d => d.area   || '').filter(Boolean))].sort();
+  const setores = [...new Set(todosOsDados.map(d => d.setor  || '').filter(Boolean))].sort();
+  const turnos  = [...new Set(todosOsDados.map(d => d.turno  || '').filter(Boolean))].sort();
+  const gestores= [...new Set(todosOsDados.map(d => d.gestor || '').filter(Boolean))].sort();
+  const fill = (id, items) => {
+    const el = document.getElementById(id); const cur = el.value;
+    while (el.options.length > 1) el.remove(1);
+    items.forEach(v => { const o = document.createElement('option'); o.value = v; o.textContent = v; el.appendChild(o); });
+    if (cur) el.value = cur;
+  };
+  fill('filArea',   areas);
+  fill('filSetor',  setores);
+  fill('filTurno',  turnos);
+  fill('filGestor', gestores);
+}
+
+// ── Score pill ────────────────────────────────────────────
+function filtrarScore(btn) {
+  document.querySelectorAll('.score-pill').forEach(b => b.classList.remove('sp-active'));
+  btn.classList.add('sp-active');
+  scoreFiltro = btn.dataset.score;
+  aplicarFiltros();
+}
+
+// ── Apply filters ─────────────────────────────────────────
+function aplicarFiltros() {
+  const area   = document.getElementById('filArea').value;
+  const setor  = document.getElementById('filSetor').value;
+  const turno  = document.getElementById('filTurno').value;
+  const gestor = document.getElementById('filGestor').value;
+  const busca  = (document.getElementById('filBusca').value || '').toLowerCase().trim();
+  dadosFiltrados = todosOsDados.filter(d => {
+    if (area   && d.area   !== area)   return false;
+    if (setor  && d.setor  !== setor)  return false;
+    if (turno  && d.turno  !== turno)  return false;
+    if (gestor && d.gestor !== gestor) return false;
+    if (busca) {
+      const ok = (d.colaborador||'').toLowerCase().includes(busca) ||
+                 (d.gestor||'').toLowerCase().includes(busca) ||
+                 (d.setor||'').toLowerCase().includes(busca);
+      if (!ok) return false;
+    }
+    if (scoreFiltro !== 'TODOS') {
+      const p = parseFloat(d.percentual_presenteismo) || 0;
+      if (scoreFiltro === 'CRITICO' && p >= 80)  return false;
+      if (scoreFiltro === 'RISCO'   && (p < 80 || p >= 95)) return false;
+      if (scoreFiltro === 'BOM'     && p < 95)   return false;
+    }
+    return true;
+  });
+  dadosFiltrados = ordenar(dadosFiltrados);
+  atualizarDashboard();
+}
+
+// ── Sort ──────────────────────────────────────────────────
+function sortBy(col) {
+  if (sortCol === col) sortAsc = !sortAsc;
+  else { sortCol = col; sortAsc = true; }
+  document.querySelectorAll('table.ppl-tbl th.th-sorted').forEach(th => {
+    th.classList.remove('th-sorted');
+    th.querySelector('.si').textContent = '↕';
+  });
+  const th = document.getElementById('th-' + col);
+  if (th) { th.classList.add('th-sorted'); th.querySelector('.si').textContent = sortAsc ? '↑' : '↓'; }
+  aplicarFiltros();
+}
+
+function ordenar(lista) {
+  return [...lista].sort((a, b) => {
+    let va = a[sortCol] || '', vb = b[sortCol] || '';
+    const num = ['dias_uteis','dias_presentes','dias_faltas','percentual_presenteismo'];
+    if (num.includes(sortCol)) { va = parseFloat(va)||0; vb = parseFloat(vb)||0; }
+    else { va = va.toString().toLowerCase(); vb = vb.toString().toLowerCase(); }
+    if (va < vb) return sortAsc ? -1 : 1;
+    if (va > vb) return sortAsc ? 1 : -1;
+    return 0;
+  });
+}
+
+// ── Dashboard update ──────────────────────────────────────
+function atualizarDashboard() {
+  const n = dadosFiltrados.length;
+  if (n === 0) {
+    document.getElementById('kpiTotal').textContent     = '0';
+    document.getElementById('kpiPresentes').textContent = '0';
+    document.getElementById('kpiFaltas').textContent    = '0';
+    document.getElementById('kpiDiasUteis').textContent = '0';
+    document.getElementById('gaugeNum').textContent     = '—';
+    document.getElementById('gaugeBand').textContent    = 'Sem dados';
+    renderTabela(); return;
+  }
+
+  const totalPresentes = dadosFiltrados.reduce((s,d) => s + (parseFloat(d.dias_presentes)||0), 0);
+  const totalFaltas    = dadosFiltrados.reduce((s,d) => s + (parseFloat(d.dias_faltas)   ||0), 0);
+  const totalUteis     = dadosFiltrados.reduce((s,d) => s + (parseFloat(d.dias_uteis)    ||0), 0);
+  const media = dadosFiltrados.reduce((s,d) => s + (parseFloat(d.percentual_presenteismo)||0), 0) / n;
+
+  // KPIs
+  document.getElementById('kpiTotal').textContent     = n.toLocaleString('pt-BR');
+  document.getElementById('kpiPresentes').textContent = Math.round(totalPresentes).toLocaleString('pt-BR');
+  document.getElementById('kpiFaltas').textContent    = Math.round(totalFaltas).toLocaleString('pt-BR');
+  document.getElementById('kpiDiasUteis').textContent = Math.round(totalUteis).toLocaleString('pt-BR');
+
+  const barPres = document.getElementById('kpiPresentesBar');
+  if (barPres) setTimeout(() => { barPres.style.width = Math.min(media,100).toFixed(1)+'%'; }, 80);
+
+  // Gauge arc: semicircle path total length ≈ 220
+  const TOTAL_ARC = 220;
+  const filled = Math.min(media / 100, 1) * TOTAL_ARC;
+  const gFill  = document.getElementById('gaugeFill');
+  const gNum   = document.getElementById('gaugeNum');
+  const gBand  = document.getElementById('gaugeBand');
+  const { pctColor, barCls, bandCls, bandLabel } = pctMeta(media);
+  gFill.style.stroke          = pctColor;
+  gNum.style.color            = pctColor;
+  setTimeout(() => { gFill.style.strokeDasharray = filled.toFixed(1) + ' ' + TOTAL_ARC; }, 80);
+  gNum.textContent  = media.toFixed(1) + '%';
+  gBand.textContent = bandLabel;
+  gBand.className   = 'gauge-band ' + bandCls;
+
+  // Distribution
+  const otimos  = dadosFiltrados.filter(d => (parseFloat(d.percentual_presenteismo)||0) >= 95).length;
+  const riscos  = dadosFiltrados.filter(d => { const p=parseFloat(d.percentual_presenteismo)||0; return p>=80&&p<95; }).length;
+  const criticos= dadosFiltrados.filter(d => (parseFloat(d.percentual_presenteismo)||0) < 80).length;
+  document.getElementById('gTotalOtimo').textContent = otimos.toLocaleString('pt-BR');
+  document.getElementById('gTotalRisco').textContent = riscos.toLocaleString('pt-BR');
+  document.getElementById('gTotalCrit').textContent  = criticos.toLocaleString('pt-BR');
+  setTimeout(() => {
+    document.getElementById('distOtimo').style.width = (otimos/n*100).toFixed(1)+'%';
+    document.getElementById('distRisco').style.width = (riscos/n*100).toFixed(1)+'%';
+    document.getElementById('distCrit').style.width  = (criticos/n*100).toFixed(1)+'%';
+  }, 100);
+
+  // Gestor ranking
+  renderGestorRanking();
+  // Turno breakdown
+  renderTurnoGrid();
+  // Table
+  renderTabela();
+
+  // Subtitle
+  const dtI = document.getElementById('filDtInicio').value;
+  const dtF = document.getElementById('filDtFim').value;
+  if (dtI && dtF) {
+    const f = d => { const [y,m,dd]=d.split('-'); return dd+'/'+m+'/'+y; };
+    document.getElementById('tableSubtitle').textContent = `${f(dtI)} → ${f(dtF)} · ${n.toLocaleString('pt-BR')} colaborador${n!==1?'es':''}`;
+  }
+}
+
+// ── Gestor ranking ────────────────────────────────────────
+function renderGestorRanking() {
+  const byGestor = {};
+  dadosFiltrados.forEach(d => {
+    const g = d.gestor || 'Sem gestor';
+    if (!byGestor[g]) byGestor[g] = { sum:0, cnt:0 };
+    byGestor[g].sum += parseFloat(d.percentual_presenteismo)||0;
+    byGestor[g].cnt++;
+  });
+  const list = Object.entries(byGestor)
+    .map(([g,v]) => ({ gestor:g, media: v.sum/v.cnt, cnt: v.cnt }))
+    .sort((a,b) => b.media - a.media);
+
+  document.getElementById('gestorCount').textContent = list.length.toLocaleString('pt-BR') + ' gestores';
+
+  if (!list.length) {
+    document.getElementById('gestorList').innerHTML = '<div class="ppl-empty"><span class="ppl-empty-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:32px;height:32px;opacity:.3"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>Nenhum gestor</div>';
+    return;
+  }
+
+  document.getElementById('gestorList').innerHTML = list.map((item, i) => {
+    const { pctColor, barCls } = pctMeta(item.media);
+    const rankCls = i === 0 ? 'gr-1' : i === 1 ? 'gr-2' : i === 2 ? 'gr-3' : item.media < 80 ? 'gr-bad' : 'gr-n';
+    const rankLabel = i === 0 ? '1°' : i === 1 ? '2°' : i === 2 ? '3°' : (i+1)+'°';
+    const nomeAbrev = item.gestor.split(' ').slice(0,2).join(' ');
+    return `
+      <div class="gestor-row">
+        <div class="gestor-rank ${rankCls}">${rankLabel}</div>
+        <div class="gestor-info">
+          <div class="gestor-nome" title="${item.gestor}">${item.gestor}</div>
+          <div class="gestor-meta">${item.cnt} colaborador${item.cnt!==1?'es':''}</div>
+        </div>
+        <div class="gestor-bar-wrap">
+          <div class="gestor-bar ${barCls}" style="width:${Math.min(item.media,100).toFixed(1)}%"></div>
+        </div>
+        <div class="gestor-pct" style="color:${pctColor}">${item.media.toFixed(1)}%</div>
+      </div>`;
+  }).join('');
+}
+
+// ── Turno grid ────────────────────────────────────────────
+function renderTurnoGrid() {
+  const byTurno = {};
+  dadosFiltrados.forEach(d => {
+    const t = d.turno || 'S/T';
+    if (!byTurno[t]) byTurno[t] = { sum:0, cnt:0 };
+    byTurno[t].sum += parseFloat(d.percentual_presenteismo)||0;
+    byTurno[t].cnt++;
+  });
+  const turnos = Object.entries(byTurno).sort((a,b) => a[0].localeCompare(b[0]));
+  if (!turnos.length) {
+    document.getElementById('turnoGrid').innerHTML = '<div class="ppl-empty" style="grid-column:1/-1"><span class="ppl-empty-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:32px;height:32px;opacity:.3"><circle cx="12" cy="12" r="9"/><polyline points="12 6 12 12 16 14"/></svg></span>Sem dados</div>';
+    return;
+  }
+  const trnClass = t => {
+    const u = t.toUpperCase();
+    return u==='T1'?'trn-T1':u==='T2'?'trn-T2':u==='T3'?'trn-T3':u==='T4'?'trn-T4':u.includes('ADM')?'trn-ADM':'trn-def';
+  };
+  document.getElementById('turnoGrid').innerHTML = turnos.map(([t, v]) => {
+    const media = v.sum / v.cnt;
+    const { pctColor, barCls } = pctMeta(media);
+    return `
+      <div class="turno-item">
+        <div class="turno-item-hdr">
+          <span class="turno-badge ${trnClass(t)}">${t}</span>
+          <span style="font-size:9.5px;color:var(--text-dim)">${v.cnt} colabs</span>
+        </div>
+        <div class="turno-pct-n" style="color:${pctColor}">${media.toFixed(1)}%</div>
+        <div class="turno-pct-l">Presenteísmo médio</div>
+        <div class="turno-mini-bar">
+          <div class="turno-mini-fill ${barCls}" style="width:${Math.min(media,100).toFixed(1)}%"></div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ── Table ──────────────────────────────────────────────────
+function renderTabela() {
+  const tbody = document.getElementById('pplTbody');
+  document.getElementById('pplCount').innerHTML = `<strong>${dadosFiltrados.length.toLocaleString('pt-BR')}</strong> colaboradores`;
+
+  if (!dadosFiltrados.length) {
+    tbody.innerHTML = '<tr><td colspan="9"><div class="ppl-empty"><span class="ppl-empty-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:32px;height:32px;opacity:.3"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></span>Nenhum registro para os filtros selecionados.</div></td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = dadosFiltrados.map((d, i) => {
+    const semDados = d.percentual_presenteismo === null || d.percentual_presenteismo === undefined || d.percentual_presenteismo === '';
+    const pct = semDados ? null : parseFloat(d.percentual_presenteismo);
+    const { pctColor, pctCls, barCls, tagCls, tagLabel } = semDados ? {
+      pctColor:'rgba(148,163,184,.4)', pctCls:'', barCls:'',
+      tagCls:'', tagLabel:''
+    } : pctMeta(pct);
+    const avCls = semDados ? 'tbl-av-sem' : pct >= 95 ? 'tbl-av-pres' : pct >= 80 ? 'tbl-av-risco' : 'tbl-av-crit';
+    const rankCls = semDados ? 'r-mid' : i < 3 ? 'r-top' : pct < 80 ? 'r-low' : 'r-mid';
+
+    const nome = d.colaborador || '—';
+    const partes = nome.split(' ').filter(Boolean);
+    const ini = (partes.length >= 2 ? partes[0][0] + partes[partes.length-1][0] : (partes[0]||'?').substring(0,2)).toUpperCase();
+
+    const t = (d.turno || '').toUpperCase();
+    const tCls = t==='T1'?'trn-T1':t==='T2'?'trn-T2':t==='T3'?'trn-T3':t==='T4'?'trn-T4':t.includes('ADM')?'trn-ADM':'trn-def';
+
+    const accentColor = semDados ? 'rgba(148,163,184,.2)' : pct >= 95 ? '#10b981' : pct >= 80 ? '#f59e0b' : '#ef4444';
+
+    const pctCell = semDados
+      ? `<span style="font-size:11px;color:rgba(148,163,184,.4);font-style:italic">Sem dados</span>`
+      : `<div class="tbl-pct-cell">
+           <div class="tbl-pct-row">
+             <span class="tbl-pct-n" style="color:${pctColor}">${pct.toFixed(1)}%</span>
+             <span class="tbl-pct-tag ${tagCls}">${tagLabel}</span>
+           </div>
+           <div class="tbl-pct-bar-wrap">
+             <div class="tbl-pct-bar ${barCls}" style="width:${Math.min(pct,100).toFixed(1)}%"></div>
+           </div>
+         </div>`;
+
+    return `
+      <tr style="position:relative${semDados ? ';opacity:.65' : ''}">
+        <td style="text-align:center;position:relative;padding-left:12px">
+          <div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:${accentColor};opacity:.7;border-radius:0 2px 2px 0"></div>
+          <span class="tbl-rank ${rankCls}">${i+1}</span>
+        </td>
+        <td>
+          <div class="tbl-nome-wrap">
+            <div class="tbl-av ${avCls}">${ini}</div>
+            <div class="tbl-nome">
+              <strong>${nome}</strong>
+              <span>${d.cargo || d.area || ''}</span>
+            </div>
+          </div>
+        </td>
+        <td class="tbl-dim" style="font-size:11px;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${d.gestor||''}">
+          ${d.gestor || '—'}
+        </td>
+        <td class="tbl-dim">${d.setor || '—'}</td>
+        <td><span class="turno-badge ${tCls}">${d.turno || '—'}</span></td>
+        <td class="tbl-num" style="color:rgba(255,255,255,.5)">${semDados ? '—' : Math.round(parseFloat(d.dias_uteis)||0)}</td>
+        <td class="tbl-num" style="color:rgba(255,255,255,.7)">${semDados ? '—' : Math.round(parseFloat(d.dias_presentes)||0)}</td>
+        <td class="tbl-num" style="color:rgba(255,255,255,.7)">${semDados ? '—' : Math.round(parseFloat(d.dias_faltas)||0)}</td>
+        <td>${pctCell}</td>
+      </tr>`;
+  }).join('');
+}
+
+// ── pctMeta helper ─────────────────────────────────────────
+function pctMeta(pct) {
+  if (pct >= 95) return {
+    pctColor:'#4ade80', pctCls:'pct-otimo', barCls:'bar-otimo',
+    tagCls:'tag-otimo', tagLabel:'✓ Ótimo', bandCls:'band-otimo', bandLabel:'✓ Ótimo — Meta atingida'
+  };
+  if (pct >= 80) return {
+    pctColor:'#fbbf24', pctCls:'pct-risco', barCls:'bar-risco',
+    tagCls:'tag-bom', tagLabel:'⚠ Risco', bandCls:'band-risco', bandLabel:'⚠ Risco — Abaixo da meta'
+  };
+  return {
+    pctColor:'#f87171', pctCls:'pct-critico', barCls:'bar-critico',
+    tagCls:'tag-critico', tagLabel:'✕ Crítico', bandCls:'band-critico', bandLabel:'✕ Crítico — Ação necessária'
+  };
+}
+
+// ── CSV ───────────────────────────────────────────────────
+function exportarCSV() {
+  if (!dadosFiltrados.length) { mostrarToast('Nenhum dado para exportar','error'); return; }
+  const headers = ['Colaborador','Gestor','Setor','Área','Turno','Dias Úteis','Presentes','Faltas','% Presenteísmo'];
+  const rows = dadosFiltrados.map(d => [
+    d.colaborador||'', d.gestor||'', d.setor||'', d.area||'', d.turno||'',
+    Math.round(parseFloat(d.dias_uteis)||0),
+    Math.round(parseFloat(d.dias_presentes)||0),
+    Math.round(parseFloat(d.dias_faltas)||0),
+    (parseFloat(d.percentual_presenteismo)||0).toFixed(1)+'%'
+  ]);
+  let csv = '\uFEFF' + headers.join(';') + '\n';
+  rows.forEach(r => { csv += r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(';') + '\n'; });
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = `people_${document.getElementById('filDtInicio').value}_${document.getElementById('filDtFim').value}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  mostrarToast('CSV exportado!','success');
+}
+
+// ── Exportar para Google Planilhas ────────────────────────────────────────
+function exportarSheets() {
+  if (!dadosFiltrados.length) { mostrarToast('Nenhum dado para exportar', 'error'); return; }
+
+  const dtInicio = document.getElementById('filDtInicio').value || '';
+  const dtFim    = document.getElementById('filDtFim').value    || '';
+
+  const headers = [
+    'Colaborador', 'Gestor', 'Setor', 'Área', 'Turno',
+    'Dias Úteis', 'Dias Presentes', 'Dias de Falta', '% Presenteísmo'
+  ];
+
+  const rows = dadosFiltrados.map(d => [
+    d.colaborador || '',
+    d.gestor      || '',
+    d.setor       || '',
+    d.area        || '',
+    d.turno       || '',
+    Math.round(parseFloat(d.dias_uteis)     || 0),
+    Math.round(parseFloat(d.dias_presentes) || 0),
+    Math.round(parseFloat(d.dias_faltas)    || 0),
+    parseFloat(d.percentual_presenteismo || 0).toFixed(1) + '%'
+  ]);
+
+  // Feedback visual
+  const btn = document.getElementById('pplSheetsBtn');
+  if (btn) { btn.classList.add('loading'); btn.textContent = 'Criando planilha…'; }
+  mostrarToast('Criando planilha no Google Drive…', 'info');
+
+  const titulo = `Presenteísmo People ${dtInicio} a ${dtFim}`;
+  google.script.run
+    .withSuccessHandler(res => {
+      if (btn) {
+        btn.classList.remove('loading');
+        btn.innerHTML = '<svg viewBox="0 0 24 24" style="width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="9" x2="9" y2="21"/><line x1="15" y1="9" x2="15" y2="21"/></svg> Google Planilhas';
+      }
+      if (res && res.success) {
+        mostrarToast('Planilha criada! Abrindo…', 'success');
+        window.open(res.url, '_blank');
+      } else {
+        mostrarToast('Erro: ' + (res && res.message ? res.message : 'falha'), 'error');
+      }
+    })
+    .withFailureHandler(err => {
+      if (btn) { btn.classList.remove('loading'); btn.innerHTML = 'Google Planilhas'; }
+      mostrarToast('Erro ao criar planilha: ' + (err.message || err), 'error');
+    })
+    .exportarParaGoogleSheets({
+      title:   titulo,
+      sheet:   'Presenteísmo',
+      headers: headers,
+      rows:    rows,
+      freeze:  1   // congela a coluna Colaborador
+    });
+}
+
+// ── Helpers ───────────────────────────────────────────────
+function mostrarLoading(msg) {
+  ChaLoader.start('pplOverlay', msg || 'Carregando...');
+  document.getElementById('pplOverlay').classList.add('show');
+}
+function esconderLoading() {
+  ChaLoader.complete();
+  document.getElementById('pplOverlay').classList.remove('show');
+}
+function mostrarToast(msg, tipo) {
+  const t = document.getElementById('pplToast');
+  document.getElementById('pplToastMsg').textContent = msg;
+  t.className = 'ppl-toast '+(tipo||'info')+' show';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3500);
+}
+// ── Alias KPIs (backward compat) ──────────────────────────
+function atualizarKPIs() { atualizarDashboard(); }
+</script>
+</body>
+</html>

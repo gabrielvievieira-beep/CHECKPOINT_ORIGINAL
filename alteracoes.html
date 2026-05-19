@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Solicitações de Alterações — Checkpoint BA01</title>
+<?!= include('style') ?>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh;}
+
+/* ── TOPBAR ─────────────────────────────────────────────── */
+.alt-topbar{position:sticky;top:0;z-index:200;display:flex;align-items:center;justify-content:space-between;
+  padding:0 24px;height:56px;background:rgba(10,16,34,.98);backdrop-filter:blur(12px);
+  border-bottom:1px solid rgba(255,255,255,.04);box-shadow:0 4px 24px rgba(0,0,0,.5);}
+.alt-topbar::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(56,189,248,.7) 20%,rgba(255,215,0,.8) 50%,rgba(56,189,248,.7) 80%,transparent);
+  background-size:200% 100%;animation:tb-sweep 5s linear infinite;}
+@keyframes tb-sweep{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.alt-tb-left{display:flex;align-items:center;gap:12px;}
+.alt-tb-icon{width:36px;height:36px;background:linear-gradient(135deg,rgba(56,189,248,.2),rgba(255,215,0,.08));
+  border:1px solid rgba(56,189,248,.35);border-radius:10px;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 12px rgba(56,189,248,.15);}
+.alt-tb-brand{font-size:16px;font-weight:800;color:#fff;letter-spacing:-.3px;}
+.alt-tb-brand span{background:linear-gradient(90deg,#38bdf8,#FFD700);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.alt-sep{width:1px;height:20px;background:rgba(255,255,255,.1);}
+.alt-pill{padding:3px 10px;border:1px solid rgba(56,189,248,.25);border-radius:20px;font-size:11px;font-weight:600;color:rgba(56,189,248,.8);background:rgba(56,189,248,.07);}
+.alt-tb-right{display:flex;align-items:center;gap:10px;}
+.alt-btn{display:flex;align-items:center;gap:6px;padding:0 14px;height:32px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:none;transition:all .2s;text-decoration:none;}
+.alt-btn-ghost{background:rgba(255,255,255,.07);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.1);}
+.alt-btn-ghost:hover{background:rgba(255,255,255,.12);color:#fff;}
+.alt-btn-sky{background:rgba(56,189,248,.1);color:#38bdf8;border:1px solid rgba(56,189,248,.25);}
+.alt-btn-sky:hover{background:rgba(56,189,248,.18);box-shadow:0 0 12px rgba(56,189,248,.2);}
+.alt-clock{font-size:12px;font-weight:600;color:rgba(255,255,255,.4);font-variant-numeric:tabular-nums;}
+
+/* ── TABS ────────────────────────────────────────────────── */
+.alt-tabs{display:flex;gap:0;border-bottom:1px solid rgba(255,255,255,.06);background:rgba(10,16,34,.6);padding:0 24px;}
+.alt-tab{display:flex;align-items:center;gap:8px;padding:14px 20px;font-size:13px;font-weight:600;color:rgba(255,255,255,.4);
+  cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;user-select:none;}
+.alt-tab:hover{color:rgba(255,255,255,.7);}
+.alt-tab.active{color:#38bdf8;border-bottom-color:#38bdf8;}
+.alt-tab-badge{padding:2px 7px;border-radius:20px;font-size:10px;font-weight:700;background:rgba(56,189,248,.12);color:#38bdf8;}
+.alt-tab.active .alt-tab-badge{background:rgba(56,189,248,.2);}
+.alt-tab-badge.amber{background:rgba(245,158,11,.15);color:#fbbf24;}
+
+/* ── VIEWS ───────────────────────────────────────────────── */
+.alt-view{display:none;padding:28px 24px;max-width:1200px;margin:0 auto;}
+.alt-view.active{display:block;}
+
+/* ── SKELETON / LOADING ──────────────────────────────────── */
+.alt-loading{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:80px 0;color:rgba(255,255,255,.4);}
+.alt-spinner{width:36px;height:36px;border:3px solid rgba(56,189,248,.15);border-top-color:#38bdf8;border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── KPI BAR ─────────────────────────────────────────────── */
+.alt-kpi-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;}
+.alt-kpi{background:rgba(22,34,65,.85);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:16px 20px;
+  display:flex;flex-direction:column;gap:4px;transition:border-color .2s;}
+.alt-kpi:hover{border-color:rgba(255,255,255,.14);}
+.alt-kpi-num{font-size:28px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1;}
+.alt-kpi-lbl{font-size:11px;font-weight:600;color:rgba(255,255,255,.4);letter-spacing:.5px;text-transform:uppercase;}
+.kpi-amber .alt-kpi-num{color:#fbbf24;}
+.kpi-sky   .alt-kpi-num{color:#38bdf8;}
+.kpi-green .alt-kpi-num{color:#4ade80;}
+.kpi-muted .alt-kpi-num{color:rgba(255,255,255,.5);}
+
+/* ── FILTROS ACOMPANHAR ──────────────────────────────────── */
+.alt-filters{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:20px;}
+.alt-search{display:flex;align-items:center;gap:8px;flex:1;min-width:220px;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:0 12px;height:38px;}
+.alt-search input{flex:1;background:none;border:none;outline:none;color:#e2e8f0;font-size:13px;}
+.alt-search input::placeholder{color:rgba(255,255,255,.3);}
+.alt-search svg{flex-shrink:0;opacity:.4;}
+.alt-filter-chips{display:flex;gap:6px;flex-wrap:wrap;}
+.alt-chip{padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid rgba(255,255,255,.1);
+  background:rgba(255,255,255,.05);color:rgba(255,255,255,.5);transition:all .18s;user-select:none;}
+.alt-chip:hover{border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.75);}
+.alt-chip.active{background:rgba(56,189,248,.12);border-color:rgba(56,189,248,.35);color:#38bdf8;}
+.alt-chip.amber.active{background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.35);color:#fbbf24;}
+.alt-chip.green.active{background:rgba(74,222,128,.1);border-color:rgba(74,222,128,.3);color:#4ade80;}
+.alt-chip.red.active{background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.3);color:#f87171;}
+
+/* ── CARDS LISTA ─────────────────────────────────────────── */
+.alt-list{display:flex;flex-direction:column;gap:8px;}
+.alt-card{background:rgba(22,34,65,.85);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:18px 20px;
+  display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:center;transition:all .2s;cursor:pointer;}
+.alt-card:hover{border-color:rgba(56,189,248,.25);box-shadow:0 4px 20px rgba(0,0,0,.3);}
+.alt-card-avatar{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+  font-size:15px;font-weight:800;flex-shrink:0;}
+.alt-card-body{min-width:0;}
+.alt-card-name{font-size:14px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.alt-card-meta{font-size:12px;color:rgba(255,255,255,.4);margin-top:3px;}
+.alt-card-right{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;}
+.alt-status-badge{padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.4px;}
+.st-PENDENTE{background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.3);color:#fbbf24;}
+.st-VALIDAR{background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.25);color:#38bdf8;}
+.st-CONCLUÍDO,.st-CONCLUIDO{background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.25);color:#4ade80;}
+.st-CANCELADO{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);color:#f87171;}
+.alt-card-date{font-size:11px;color:rgba(255,255,255,.3);}
+.alt-tipo-tag{font-size:10px;font-weight:600;padding:2px 8px;border-radius:6px;}
+.tp-MUDANCA_ESCALA{background:rgba(168,85,247,.12);color:#c084fc;}
+.tp-MUDANCA_GESTOR{background:rgba(249,115,22,.12);color:#fb923c;}
+.tp-DESLIGAMENTO{background:rgba(239,68,68,.1);color:#f87171;}
+.tp-OUTRO{background:rgba(255,255,255,.07);color:rgba(255,255,255,.5);}
+
+/* ── EMPTY STATE ─────────────────────────────────────────── */
+.alt-empty{text-align:center;padding:60px 24px;color:rgba(255,255,255,.3);}
+.alt-empty-icon{font-size:40px;margin-bottom:12px;opacity:.5;}
+.alt-empty-title{font-size:15px;font-weight:600;margin-bottom:6px;color:rgba(255,255,255,.4);}
+.alt-empty-sub{font-size:13px;}
+
+/* ── NOVA SOLICITAÇÃO FORM ───────────────────────────────── */
+.alt-form-card{background:rgba(22,34,65,.85);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:28px;max-width:680px;margin:0 auto;}
+.alt-form-title{font-size:16px;font-weight:700;color:#fff;margin-bottom:24px;display:flex;align-items:center;gap:10px;}
+.alt-form-title span{background:linear-gradient(90deg,#38bdf8,#FFD700);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.alt-field{margin-bottom:18px;}
+.alt-label{font-size:12px;font-weight:600;color:rgba(255,255,255,.5);letter-spacing:.4px;text-transform:uppercase;margin-bottom:7px;display:block;}
+.alt-input{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;
+  padding:10px 14px;color:#e2e8f0;font-size:13px;outline:none;transition:border-color .2s;}
+.alt-input:focus{border-color:rgba(56,189,248,.4);box-shadow:0 0 0 3px rgba(56,189,248,.06);}
+.alt-input::placeholder{color:rgba(255,255,255,.25);}
+.alt-input[disabled]{opacity:.5;cursor:not-allowed;}
+select.alt-input option{background:#1e2d4f;color:#e2e8f0;}
+.alt-tipo-chips{display:flex;gap:8px;flex-wrap:wrap;}
+.alt-tipo-chip{padding:8px 16px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid rgba(255,255,255,.1);
+  background:rgba(255,255,255,.04);color:rgba(255,255,255,.5);transition:all .18s;user-select:none;}
+.alt-tipo-chip:hover{border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.75);}
+.alt-tipo-chip.selected{background:rgba(56,189,248,.12);border-color:rgba(56,189,248,.4);color:#38bdf8;}
+.alt-tipo-chip[data-tipo="DESLIGAMENTO"].selected{background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.35);color:#f87171;}
+.alt-dynamic{margin-top:0;transition:all .3s;}
+.alt-collab-search{position:relative;}
+.alt-collab-results{position:absolute;top:calc(100% + 4px);left:0;right:0;
+  background:#1e2d4f;border:1px solid rgba(56,189,248,.25);border-radius:10px;
+  max-height:220px;overflow-y:auto;z-index:100;box-shadow:0 8px 24px rgba(0,0,0,.5);}
+.alt-collab-item{padding:10px 14px;font-size:13px;cursor:pointer;transition:background .15s;border-bottom:1px solid rgba(255,255,255,.04);}
+.alt-collab-item:hover{background:rgba(56,189,248,.08);}
+.alt-collab-item:last-child{border-bottom:none;}
+.alt-collab-item strong{color:#fff;}
+.alt-collab-item span{color:rgba(255,255,255,.4);font-size:11px;}
+.alt-hint{font-size:11px;color:rgba(255,255,255,.3);margin-top:5px;}
+.alt-btn-submit{width:100%;height:44px;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;border:none;
+  background:linear-gradient(90deg,rgba(56,189,248,.15),rgba(255,215,0,.1));
+  border:1px solid rgba(56,189,248,.3);color:#38bdf8;transition:all .2s;margin-top:8px;}
+.alt-btn-submit:hover{background:linear-gradient(90deg,rgba(56,189,248,.25),rgba(255,215,0,.15));box-shadow:0 0 20px rgba(56,189,248,.2);}
+.alt-btn-submit:disabled{opacity:.5;cursor:not-allowed;}
+
+/* ── MODAL AÇÃO ──────────────────────────────────────────── */
+.alt-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:500;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+.alt-overlay.open{display:flex;}
+.alt-modal{background:#1e2d4f;border:1px solid rgba(56,189,248,.2);border-radius:20px;padding:28px;width:min(520px,94vw);box-shadow:0 24px 60px rgba(0,0,0,.7);}
+.alt-modal-title{font-size:16px;font-weight:700;color:#fff;margin-bottom:6px;}
+.alt-modal-sub{font-size:13px;color:rgba(255,255,255,.4);margin-bottom:22px;}
+.alt-modal-detail{background:rgba(255,255,255,.04);border-radius:10px;padding:14px 16px;margin-bottom:20px;font-size:13px;line-height:1.8;}
+.alt-modal-detail strong{color:rgba(255,255,255,.7);}
+.alt-modal-actions{display:flex;gap:8px;flex-wrap:wrap;}
+.alt-action-btn{flex:1;min-width:100px;height:38px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;border:none;transition:all .2s;}
+.btn-validar{background:rgba(56,189,248,.12);color:#38bdf8;border:1px solid rgba(56,189,248,.3);}
+.btn-validar:hover{background:rgba(56,189,248,.2);}
+.btn-concluir{background:rgba(74,222,128,.1);color:#4ade80;border:1px solid rgba(74,222,128,.25);}
+.btn-concluir:hover{background:rgba(74,222,128,.18);}
+.btn-cancelar{background:rgba(239,68,68,.1);color:#f87171;border:1px solid rgba(239,68,68,.25);}
+.btn-cancelar:hover{background:rgba(239,68,68,.18);}
+.btn-fechar{background:rgba(255,255,255,.07);color:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.1);}
+.btn-fechar:hover{background:rgba(255,255,255,.12);}
+
+/* ── TOAST ───────────────────────────────────────────────── */
+.alt-toast{position:fixed;bottom:24px;right:24px;z-index:999;
+  background:#1e2d4f;border:1px solid rgba(56,189,248,.3);border-radius:12px;
+  padding:12px 18px;font-size:13px;font-weight:600;color:#e2e8f0;
+  box-shadow:0 8px 32px rgba(0,0,0,.5);transform:translateY(80px);opacity:0;transition:all .3s;pointer-events:none;}
+.alt-toast.show{transform:translateY(0);opacity:1;}
+.alt-toast.success{border-color:rgba(74,222,128,.35);color:#4ade80;}
+.alt-toast.error{border-color:rgba(239,68,68,.35);color:#f87171;}
+
+/* ── SECTION HEADER ──────────────────────────────────────── */
+.alt-section-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.alt-section-title{font-size:14px;font-weight:700;color:rgba(255,255,255,.7);}
+.alt-count-badge{font-size:12px;font-weight:700;padding:2px 10px;border-radius:20px;
+  background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.2);color:#38bdf8;}
+/* ── Botão Menu Principal ─────────────────────────────────── */
+#btnMenuHome {
+  height: 42px !important;
+  font-size: 14px !important;
+  padding: 0 22px !important;
+  font-weight: 700 !important;
+  border-radius: 10px !important;
+}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="alt-topbar">
+  <div class="alt-tb-left">
+    <div class="alt-tb-icon">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/>
+      </svg>
+    </div>
+    <div class="alt-tb-brand">Solicitações de <span>Alterações</span></div>
+    <div class="alt-sep"></div>
+    <div class="alt-pill">BA01</div>
+  </div>
+  <div class="alt-tb-right">
+    <span id="nomeUsuario" style="font-size:12px;color:rgba(255,255,255,.35);"></span>
+    <div class="alt-clock" id="altClock"></div>
+    <div id="menuContainer"></div>
+    <button class="alt-btn alt-btn-ghost" id="btnMenuHome" onclick="window.top.location.href='<?= ScriptApp.getService().getUrl() ?>'">← Menu</button>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="alt-tabs">
+  <div class="alt-tab active" id="tabNova" onclick="trocarTab('nova')">
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
+    Nova Solicitação
+  </div>
+  <div class="alt-tab" id="tabAcomp" onclick="trocarTab('acompanhar')">
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    Acompanhar
+    <span class="alt-tab-badge amber" id="badgePendente">—</span>
+  </div>
+</div>
+
+<!-- ── VIEW: NOVA SOLICITAÇÃO ───────────────────────────── -->
+<div class="alt-view active" id="viewNova">
+  <div class="alt-form-card">
+    <div class="alt-form-title">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#38bdf8" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
+      Nova <span>Solicitação</span>
+    </div>
+
+    <!-- Busca colaborador -->
+    <div class="alt-field">
+      <label class="alt-label">Colaborador</label>
+      <div class="alt-collab-search">
+        <input class="alt-input" id="inputColaborador" placeholder="Digite o nome do colaborador..." autocomplete="off"
+               oninput="filtrarColaboradores(this.value)" onfocus="mostrarResultados()" onblur="setTimeout(()=>esconderResultados(),180)"/>
+        <div class="alt-collab-results" id="collabResults" style="display:none;"></div>
+      </div>
+      <div class="alt-hint" id="hintColaborador"></div>
+    </div>
+
+    <!-- Tipo de alteração -->
+    <div class="alt-field">
+      <label class="alt-label">Tipo de Alteração</label>
+      <div class="alt-tipo-chips">
+        <div class="alt-tipo-chip" data-tipo="MUDANCA_ESCALA"  onclick="selecionarTipo(this)">🔄 Mudança de Escala</div>
+        <div class="alt-tipo-chip" data-tipo="MUDANCA_GESTOR"  onclick="selecionarTipo(this)">👤 Mudança de Gestor</div>
+        <div class="alt-tipo-chip" data-tipo="DESLIGAMENTO"    onclick="selecionarTipo(this)">🚪 Desligamento</div>
+        <div class="alt-tipo-chip" data-tipo="OUTRO"           onclick="selecionarTipo(this)">📝 Outro</div>
+      </div>
+    </div>
+
+    <!-- Campos dinâmicos -->
+    <div id="camposDinamicos"></div>
+
+    <!-- Descrição -->
+    <div class="alt-field" id="campoDescricao" style="display:none;">
+      <label class="alt-label">Descrição / Observação</label>
+      <textarea class="alt-input" id="inputDescricao" rows="3" placeholder="Descreva o motivo ou detalhes adicionais..."></textarea>
+    </div>
+
+    <button class="alt-btn-submit" id="btnSubmit" onclick="enviarSolicitacao()" disabled>Enviar Solicitação</button>
+  </div>
+</div>
+
+<!-- ── VIEW: ACOMPANHAR ──────────────────────────────────── -->
+<div class="alt-view" id="viewAcomp">
+
+  <!-- KPI -->
+  <div class="alt-kpi-bar">
+    <div class="alt-kpi kpi-amber">
+      <div class="alt-kpi-num" id="kpiPendente">—</div>
+      <div class="alt-kpi-lbl">⏳ Pendentes</div>
+    </div>
+    <div class="alt-kpi kpi-sky">
+      <div class="alt-kpi-num" id="kpiValidar">—</div>
+      <div class="alt-kpi-lbl">🔵 Para Validar</div>
+    </div>
+    <div class="alt-kpi kpi-green">
+      <div class="alt-kpi-num" id="kpiConcluido">—</div>
+      <div class="alt-kpi-lbl">✅ Concluídos</div>
+    </div>
+    <div class="alt-kpi kpi-muted">
+      <div class="alt-kpi-num" id="kpiTotal">—</div>
+      <div class="alt-kpi-lbl">📋 Total</div>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="alt-filters">
+    <div class="alt-search">
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input id="searchAcomp" placeholder="Buscar colaborador ou gestor..." oninput="renderLista()"/>
+    </div>
+    <div class="alt-filter-chips">
+      <div class="alt-chip active" data-filter-status="todos"            onclick="toggleFilter(this,'status')">Todos</div>
+      <div class="alt-chip amber"  data-filter-status="PENDENTE"         onclick="toggleFilter(this,'status')">Pendente</div>
+      <div class="alt-chip"        data-filter-status="VALIDAR"          onclick="toggleFilter(this,'status')">Validar</div>
+      <div class="alt-chip green"  data-filter-status="CONCLUÍDO"        onclick="toggleFilter(this,'status')">Concluído</div>
+      <div class="alt-chip red"    data-filter-status="CANCELADO"        onclick="toggleFilter(this,'status')">Cancelado</div>
+    </div>
+    <div class="alt-filter-chips">
+      <div class="alt-chip active" data-filter-tipo="todos"              onclick="toggleFilter(this,'tipo')">Todos tipos</div>
+      <div class="alt-chip"        data-filter-tipo="MUDANCA_ESCALA"     onclick="toggleFilter(this,'tipo')">Escala</div>
+      <div class="alt-chip"        data-filter-tipo="MUDANCA_GESTOR"     onclick="toggleFilter(this,'tipo')">Gestor</div>
+      <div class="alt-chip"        data-filter-tipo="DESLIGAMENTO"       onclick="toggleFilter(this,'tipo')">Desligamento</div>
+      <div class="alt-chip"        data-filter-tipo="OUTRO"              onclick="toggleFilter(this,'tipo')">Outro</div>
+    </div>
+  </div>
+
+  <!-- Lista -->
+  <div class="alt-section-hdr">
+    <div class="alt-section-title">Solicitações</div>
+    <div class="alt-count-badge" id="countBadge">—</div>
+  </div>
+  <div id="listaAcomp"><div class="alt-loading"><div class="alt-spinner"></div><span>Carregando solicitações...</span></div></div>
+</div>
+
+<!-- MODAL AÇÃO -->
+<div class="alt-overlay" id="modalOverlay" onclick="fecharModal(event)">
+  <div class="alt-modal" onclick="event.stopPropagation()">
+    <div class="alt-modal-title" id="modalTitle">Detalhes da Solicitação</div>
+    <div class="alt-modal-sub"  id="modalSub"></div>
+    <div class="alt-modal-detail" id="modalDetail"></div>
+    <div class="alt-modal-actions" id="modalActions"></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="alt-toast" id="altToast"></div>
+
+<script>
+/* ════════════════════════════════════════════════════════════
+   STATE
+════════════════════════════════════════════════════════════ */
+let todasSolicitacoes = [];  // pendentes + validar (loaded on tab open)
+let todoColaboradores = [];  // from CP_LISTA_COLABORADORES
+let gestoresLista     = [];
+let filterStatus = 'todos';
+let filterTipo   = 'todos';
+let colaboradorSelecionado = null;
+let tipoSelecionado = null;
+let modalData = null;
+let dadosCarregados = false;
+
+/* ════════════════════════════════════════════════════════════
+   CLOCK & USER
+════════════════════════════════════════════════════════════ */
+function atualizarRelogio(){
+  const n=new Date();
+  document.getElementById('altClock').textContent=
+    n.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+setInterval(atualizarRelogio,1000); atualizarRelogio();
+
+google.script.run.withSuccessHandler(e=>{
+  if(e) document.getElementById('nomeUsuario').textContent=e.split('@')[0];
+}).getUsuarioEmail();
+
+/* ════════════════════════════════════════════════════════════
+   TABS
+════════════════════════════════════════════════════════════ */
+function trocarTab(tab){
+  document.querySelectorAll('.alt-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.alt-view').forEach(v=>v.classList.remove('active'));
+  if(tab==='nova'){
+    document.getElementById('tabNova').classList.add('active');
+    document.getElementById('viewNova').classList.add('active');
+    if(todoColaboradores.length===0) carregarColaboradores();
+  } else {
+    document.getElementById('tabAcomp').classList.add('active');
+    document.getElementById('viewAcomp').classList.add('active');
+    if(!dadosCarregados) carregarSolicitacoes();
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   CARREGAR DADOS
+════════════════════════════════════════════════════════════ */
+function carregarColaboradores(){
+  google.script.run
+    .withSuccessHandler(lista=>{
+      todoColaboradores = lista || [];
+    })
+    .withFailureHandler(e=>mostrarToast('Erro ao carregar colaboradores','error'))
+    .getColaboradores();
+}
+
+function carregarSolicitacoes(){
+  dadosCarregados = false;
+  ChaLoader.start('listaAcomp', 'Carregando solicitações...');
+
+  google.script.run
+    .withSuccessHandler(lista=>{
+      ChaLoader.complete();
+      todasSolicitacoes = lista || [];
+      dadosCarregados = true;
+      atualizarKPIs();
+      renderLista();
+    })
+    .withFailureHandler(e=>{
+      ChaLoader.error();
+      document.getElementById('listaAcomp').innerHTML=
+        '<div class="alt-empty"><div class="alt-empty-icon">⚠️</div><div class="alt-empty-title">Erro ao carregar</div><div class="alt-empty-sub">'+e.message+'</div></div>';
+    })
+    .listarSolicitacoesAlteracao({});
+}
+
+/* ════════════════════════════════════════════════════════════
+   KPIs
+════════════════════════════════════════════════════════════ */
+function atualizarKPIs(){
+  const pend = todasSolicitacoes.filter(s=>s.status==='PENDENTE').length;
+  const val  = todasSolicitacoes.filter(s=>s.status==='VALIDAR').length;
+  const conc = todasSolicitacoes.filter(s=>s.status==='CONCLUÍDO'||s.status==='CONCLUIDO').length;
+  animarNum('kpiPendente', pend);
+  animarNum('kpiValidar',  val);
+  animarNum('kpiConcluido',conc);
+  animarNum('kpiTotal',    todasSolicitacoes.length);
+  document.getElementById('badgePendente').textContent = pend || '0';
+}
+
+function animarNum(id, target){
+  const el = document.getElementById(id);
+  let v=0; const step=Math.max(1,Math.ceil(target/25));
+  const t=setInterval(()=>{ v=Math.min(v+step,target); el.textContent=v; if(v>=target)clearInterval(t); },30);
+}
+
+/* ════════════════════════════════════════════════════════════
+   FILTROS + RENDER LISTA
+════════════════════════════════════════════════════════════ */
+function toggleFilter(el, group){
+  document.querySelectorAll(`[data-filter-${group}]`).forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  if(group==='status') filterStatus = el.dataset.filterStatus;
+  if(group==='tipo')   filterTipo   = el.dataset.filterTipo;
+  renderLista();
+}
+
+function renderLista(){
+  const q = (document.getElementById('searchAcomp').value||'').toLowerCase().trim();
+  let lista = todasSolicitacoes.filter(s=>{
+    if(filterStatus!=='todos' && s.status!==filterStatus) return false;
+    if(filterTipo!=='todos'   && s.tipo_alteracao!==filterTipo) return false;
+    if(q){
+      const hay=(s.colaborador||'')+(s.gestor||'');
+      if(!hay.toLowerCase().includes(q)) return false;
+    }
+    return true;
+  });
+
+  document.getElementById('countBadge').textContent = lista.length + ' resultado' + (lista.length!==1?'s':'');
+
+  if(lista.length===0){
+    document.getElementById('listaAcomp').innerHTML=
+      '<div class="alt-empty"><div class="alt-empty-icon">🔍</div><div class="alt-empty-title">Nenhuma solicitação encontrada</div><div class="alt-empty-sub">Tente ajustar os filtros</div></div>';
+    return;
+  }
+
+  const tipoLabel={MUDANCA_ESCALA:'Mudança de Escala',MUDANCA_GESTOR:'Mudança de Gestor',DESLIGAMENTO:'Desligamento',OUTRO:'Outro'};
+  const html = lista.map(s=>{
+    const initials=(s.colaborador||'?').split(' ').slice(0,2).map(n=>n[0]).join('').toUpperCase();
+    const hue = (s.idgroot||0) % 360;
+    const dataSol = s.data_solicitacao ? s.data_solicitacao.split(' ')[0] : '—';
+    const tipoTxt = tipoLabel[s.tipo_alteracao]||s.tipo_alteracao||'—';
+    return `
+    <div class="alt-card" onclick="abrirModal(${JSON.stringify(s).replace(/"/g,'&quot;')})">
+      <div class="alt-card-avatar" style="background:hsla(${hue},60%,40%,.2);border:1px solid hsla(${hue},60%,50%,.3);color:hsl(${hue},60%,70%);">${initials}</div>
+      <div class="alt-card-body">
+        <div class="alt-card-name">${s.colaborador||'—'}</div>
+        <div class="alt-card-meta">Gestor: ${s.gestor||'—'} · Escala: ${s.escala||'—'}</div>
+      </div>
+      <div class="alt-card-right">
+        <span class="alt-status-badge st-${s.status||'PENDENTE'}">${s.status||'PENDENTE'}</span>
+        <span class="alt-tipo-tag tp-${s.tipo_alteracao||'OUTRO'}">${tipoTxt}</span>
+        <span class="alt-card-date">${dataSol}</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('listaAcomp').innerHTML=`<div class="alt-list">${html}</div>`;
+}
+
+/* ════════════════════════════════════════════════════════════
+   MODAL AÇÃO
+════════════════════════════════════════════════════════════ */
+function abrirModal(s){
+  modalData = s;
+  const tipoLabel={MUDANCA_ESCALA:'Mudança de Escala',MUDANCA_GESTOR:'Mudança de Gestor',DESLIGAMENTO:'Desligamento',OUTRO:'Outro'};
+  document.getElementById('modalTitle').textContent = s.colaborador || 'Solicitação';
+  document.getElementById('modalSub').textContent   = tipoLabel[s.tipo_alteracao]||s.tipo_alteracao||'—';
+  document.getElementById('modalDetail').innerHTML  = `
+    <strong>Gestor:</strong> ${s.gestor||'—'}<br>
+    <strong>Escala atual:</strong> ${s.escala||'—'}<br>
+    ${s.nova_escala   ? '<strong>Nova escala:</strong> '+s.nova_escala+'<br>' : ''}
+    ${s.novo_gestor   ? '<strong>Novo gestor:</strong> '+s.novo_gestor+'<br>' : ''}
+    ${s.data_desligamento ? '<strong>Data desligamento:</strong> '+s.data_desligamento+'<br>' : ''}
+    ${s.descricao     ? '<strong>Descrição:</strong> '+s.descricao+'<br>' : ''}
+    <strong>Status:</strong> <span class="alt-status-badge st-${s.status}">${s.status}</span><br>
+    <strong>Solicitado em:</strong> ${(s.data_solicitacao||'').split('.')[0]||'—'}<br>
+    <strong>Responsável:</strong> ${(s.responsavel||'—').split('@')[0]}
+  `;
+
+  const actions = document.getElementById('modalActions');
+  actions.innerHTML='';
+  if(s.status==='PENDENTE'){
+    actions.innerHTML+=`<button class="alt-action-btn btn-validar"  onclick="acao('VALIDAR')">🔵 Validar</button>`;
+    actions.innerHTML+=`<button class="alt-action-btn btn-concluir" onclick="acao('CONCLUÍDO')">✅ Concluir</button>`;
+    actions.innerHTML+=`<button class="alt-action-btn btn-cancelar" onclick="acao('CANCELADO')">❌ Cancelar</button>`;
+  } else if(s.status==='VALIDAR'){
+    actions.innerHTML+=`<button class="alt-action-btn btn-concluir" onclick="acao('CONCLUÍDO')">✅ Concluir</button>`;
+    actions.innerHTML+=`<button class="alt-action-btn btn-cancelar" onclick="acao('CANCELADO')">❌ Cancelar</button>`;
+  }
+  actions.innerHTML+=`<button class="alt-action-btn btn-fechar"  onclick="fecharModal()">Fechar</button>`;
+
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function fecharModal(e){
+  if(!e || e.target===document.getElementById('modalOverlay'))
+    document.getElementById('modalOverlay').classList.remove('open');
+}
+
+function acao(novoStatus){
+  if(!modalData) return;
+  document.getElementById('modalOverlay').classList.remove('open');
+  mostrarToast('Atualizando status...','');
+  google.script.run
+    .withSuccessHandler(r=>{
+      if(r.success){
+        mostrarToast('Status atualizado com sucesso!','success');
+        dadosCarregados=false;
+        carregarSolicitacoes();
+      } else {
+        mostrarToast(r.message||'Erro ao atualizar','error');
+      }
+    })
+    .withFailureHandler(e=>mostrarToast(e.message,'error'))
+    .atualizarStatusSolicitacao(modalData.idgroot, modalData.data_solicitacao, novoStatus, null);
+}
+
+/* ════════════════════════════════════════════════════════════
+   NOVA SOLICITAÇÃO
+════════════════════════════════════════════════════════════ */
+function filtrarColaboradores(q){
+  colaboradorSelecionado = null;
+  document.getElementById('hintColaborador').textContent='';
+  validarForm();
+  if(!q||q.length<2){ esconderResultados(); return; }
+  const lower = q.toLowerCase();
+  const matches = todoColaboradores.filter(c=>(c.colaborador||'').toLowerCase().includes(lower)).slice(0,12);
+  if(!matches.length){ esconderResultados(); return; }
+  const html = matches.map(c=>`
+    <div class="alt-collab-item" onclick="selecionarColaborador(${JSON.stringify(c).replace(/"/g,'&quot;')})">
+      <strong>${c.colaborador||'—'}</strong>
+      <span> · ${c.setor||'—'} · ${c.turno||'—'}</span>
+    </div>`).join('');
+  document.getElementById('collabResults').innerHTML=html;
+  document.getElementById('collabResults').style.display='block';
+}
+
+function mostrarResultados(){ if(document.getElementById('collabResults').innerHTML) document.getElementById('collabResults').style.display='block'; }
+function esconderResultados(){ document.getElementById('collabResults').style.display='none'; }
+
+function selecionarColaborador(c){
+  colaboradorSelecionado = c;
+  document.getElementById('inputColaborador').value = c.colaborador||'';
+  document.getElementById('hintColaborador').textContent = `Setor: ${c.setor||'—'} · Escala: ${c.turno||'—'} · Gestor: ${c.gestor||'—'}`;
+  esconderResultados();
+  validarForm();
+}
+
+function selecionarTipo(el){
+  document.querySelectorAll('.alt-tipo-chip').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+  tipoSelecionado = el.dataset.tipo;
+  renderCamposDinamicos(tipoSelecionado);
+  validarForm();
+}
+
+function renderCamposDinamicos(tipo){
+  const div = document.getElementById('camposDinamicos');
+  const desc = document.getElementById('campoDescricao');
+  desc.style.display='block';
+  let html='';
+  if(tipo==='MUDANCA_ESCALA'){
+    html=`<div class="alt-field">
+      <label class="alt-label">Nova Escala</label>
+      <select class="alt-input" id="inputNovaEscala">
+        <option value="">Selecione...</option>
+        <option>T1</option><option>T2</option><option>T3</option><option>T4</option><option>ADM</option>
+      </select></div>`;
+  } else if(tipo==='MUDANCA_GESTOR'){
+    html=`<div class="alt-field">
+      <label class="alt-label">Novo Gestor</label>
+      <input class="alt-input" id="inputNovoGestor" list="gestoresList" placeholder="Digite o nome do novo gestor..."/>
+      <datalist id="gestoresList"></datalist></div>`;
+    setTimeout(()=>preencherGestoresList(),100);
+  } else if(tipo==='DESLIGAMENTO'){
+    html=`<div class="alt-field">
+      <label class="alt-label">Data de Desligamento</label>
+      <input class="alt-input" type="date" id="inputDataDesligamento"/></div>`;
+  }
+  div.innerHTML=html;
+}
+
+function preencherGestoresList(){
+  if(!gestoresLista.length){
+    google.script.run.withSuccessHandler(lista=>{
+      gestoresLista=lista||[];
+      const dl=document.getElementById('gestoresList');
+      if(dl) gestoresLista.forEach(g=>{const o=document.createElement('option');o.value=g;dl.appendChild(o);});
+    }).getGestoresAlteracoes();
+  } else {
+    const dl=document.getElementById('gestoresList');
+    if(dl) gestoresLista.forEach(g=>{const o=document.createElement('option');o.value=g;dl.appendChild(o);});
+  }
+}
+
+function validarForm(){
+  const ok = !!colaboradorSelecionado && !!tipoSelecionado;
+  document.getElementById('btnSubmit').disabled = !ok;
+}
+
+function enviarSolicitacao(){
+  if(!colaboradorSelecionado||!tipoSelecionado) return;
+  const c = colaboradorSelecionado;
+  const sol = {
+    colaboradorId:   c.id_groot,
+    colaboradorNome: c.colaborador,
+    gestor:          c.gestor||'',
+    escala:          c.turno||'',
+    tipo:            tipoSelecionado,
+    novaEscala:      document.getElementById('inputNovaEscala')?.value||null,
+    novoGestor:      document.getElementById('inputNovoGestor')?.value||null,
+    dataDesligamento:document.getElementById('inputDataDesligamento')?.value||null,
+    descricao:       document.getElementById('inputDescricao')?.value||null,
+  };
+  document.getElementById('btnSubmit').disabled=true;
+  document.getElementById('btnSubmit').textContent='Enviando...';
+  google.script.run
+    .withSuccessHandler(r=>{
+      document.getElementById('btnSubmit').textContent='Enviar Solicitação';
+      if(r.success){
+        mostrarToast('✅ Solicitação enviada com sucesso!','success');
+        resetForm();
+        dadosCarregados=false;
+      } else {
+        mostrarToast(r.message||'Erro ao enviar','error');
+        document.getElementById('btnSubmit').disabled=false;
+      }
+    })
+    .withFailureHandler(e=>{
+      document.getElementById('btnSubmit').textContent='Enviar Solicitação';
+      document.getElementById('btnSubmit').disabled=false;
+      mostrarToast(e.message,'error');
+    })
+    .salvarSolicitacaoAlteracao(sol);
+}
+
+function resetForm(){
+  colaboradorSelecionado=null; tipoSelecionado=null;
+  document.getElementById('inputColaborador').value='';
+  document.getElementById('hintColaborador').textContent='';
+  document.getElementById('camposDinamicos').innerHTML='';
+  document.getElementById('campoDescricao').style.display='none';
+  document.getElementById('inputDescricao').value='';
+  document.querySelectorAll('.alt-tipo-chip').forEach(c=>c.classList.remove('selected'));
+  document.getElementById('btnSubmit').disabled=true;
+  document.getElementById('btnSubmit').textContent='Enviar Solicitação';
+}
+
+/* ════════════════════════════════════════════════════════════
+   TOAST
+════════════════════════════════════════════════════════════ */
+function mostrarToast(msg, tipo){
+  const t=document.getElementById('altToast');
+  t.textContent=msg; t.className='alt-toast '+(tipo||'');
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3500);
+}
+
+/* ════════════════════════════════════════════════════════════
+   INIT — carrega colaboradores e solicitações em paralelo
+════════════════════════════════════════════════════════════ */
+carregarColaboradores();
+carregarSolicitacoes();
+</script>
+</body>
+</html>

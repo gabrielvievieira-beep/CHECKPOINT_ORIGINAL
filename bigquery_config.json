@@ -1,0 +1,20 @@
+{
+  "billing_project": "meli-sbox",
+  "owner": "gabrielvie.vieira@mercadolivre.com",
+  "description": "Sistema de Absenteísmo - Sandbox do Gabriel",
+  "datasets": ["BRBA01"],
+  "tables": [
+    "meli-sbox.BRBA01.CP_AUSENCIAS_PROGRAMADAS",
+    "meli-sbox.BRBA01.CP_ESCALAS_ROTATIVAS",
+    "meli-sbox.BRBA01.CP_HISTORICO_ABS",
+    "meli-sbox.BRBA01.CP_HISTORICO_AVAILABLE_TIME",
+    "meli-sbox.BRBA01.CP_LISTA_COLABORADORES",
+    "meli-sbox.BRBA01.CP_SOLICITACOES_ALTERACOES",
+    "meli-sbox.BRBA01.CP_PERMISSOES_ABS"
+  ],
+  "paths": {
+    "meli_catalog": "meli-bi-data.WHOWNER.<table_name>",
+    "sandbox_tables": "meli-sbox.BRBA01.<table_name>"
+  },
+  "configured_at": "2026-04-17"
+}

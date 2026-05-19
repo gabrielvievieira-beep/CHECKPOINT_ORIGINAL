@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Glossário de Justificativas — Checkpoint BA01</title>
+  <?!= include('style') ?>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0a0f1e;
+      color: #e2e8f0;
+      min-height: 100vh;
+    }
+
+    /* ── HERO HEADER ─────────────────────────────────────── */
+    .gl-hero {
+      position: relative; overflow: hidden;
+      background: linear-gradient(180deg, rgba(10,15,30,1) 0%, rgba(15,23,42,1) 100%);
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      padding: 0 0 32px;
+    }
+    .gl-hero::before {
+      content:''; position:absolute; inset:0;
+      background: radial-gradient(ellipse 80% 60% at 50% -10%,
+        rgba(99,102,241,.18) 0%, transparent 70%);
+      pointer-events:none;
+    }
+    /* animated sweep */
+    .gl-hero::after {
+      content:''; position:absolute; bottom:0; left:0; right:0; height:1px;
+      background: linear-gradient(90deg,
+        transparent 0%, rgba(255,215,0,.6) 20%,
+        rgba(99,102,241,.5) 50%, rgba(56,189,248,.5) 75%,
+        transparent 100%);
+      background-size: 200% 100%;
+      animation: heroSweep 6s ease-in-out infinite;
+    }
+    @keyframes heroSweep {
+      0%,100% { background-position:0% 0%; opacity:.5; }
+      50%      { background-position:100% 0%; opacity:1; }
+    }
+
+    /* topbar nav */
+    .gl-nav {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 40px; height: 58px;
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(10,15,30,.97);
+      backdrop-filter: blur(22px);
+      border-bottom: 1px solid rgba(255,255,255,.04);
+    }
+    .gl-nav-left { display:flex; align-items:center; gap:10px; }
+    .gl-nav-icon {
+      width:32px; height:32px; border-radius:8px;
+      background: linear-gradient(135deg,#FFD700,#f59e0b);
+      display:flex; align-items:center; justify-content:center;
+      box-shadow: 0 0 16px rgba(255,215,0,.25);
+    }
+    .gl-nav-icon svg { width:15px; height:15px; fill:none; stroke:#111; stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round; }
+    .gl-nav-title {
+      font-size:.9rem; font-weight:800; letter-spacing:-.02em;
+      background: linear-gradient(90deg,#f1f5f9,rgba(255,215,0,.85));
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+    }
+    .gl-nav-sub { font-size:.6rem; color:rgba(148,163,184,.6); font-weight:600; letter-spacing:.06em; text-transform:uppercase; }
+    .gl-back-btn {
+      display:flex; align-items:center; gap:6px;
+      padding:6px 14px; border-radius:8px;
+      background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.09);
+      color: rgba(148,163,184,.8); font-size:.75rem; font-weight:700;
+      cursor:pointer; transition: all .2s; letter-spacing:.02em;
+    }
+    .gl-back-btn:hover { background:rgba(255,255,255,.09); color:#f1f5f9; border-color:rgba(255,255,255,.16); }
+    .gl-back-btn svg { width:13px; height:13px; fill:none; stroke:currentColor; stroke-width:2.3; stroke-linecap:round; stroke-linejoin:round; }
+
+    /* ── Créditos Dev ─────────────────────────────────── */
+    .dev-info-btn {
+      position:relative; background:none; border:none; cursor:default;
+      color:rgba(148,163,184,.3); padding:3px 5px; font-size:14px; line-height:1;
+      border-radius:4px; transition:color .2s; display:flex; align-items:center;
+    }
+    .dev-info-btn:hover { color:rgba(255,215,0,.65); }
+    .dev-info-tooltip {
+      position:absolute; right:0; top:calc(100% + 8px);
+      background:rgba(10,16,34,.98); border:1px solid rgba(255,215,0,.14);
+      border-radius:8px; padding:9px 14px; white-space:nowrap; font-size:11px;
+      color:rgba(226,232,240,.65); pointer-events:none; opacity:0;
+      transform:translateY(-4px); transition:opacity .18s,transform .18s;
+      z-index:9999; box-shadow:0 8px 24px rgba(0,0,0,.45);
+    }
+    .dev-info-btn:hover .dev-info-tooltip { opacity:1; transform:translateY(0); }
+    .dev-footer {
+      text-align:center; padding:9px 0; font-size:10px;
+      color:rgba(148,163,184,.2); border-top:1px solid rgba(255,255,255,.04);
+      letter-spacing:.03em;
+    }
+
+    /* ── EXPORT BUTTON ──────────────────────────────────── */
+    .gl-nav-actions { display:flex; align-items:center; gap:8px; }
+    .gl-export-btn {
+      display:flex; align-items:center; gap:6px;
+      padding:6px 14px; border-radius:8px;
+      background: rgba(52,168,83,.1); border: 1px solid rgba(52,168,83,.25);
+      color: rgba(74,222,128,.85); font-size:.75rem; font-weight:700;
+      cursor:pointer; transition: all .2s; letter-spacing:.02em; white-space:nowrap;
+    }
+    .gl-export-btn:hover:not(:disabled) {
+      background: rgba(52,168,83,.18); border-color:rgba(74,222,128,.4);
+      color:#4ade80;
+    }
+    .gl-export-btn:disabled { opacity:.5; cursor:not-allowed; }
+    .gl-export-btn svg { width:13px; height:13px; fill:none; stroke:currentColor; stroke-width:2.3; stroke-linecap:round; stroke-linejoin:round; flex-shrink:0; }
+    .gl-export-btn.loading { color:rgba(148,163,184,.7); border-color:rgba(148,163,184,.2); background:rgba(255,255,255,.04); }
+    .gl-export-btn.success { color:#4ade80; border-color:rgba(74,222,128,.4); background:rgba(52,168,83,.12); }
+    .gl-export-btn.error   { color:#f87171; border-color:rgba(248,113,113,.3); background:rgba(239,68,68,.08); }
+
+    /* hero content */
+    .gl-hero-content { padding: 36px 40px 0; }
+    .gl-hero-eyebrow {
+      display:inline-flex; align-items:center; gap:6px;
+      padding:3px 10px; border-radius:20px;
+      background:rgba(99,102,241,.1); border:1px solid rgba(99,102,241,.2);
+      font-size:.62rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
+      color:rgba(129,140,248,.8); margin-bottom:14px;
+    }
+    .gl-hero-eyebrow svg { width:10px; height:10px; fill:none; stroke:currentColor; stroke-width:2.5; }
+    .gl-hero-h1 {
+      font-size:2.1rem; font-weight:900; letter-spacing:-.04em; line-height:1.1;
+      background: linear-gradient(135deg, #f1f5f9 0%, rgba(255,215,0,.9) 60%, rgba(129,140,248,.8) 100%);
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+      margin-bottom:8px;
+    }
+    .gl-hero-sub {
+      font-size:.88rem; color:rgba(148,163,184,.6); max-width:520px; line-height:1.6;
+      margin-bottom:28px;
+    }
+
+    /* stats row */
+    .gl-hero-stats {
+      display:flex; gap:24px; flex-wrap:wrap;
+    }
+    .gl-stat {
+      display:flex; align-items:center; gap:8px;
+    }
+    .gl-stat-n {
+      font-size:1.5rem; font-weight:900; letter-spacing:-.03em;
+      color:#f1f5f9;
+    }
+    .gl-stat-l { font-size:.65rem; color:rgba(148,163,184,.5); font-weight:600; letter-spacing:.05em; text-transform:uppercase; line-height:1.3; }
+    .gl-stat-div { width:1px; height:28px; background:rgba(255,255,255,.07); }
+
+    /* ── STICKY FILTER BAR ───────────────────────────────── */
+    .gl-filter-outer {
+      position:sticky; top:58px; z-index:90;
+      background: rgba(10,15,30,.97);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255,255,255,.05);
+      padding: 0 40px;
+    }
+    .gl-filter-bar {
+      display:flex; align-items:center; gap:12px;
+      padding: 14px 0;
+      flex-wrap: wrap;
+    }
+
+    /* search */
+    .gl-search-wrap {
+      position:relative; flex:0 0 280px;
+    }
+    .gl-search-ico {
+      position:absolute; left:11px; top:50%; transform:translateY(-50%);
+      width:14px; height:14px; fill:none; stroke:rgba(148,163,184,.4);
+      stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round;
+      pointer-events:none;
+    }
+    .gl-search {
+      width:100%; padding:8px 36px 8px 32px;
+      background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.09);
+      border-radius:10px; color:#e2e8f0; font-size:.8rem;
+      outline:none; transition:all .2s;
+    }
+    .gl-search::placeholder { color:rgba(148,163,184,.35); }
+    .gl-search:focus { border-color:rgba(255,215,0,.3); background:rgba(255,255,255,.07); box-shadow:0 0 0 3px rgba(255,215,0,.06); }
+    .gl-search-clear {
+      position:absolute; right:8px; top:50%; transform:translateY(-50%);
+      background:none; border:none; cursor:pointer;
+      color:rgba(148,163,184,.4); font-size:.8rem; padding:2px 4px;
+      display:none; transition:color .15s;
+    }
+    .gl-search-clear:hover { color:#f87171; }
+
+    /* category chips */
+    .gl-cats { display:flex; gap:6px; flex-wrap:wrap; flex:1; }
+    .gl-cat {
+      display:flex; align-items:center; gap:5px;
+      padding:5px 12px; border-radius:20px;
+      background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08);
+      font-size:.7rem; font-weight:700; letter-spacing:.04em; text-transform:uppercase;
+      color:rgba(148,163,184,.55); cursor:pointer; transition:all .18s;
+      white-space:nowrap; user-select:none;
+    }
+    .gl-cat:hover { background:rgba(255,255,255,.08); color:#e2e8f0; }
+    .gl-cat.active {
+      background:var(--cc-bg, rgba(255,255,255,.1));
+      border-color:var(--cc-border, rgba(255,255,255,.2));
+      color:var(--cc-color, #e2e8f0);
+    }
+    .gl-cat-dot {
+      width:6px; height:6px; border-radius:50%;
+      background:var(--cc-color, #94a3b8); flex-shrink:0;
+    }
+    .gl-cat-count {
+      font-size:.6rem; background:rgba(255,255,255,.08);
+      padding:0 5px; border-radius:8px; font-weight:800;
+    }
+    .gl-cat.active .gl-cat-count { background:rgba(255,255,255,.18); }
+
+    /* result count */
+    .gl-result-count {
+      font-size:.72rem; color:rgba(148,163,184,.4); white-space:nowrap;
+      font-weight:600; margin-left:auto; flex-shrink:0;
+    }
+    .gl-result-count span { color:rgba(255,215,0,.7); font-weight:800; }
+
+    /* ── GRID ────────────────────────────────────────────── */
+    .gl-grid-wrap { padding: 28px 40px 60px; }
+    .gl-grid {
+      display:grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap:14px;
+    }
+
+    /* card */
+    .gl-card {
+      position:relative; overflow:hidden;
+      background: linear-gradient(135deg, rgba(18,26,52,.97) 0%, rgba(12,18,38,.97) 100%);
+      border:1px solid rgba(255,255,255,.07);
+      border-radius:14px;
+      border-left:3px solid var(--c, #64748b);
+      padding:18px 18px 16px 20px;
+      transition: transform .2s, box-shadow .2s, border-color .2s, opacity .25s;
+      cursor:default;
+    }
+    .gl-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(0,0,0,.4), 0 0 0 1px rgba(255,255,255,.06);
+    }
+    .gl-card.hidden { display:none; }
+
+    /* ambient glow top-right */
+    .gl-card::before {
+      content:''; position:absolute; top:-20px; right:-20px;
+      width:80px; height:80px; border-radius:50%;
+      background:var(--c, #64748b); opacity:.06; filter:blur(20px);
+      pointer-events:none;
+    }
+
+    .gl-card-top {
+      display:flex; align-items:flex-start; justify-content:space-between; gap:12px;
+      margin-bottom:10px;
+    }
+    .gl-card-badge {
+      display:inline-flex; align-items:center; justify-content:center;
+      padding:3px 9px; border-radius:6px;
+      background:rgba(var(--cr,100,116,139),.14);
+      border:1px solid rgba(var(--cr,100,116,139),.25);
+      font-size:.6rem; font-weight:900; letter-spacing:.08em;
+      color:var(--c,#94a3b8); white-space:nowrap; flex-shrink:0;
+    }
+    .gl-card-group {
+      font-size:.58rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase;
+      color:rgba(148,163,184,.35); white-space:nowrap;
+    }
+
+    .gl-card-name {
+      font-size:.9rem; font-weight:700; color:#f1f5f9;
+      letter-spacing:-.01em; line-height:1.3;
+      margin-bottom:8px;
+    }
+    .gl-card-name mark {
+      background:rgba(255,215,0,.22); color:#FFD700;
+      border-radius:3px; padding:0 2px;
+    }
+
+    .gl-card-divider {
+      height:1px; background:rgba(255,255,255,.05); margin-bottom:10px;
+    }
+
+    .gl-card-desc {
+      font-size:.78rem; color:rgba(148,163,184,.65); line-height:1.6;
+    }
+    .gl-card-desc.nodesc { color:rgba(148,163,184,.3); font-style:italic; }
+    .gl-card-desc mark {
+      background:rgba(255,215,0,.22); color:#FFD700;
+      border-radius:3px; padding:0 2px; font-style:normal;
+    }
+
+    /* empty state */
+    .gl-empty {
+      display:none; flex-direction:column; align-items:center;
+      justify-content:center; padding:72px 20px; text-align:center;
+      grid-column: 1 / -1;
+    }
+    .gl-empty.show { display:flex; }
+    .gl-empty-ico { font-size:3rem; margin-bottom:16px; opacity:.4; }
+    .gl-empty-t { font-size:.95rem; font-weight:700; color:#f1f5f9; margin-bottom:6px; }
+    .gl-empty-s { font-size:.8rem; color:rgba(148,163,184,.45); }
+
+    /* section labels */
+    .gl-section-label {
+      grid-column: 1 / -1;
+      display:flex; align-items:center; gap:12px;
+      margin-top:8px; margin-bottom:4px;
+    }
+    .gl-section-label-text {
+      font-size:.62rem; font-weight:800; letter-spacing:.1em; text-transform:uppercase;
+      color:rgba(148,163,184,.35);
+    }
+    .gl-section-label-line { flex:1; height:1px; background:rgba(255,255,255,.05); }
+
+    @media (max-width:860px) {
+      .gl-hero-content, .gl-filter-outer, .gl-grid-wrap { padding-left:20px; padding-right:20px; }
+      .gl-filter-outer { padding-left:20px; padding-right:20px; }
+      .gl-nav { padding:0 20px; }
+      .gl-grid { grid-template-columns:1fr; }
+      .gl-search-wrap { flex:1; min-width:0; }
+      .gl-hero-h1 { font-size:1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="gl-nav">
+  <div class="gl-nav-left">
+    <div class="gl-nav-icon">
+      <svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+    </div>
+    <div>
+      <div class="gl-nav-title">Glossário de Justificativas</div>
+      <div class="gl-nav-sub">Checkpoint BA01 · Referência oficial</div>
+    </div>
+  </div>
+  <div class="gl-nav-actions">
+    <div class="dev-info-btn">ⓘ
+      <div class="dev-info-tooltip">Desenvolvido por Gabriel Vieira &amp; Lucas Leal · MercadoLibre 2026</div>
+    </div>
+    <button id="exportBtn" class="gl-export-btn" onclick="exportarGlossario()" title="Exportar todos os termos para Google Planilha">
+      <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/></svg>
+      Exportar Planilha
+    </button>
+    <button class="gl-back-btn" onclick="window.top.location.href='<?= ScriptApp.getService().getUrl() ?>'">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+      Voltar ao Menu
+    </button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="gl-hero">
+  <div class="gl-hero-content">
+    <div class="gl-hero-eyebrow">
+      <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      Documentação Oficial
+    </div>
+    <h1 class="gl-hero-h1">Justificativas de Presença</h1>
+    <p class="gl-hero-sub">Consulte o significado e a aplicação correta de cada justificativa utilizada no sistema de chamada. Use a busca ou os filtros por categoria.</p>
+    <div class="gl-hero-stats" id="heroStats">
+      <div class="gl-stat"><span class="gl-stat-n" id="statTotal">—</span><span class="gl-stat-l">justificativas<br>cadastradas</span></div>
+      <div class="gl-stat-div"></div>
+      <div class="gl-stat"><span class="gl-stat-n" id="statGrupos">—</span><span class="gl-stat-l">grupos<br>temáticos</span></div>
+      <div class="gl-stat-div"></div>
+      <div class="gl-stat"><span class="gl-stat-n" id="statFJ">—</span><span class="gl-stat-l">variantes<br>de FJ</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- FILTER BAR -->
+<div class="gl-filter-outer">
+  <div class="gl-filter-bar">
+    <div class="gl-search-wrap">
+      <svg class="gl-search-ico" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input class="gl-search" id="searchInput" type="text" placeholder="Buscar justificativa ou descrição..." oninput="onSearch(this.value)"/>
+      <button class="gl-search-clear" id="searchClear" onclick="clearSearch()">✕</button>
+    </div>
+    <div class="gl-cats" id="catBar"></div>
+    <div class="gl-result-count" id="resultCount"></div>
+  </div>
+</div>
+
+<!-- GRID -->
+<div class="gl-grid-wrap">
+  <div class="gl-grid" id="glGrid">
+    <div class="gl-empty" id="emptyState">
+      <div class="gl-empty-ico">🔍</div>
+      <div class="gl-empty-t">Nenhuma justificativa encontrada</div>
+      <div class="gl-empty-s">Tente outro termo ou limpe os filtros</div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ─────────────────────────────────────────
+   DADOS — todas as justificativas
+───────────────────────────────────────── */
+const GRUPOS = {
+  PRESENTE: { label:'Presente',         color:'#10b981', cr:'16,185,129',  desc:'Registros que contam como presença efetiva' },
+  FI:       { label:'Falta Injustif.',  color:'#ef4444', cr:'239,68,68',   desc:'Ausências sem justificativa aceita' },
+  FJ:       { label:'Falta Justif.',    color:'#3b82f6', cr:'59,130,246',  desc:'Ausências com justificativa válida' },
+  AF:       { label:'Afastamento',      color:'#fb923c', cr:'251,146,60',  desc:'Afastamentos por INSS ou Maternidade' },
+  BH:       { label:'Banco de Horas',   color:'#eab308', cr:'234,179,8',   desc:'Compensações de jornada via BH' },
+  FE:       { label:'Férias',           color:'#06b6d4', cr:'6,182,212',   desc:'Colaboradores em período de férias' },
+  FR:       { label:'Feriado',          color:'#6366f1', cr:'99,102,241',  desc:'Folgas em feriados oficiais' },
+  DE:       { label:'Desligado',        color:'#94a3b8', cr:'148,163,184', desc:'Colaboradores desligados ou aposentados' },
+  DSR:      { label:'DSR/Escala',       color:'#64748b', cr:'100,116,139', desc:'Descanso semanal remunerado previsto em escala' },
+  OP:       { label:'Operacionais',     color:'#a855f7', cr:'168,85,247',  desc:'Admissão, treinamentos e sinergia' },
+  HC:       { label:'HC Especiais',     color:'#f59e0b', cr:'245,158,11',  desc:'Situações especiais de headcount' },
+  ESP:      { label:'Especiais',        color:'#6b7280', cr:'107,114,128', desc:'Casos não classificados ou divergentes' },
+};
+
+const DATA = [
+  /* ── PRESENTE ─────────────────────────────────────────── */
+  { code:'P',   full:'P - Presente',             grupo:'PRESENTE',
+    desc:'Base para cálculo de ABS (denominador). Registra o colaborador como presente na operação.' },
+  { code:'HE',  full:'HE - Presente Hora Extra', grupo:'PRESENTE',
+    desc:'Colaborador presente em regime de hora extra. Não impacta na base de cálculo de ABS.' },
+  { code:'PCO', full:'PCO - Protocolo COVID',    grupo:'PRESENTE',
+    desc:'Aplica-se aos colaboradores afastados por COVID.' },
+
+  /* ── FALTA INJUSTIFICADA ───────────────────────────────── */
+  { code:'FI',  full:'FI - Falta Injustificada', grupo:'FI',
+    desc:'Aplica-se aos colaboradores que faltaram sem justificativa.' },
+  { code:'FI',  full:'FI - Suspensão (Dias)',    grupo:'FI',
+    desc:'Aplica-se aos colaboradores que estão ausentes por suspensão disciplinar.' },
+  { code:'AB',  full:'AB - Abandono',            grupo:'FI',
+    desc:'Aplica-se aos colaboradores que estão em processo de abandono e não foram desligados sistemicamente.' },
+
+  /* ── FALTA JUSTIFICADA ─────────────────────────────────── */
+  { code:'FJ', full:'FJ - Abono Fretado (atraso)', grupo:'FJ',
+    desc:'Aplica-se aos colaboradores que estão presentes porém chegaram atrasados por conta do fretado.' },
+  { code:'FJ', full:'FJ - Abono Fretado (falta)',  grupo:'FJ',
+    desc:'Aplica-se aos colaboradores que faltaram devido à falta de fretado. Atenção: colaboradores que perdem o fretado por atraso ou questões pessoais e não vão até o trabalho recebem falta injustificada.' },
+  { code:'FJ', full:'FJ - Abono Gestor',           grupo:'FJ',
+    desc:'Aplica-se ao colaborador cuja falta foi abonada pelo gestor.' },
+  { code:'FJ', full:'FJ - Abono Calamidade',       grupo:'FJ',
+    desc:'Abono concedido em situações de calamidade pública ou força maior.' },
+  { code:'FJ', full:'FJ - Abono administrativo',   grupo:'FJ',
+    desc:'Abono concedido por decisão administrativa da empresa.' },
+  { code:'FJ', full:'FJ - Acompanhamento Filho',   grupo:'FJ',
+    desc:'Aplica-se aos colaboradores que estão acompanhando filho em consulta médica.' },
+  { code:'FJ', full:'FJ - Atestado',               grupo:'FJ',
+    desc:'Aplica-se aos colaboradores que faltam e apresentam atestado médico.' },
+  { code:'FJ', full:'FJ - Declaração',             grupo:'FJ',
+    desc:'Aplica-se aos colaboradores que faltam e apresentam declaração válida.' },
+  { code:'FJ', full:'FJ - Exame Periódico Externo',grupo:'FJ',
+    desc:'Aplica-se aos colaboradores que realizam exames periódicos fora do local de trabalho.' },
+  { code:'FJ', full:'FJ - Falecimento 1º grau',    grupo:'FJ',
+    desc:'Aplica-se aos falecimentos de parentes de primeiro grau (pais, filhos, cônjuge, irmãos).' },
+  { code:'FJ', full:'FJ - Falecimento 2º grau',    grupo:'FJ',
+    desc:'Aplica-se aos falecimentos de parentes de segundo grau (avós, netos, cunhados).' },
+  { code:'FJ', full:'FJ - Folga Black',             grupo:'FJ',
+    desc:'Aplica-se às folgas cedidas pela companhia, como folga Black Friday, por exemplo.' },
+  { code:'FJ', full:'FJ - Licença Casamento',       grupo:'FJ',
+    desc:'Aplica-se à licença matrimonial (casamento civil ou religioso).' },
+  { code:'FJ', full:'FJ - Licença Doação de Sangue',grupo:'FJ',
+    desc:'Aplica-se à licença concedida para doação de sangue.' },
+  { code:'FJ', full:'FJ - Licença Eleitoral',       grupo:'FJ',
+    desc:'Aplica-se à licença por obrigação eleitoral, como mesário por exemplo.' },
+  { code:'FJ', full:'FJ - Licença Mudança',         grupo:'FJ',
+    desc:'Aplica-se à licença para mudança de residência. Permitida 1 vez ao ano.' },
+  { code:'FJ', full:'FJ - Licença Paternidade',     grupo:'FJ',
+    desc:'Aplica-se à licença paternidade conforme legislação vigente.' },
+  { code:'FJ', full:'FJ - Extensão Licença Paternidade', grupo:'FJ',
+    desc:'Extensão do período de licença paternidade além do prazo padrão.' },
+  { code:'FJ', full:'FJ - Licença Vestibular',      grupo:'FJ',
+    desc:'Aplica-se à licença para realização de prova em vestibular.' },
+  { code:'FJ', full:'FJ - Serviço Militar',         grupo:'FJ',
+    desc:'Aplica-se quando o colaborador sai da empresa para servir o exército.' },
+
+  /* ── AFASTAMENTO ──────────────────────────────────────── */
+  { code:'AF', full:'AF - Afastado INSS',                   grupo:'AF',
+    desc:'Aplica-se aos colaboradores afastados e com benefício INSS ativo.' },
+  { code:'AF', full:'AF - Licença Maternidade',             grupo:'AF',
+    desc:'Aplica-se às colaboradoras afastadas por licença maternidade.' },
+  { code:'AF', full:'AF - Extensão Licença Maternidade',    grupo:'AF',
+    desc:'Extensão do período de licença maternidade além do prazo padrão legal.' },
+
+  /* ── BANCO DE HORAS ───────────────────────────────────── */
+  { code:'BH', full:'BH - Banco de Horas não planejado', grupo:'BH',
+    desc:'Aplica-se ao banco de horas que não foi planejado pela equipe de Flow.' },
+  { code:'BH', full:'BH - Banco de Horas planejado',     grupo:'BH',
+    desc:'Aplica-se ao banco de horas que foi planejado e programado pela equipe de Flow.' },
+
+  /* ── FÉRIAS / FERIADO ─────────────────────────────────── */
+  { code:'FE', full:'FE - Férias',   grupo:'FE',
+    desc:'Aplica-se aos colaboradores que estão em período de férias remuneradas.' },
+  { code:'FR', full:'FR - Feriado',  grupo:'FR',
+    desc:'Aplica-se principalmente nas paradas de Final de Ano e demais feriados oficiais.' },
+
+  /* ── DESLIGADO ────────────────────────────────────────── */
+  { code:'DE', full:'DE - Desligado',                  grupo:'DE',
+    desc:'Aplica-se ao colaborador que foi desligado e já está refletindo no sistema.' },
+  { code:'DE', full:'DE - Aposentadoria por Invalidez',grupo:'DE',
+    desc:'Aplica-se ao colaborador afastado definitivamente por aposentadoria por invalidez.' },
+
+  /* ── ESCALA / DSR ─────────────────────────────────────── */
+  { code:'DSR', full:'DSR - Escala', grupo:'DSR',
+    desc:'Aplica-se às folgas previstas pela escala. É o dia de descanso semanal remunerado do colaborador conforme sua letra de escala.' },
+
+  /* ── OPERACIONAIS ─────────────────────────────────────── */
+  { code:'AP',  full:'AP - Admissão Postergada',      grupo:'OP',
+    desc:'Aplica-se à pessoa que não veio ao onboarding e teve a entrada na operação postergada. Conta como HC pago.' },
+  { code:'SIE', full:'SIE - Sinergia Externa',        grupo:'OP',
+    desc:'Deve ser aplicado somente ao colaborador que está presente em atividade de Sinergia Externa.' },
+  { code:'CE',  full:'CE - Curso Externo',            grupo:'OP',
+    desc:'Aplica-se às pessoas contratadas que estão em cursos externos, como PCP ou Jovens Aprendizes.' },
+  { code:'ON',  full:'ON - Onboarding / Primeiro Dia',grupo:'OP',
+    desc:'Aplica-se às pessoas que estão em onboarding e ainda estão fora da operação produtiva.' },
+  { code:'TR',  full:'TR - Treinamentos Diversos',    grupo:'OP',
+    desc:'Treinamentos fora da operação, como Brigada de Incêndio, Empilhadeiras, entre outros.' },
+
+  /* ── HC ESPECIAIS ─────────────────────────────────────── */
+  { code:'HCD', full:'HCD - HC Divergente',                  grupo:'HC',
+    desc:'Headcount com divergência sistêmica. Caso especial que requer validação com área responsável.' },
+  { code:'HTF', full:'HTF - HC Transferido para outro CAD',  grupo:'HC',
+    desc:'Aplica-se aos colaboradores transferidos para outra unidade. O colaborador só sai da lista após a alteração sistêmica ser realizada.' },
+
+  /* ── ESPECIAIS ────────────────────────────────────────── */
+  { code:'VAZIO', full:'VAZIO - Justificativa não encontrada', grupo:'ESP',
+    desc:'Aplica-se aos casos onde não são encontradas justificativas nem preenchimento de presença do colaborador.' },
+  { code:'?', full:'Justificativa fora do padrão', grupo:'ESP',
+    desc:'Aplica-se às justificativas presentes no checkpoint que estão divergentes do acordado (coluna K).' },
+];
+
+/* ─────────────────────────────────────────
+   RENDER
+───────────────────────────────────────── */
+let activeGroup = 'TODOS';
+let searchTerm  = '';
+
+function init() {
+  // stats
+  document.getElementById('statTotal').textContent  = DATA.length;
+  document.getElementById('statGrupos').textContent = Object.keys(GRUPOS).length;
+  document.getElementById('statFJ').textContent     = DATA.filter(d=>d.grupo==='FJ').length;
+
+  buildCategoryBar();
+  renderCards();
+}
+
+function buildCategoryBar() {
+  const bar = document.getElementById('catBar');
+  const todos = `<button class="gl-cat active" data-g="TODOS"
+    style="--cc-color:#e2e8f0;--cc-bg:rgba(255,255,255,.08);--cc-border:rgba(255,255,255,.16)"
+    onclick="setGroup('TODOS',this)">
+    <span class="gl-cat-dot" style="background:#e2e8f0"></span>
+    Todos
+    <span class="gl-cat-count">${DATA.length}</span>
+  </button>`;
+
+  const cats = Object.entries(GRUPOS).map(([key,g]) => {
+    const n = DATA.filter(d=>d.grupo===key).length;
+    return `<button class="gl-cat" data-g="${key}"
+      style="--cc-color:${g.color};--cc-bg:rgba(${g.cr},.1);--cc-border:rgba(${g.cr},.25)"
+      onclick="setGroup('${key}',this)">
+      <span class="gl-cat-dot" style="background:${g.color}"></span>
+      ${g.label}
+      <span class="gl-cat-count">${n}</span>
+    </button>`;
+  }).join('');
+
+  bar.innerHTML = todos + cats;
+}
+
+function setGroup(g, btn) {
+  activeGroup = g;
+  document.querySelectorAll('.gl-cat').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderCards();
+}
+
+function onSearch(val) {
+  searchTerm = val.trim().toLowerCase();
+  document.getElementById('searchClear').style.display = val ? 'block' : 'none';
+  renderCards();
+}
+
+function clearSearch() {
+  const inp = document.getElementById('searchInput');
+  inp.value = ''; searchTerm = '';
+  document.getElementById('searchClear').style.display = 'none';
+  renderCards(); inp.focus();
+}
+
+function highlight(text, term) {
+  if (!term) return text;
+  const re = new RegExp('(' + term.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + ')', 'gi');
+  return text.replace(re, '<mark>$1</mark>');
+}
+
+function renderCards() {
+  const grid  = document.getElementById('glGrid');
+  const empty = document.getElementById('emptyState');
+
+  const filtered = DATA.filter(d => {
+    const groupOk = activeGroup === 'TODOS' || d.grupo === activeGroup;
+    if (!searchTerm) return groupOk;
+    const hay = (d.full + ' ' + d.desc + ' ' + d.code).toLowerCase();
+    return groupOk && hay.includes(searchTerm);
+  });
+
+  // Group by grupo for section labels
+  const grouped = {};
+  filtered.forEach(d => {
+    if (!grouped[d.grupo]) grouped[d.grupo] = [];
+    grouped[d.grupo].push(d);
+  });
+
+  // Clear existing cards (keep empty state el)
+  grid.querySelectorAll('.gl-card,.gl-section-label').forEach(el=>el.remove());
+
+  if (filtered.length === 0) {
+    empty.classList.add('show');
+  } else {
+    empty.classList.remove('show');
+    const showLabels = activeGroup === 'TODOS' || Object.keys(grouped).length > 1;
+
+    Object.entries(grouped).forEach(([gKey, items]) => {
+      const g = GRUPOS[gKey] || { label: gKey, color:'#64748b' };
+
+      if (showLabels) {
+        const lbl = document.createElement('div');
+        lbl.className = 'gl-section-label';
+        lbl.innerHTML = `<div class="gl-section-label-line"></div>
+          <span class="gl-section-label-text" style="color:${g.color}">${g.label}</span>
+          <div class="gl-section-label-line"></div>`;
+        grid.appendChild(lbl);
+      }
+
+      items.forEach(d => {
+        const card = document.createElement('div');
+        card.className = 'gl-card';
+        const g2 = GRUPOS[d.grupo] || { color:'#64748b', cr:'100,116,139' };
+        card.style.cssText = `--c:${g2.color};--cr:${g2.cr}`;
+
+        const nameHl = highlight(escHtml(d.full), searchTerm);
+        const descHl = highlight(escHtml(d.desc), searchTerm);
+        const hasDesc = d.desc && d.desc !== '—';
+
+        card.innerHTML = `
+          <div class="gl-card-top">
+            <span class="gl-card-badge">${escHtml(d.code)}</span>
+            <span class="gl-card-group">${escHtml(g2.label || d.grupo)}</span>
+          </div>
+          <div class="gl-card-name">${nameHl}</div>
+          <div class="gl-card-divider"></div>
+          <div class="gl-card-desc${hasDesc ? '' : ' nodesc'}">${hasDesc ? descHl : 'Descrição não disponível.'}</div>
+        `;
+        grid.appendChild(card);
+      });
+    });
+  }
+
+  // update count
+  const rc = document.getElementById('resultCount');
+  if (searchTerm || activeGroup !== 'TODOS') {
+    rc.innerHTML = `<span>${filtered.length}</span> de ${DATA.length} justificativas`;
+  } else {
+    rc.textContent = '';
+  }
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ── Exportar Glossário para Google Planilha ───────────────────────────────
+   Chama exportarParaGoogleSheets() em Util.gs (função genérica já existente).
+   Monta o payload com os dados do array DATA desta página.
+ ─────────────────────────────────────────────────────────────────────────── */
+function exportarGlossario() {
+  const btn = document.getElementById('exportBtn');
+  if (!btn || btn.disabled) return;
+
+  // Estado: carregando
+  btn.disabled = true;
+  btn.classList.add('loading');
+  btn.innerHTML = `
+    <svg viewBox="0 0 24 24" style="animation:spin .9s linear infinite">
+      <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+    </svg>
+    Exportando…`;
+
+  // Mapear grupos para labels legíveis
+  const grupoLabel = {};
+  Object.entries(GRUPOS).forEach(([k,v]) => { grupoLabel[k] = v.label; });
+
+  // Montar linhas: [Código, Justificativa Completa, Grupo, Descrição]
+  const rows = DATA.map(d => [
+    d.code  || '',
+    d.full  || '',
+    grupoLabel[d.grupo] || d.grupo || '',
+    d.desc  || ''
+  ]);
+
+  const payload = {
+    title  : 'Glossário de Justificativas — Checkpoint BA01',
+    sheet  : 'Glossário',
+    headers: ['Código', 'Justificativa Completa', 'Grupo', 'Descrição'],
+    rows   : rows
+  };
+
+  google.script.run
+    .withSuccessHandler(function(res) {
+      btn.disabled = false;
+      btn.classList.remove('loading');
+      if (res && res.success && res.url) {
+        btn.classList.add('success');
+        btn.innerHTML = `
+          <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          Abrir Planilha`;
+        // Abre o link automaticamente e transforma o botão em link permanente
+        window.open(res.url, '_blank');
+        btn.onclick = function() { window.open(res.url, '_blank'); };
+      } else {
+        btn.classList.add('error');
+        btn.innerHTML = `
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          Erro — tente novamente`;
+        setTimeout(function() {
+          btn.classList.remove('error');
+          btn.innerHTML = `
+            <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/></svg>
+            Exportar Planilha`;
+          btn.onclick = exportarGlossario;
+        }, 4000);
+      }
+    })
+    .withFailureHandler(function(err) {
+      btn.disabled = false;
+      btn.classList.remove('loading');
+      btn.classList.add('error');
+      console.error('Erro exportar glossário:', err);
+      btn.innerHTML = `
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Erro — tente novamente`;
+      setTimeout(function() {
+        btn.classList.remove('error');
+        btn.innerHTML = `
+          <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/></svg>
+          Exportar Planilha`;
+        btn.onclick = exportarGlossario;
+      }, 4000);
+    })
+    .exportarParaGoogleSheets(payload);
+}
+
+/* animação de spin para o ícone de loading */
+(function() {
+  if (!document.getElementById('gl-spin-style')) {
+    const s = document.createElement('style');
+    s.id = 'gl-spin-style';
+    s.textContent = '@keyframes spin { to { transform: rotate(360deg); } }';
+    document.head.appendChild(s);
+  }
+})();
+
+window.addEventListener('DOMContentLoaded', init);
+</script>
+<div class="dev-footer">© 2026 Checkpoint BA01 · Gabriel Vieira &amp; Lucas Leal · MercadoLibre</div>
+</body>
+</html>

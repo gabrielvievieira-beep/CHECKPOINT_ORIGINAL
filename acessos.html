@@ -1,0 +1,1269 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Acessos — Checkpoint BA01</title>
+  <?!= include('style') ?>
+  <style>
+/* ─── Reset & Base ─────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  margin: 0; padding: 0;
+  background: #0f172a;
+  color: #e2e8f0;
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  min-height: 100vh;
+}
+
+/* ─── Topbar ────────────────────────────────────────────────────── */
+.ac-topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 24px; height: 56px;
+  background: rgba(10,16,34,.98);
+  border-bottom: 1px solid rgba(255,255,255,.05);
+  position: sticky; top: 0; z-index: 200;
+  backdrop-filter: blur(12px);
+}
+.ac-topbar::after {
+  content:''; position:absolute; bottom:0; left:0; right:0; height:2px;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,215,0,.8) 20%, rgba(251,113,133,.5) 50%, rgba(99,102,241,.5) 80%, transparent 100%);
+  background-size: 300% 100%; animation: acFlow 7s ease-in-out infinite;
+}
+@keyframes acFlow { 0%,100%{background-position:0%} 50%{background-position:100%} }
+
+.ac-tb-left  { display:flex; align-items:center; gap:12px; }
+.ac-tb-right { display:flex; align-items:center; gap:10px; }
+
+.ac-tb-icon {
+  width:32px; height:32px;
+  background:rgba(255,215,0,.12); border:1px solid rgba(255,215,0,.25);
+  border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:15px;
+}
+.ac-tb-brand { font-size:16px; font-weight:700; color:#fff; letter-spacing:-.3px; }
+.ac-tb-brand span { color:#FFD700; }
+.ac-sep { width:1px; height:20px; background:rgba(255,255,255,.08); flex-shrink:0; }
+.ac-pill {
+  display:flex; align-items:center; gap:5px; padding:3px 10px; border-radius:20px;
+  background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.1);
+  font-size:11px; font-weight:700; color:rgba(148,163,184,.6);
+}
+.ac-pill::before { content:''; width:6px; height:6px; border-radius:50%; background:rgba(148,163,184,.5); animation:acPulse 2s infinite; }
+@keyframes acPulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+.ac-clock { font-size:12px; font-weight:600; color:rgba(255,255,255,.3); font-variant-numeric:tabular-nums; letter-spacing:.5px; }
+
+.ac-btn {
+  display:flex; align-items:center; gap:6px;
+  padding:0 14px; height:32px; border-radius:8px;
+  font-size:12px; font-weight:600; cursor:pointer; border:none; transition:all .2s; font-family:inherit;
+}
+.ac-btn svg { width:13px; height:13px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; }
+.ac-btn-ghost { background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.14); color:#e2e8f0; }
+.ac-btn-ghost:hover { background:rgba(255,255,255,.11); color:#fff; }
+.ac-btn-gold { background:linear-gradient(135deg,#FFD700,#f59e0b); color:#111; font-weight:800; }
+.ac-btn-gold:hover { filter:brightness(1.08); transform:translateY(-1px); }
+.ac-btn-red  { background:rgba(248,113,113,.1); border:1px solid rgba(248,113,113,.25); color:#f87171; }
+.ac-btn-red:hover { background:rgba(248,113,113,.18); }
+
+/* ─── KPI Cards ─────────────────────────────────────────────────── */
+.ac-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 10px;
+  padding: 20px 24px 0;
+}
+@media(max-width:1100px) { .ac-kpi-row { grid-template-columns: repeat(3,1fr); } }
+@media(max-width:680px)  { .ac-kpi-row { grid-template-columns: repeat(2,1fr); } }
+
+.ac-kpi-card {
+  background: rgba(10,16,34,.97);
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 14px; padding: 16px 18px;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; transition: all .2s; position: relative; overflow: hidden;
+}
+.ac-kpi-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(var(--kc-rgb,255,215,0),.6), transparent);
+  opacity: 0; transition: opacity .2s;
+}
+.ac-kpi-card:hover { border-color: rgba(var(--kc-rgb,255,215,0),.25); transform: translateY(-1px); }
+.ac-kpi-card:hover::before { opacity: 1; }
+
+.ac-kpi-left { display: flex; align-items: center; gap: 12px; }
+
+.ac-kpi-ico-wrap {
+  width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0;
+  background: rgba(var(--kc-rgb,255,215,0),.1);
+  border: 1px solid rgba(var(--kc-rgb,255,215,0),.18);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--kc, #FFD700);
+}
+.ac-kpi-val { font-size: 22px; font-weight: 800; line-height: 1; }
+.ac-kpi-lbl { font-size: 10px; font-weight: 600; color: rgba(255,255,255,.28); margin-top: 3px; text-transform: uppercase; letter-spacing: .05em; }
+.ac-kpi-pct { font-size: 12px; font-weight: 700; opacity: .7; white-space: nowrap; }
+.ac-kpi-trend { width: 40px; height: 24px; opacity: .5; }
+
+/* ─── Main body ─────────────────────────────────────────────────── */
+.ac-body { padding:18px 24px 48px; display:flex; flex-direction:column; gap:18px; }
+
+/* ─── Panel ─────────────────────────────────────────────────────── */
+.ac-panel {
+  background:rgba(10,16,34,.97); border:1px solid rgba(255,255,255,.12);
+  border-radius:14px; overflow:hidden;
+}
+.ac-panel-hdr {
+  display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+  padding:14px 20px; border-bottom:1px solid rgba(255,255,255,.08);
+  background:rgba(255,255,255,.02);
+}
+.ac-panel-title {
+  font-size:15px; font-weight:700; color:#fff; display:flex; align-items:center; gap:8px;
+}
+.ac-panel-badge {
+  padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700;
+  background:rgba(255,215,0,.1); border:1px solid rgba(255,215,0,.2); color:#FFD700;
+}
+
+/* Search box */
+.ac-search {
+  display:flex; align-items:center; gap:8px;
+  background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.12);
+  border-radius:9px; padding:7px 12px; transition:all .2s; min-width:220px; max-width:320px; flex:1;
+}
+.ac-search:focus-within { border-color:rgba(255,215,0,.45); background:rgba(255,215,0,.03); }
+.ac-search svg { width:13px; height:13px; flex-shrink:0; fill:none; stroke:rgba(255,255,255,.25); stroke-width:2.2; stroke-linecap:round; }
+.ac-search:focus-within svg { stroke:rgba(255,215,0,.6); }
+.ac-search input { flex:1; background:none; border:none; outline:none; color:#e2e8f0; font-size:13px; font-family:inherit; }
+.ac-search input::placeholder { color:rgba(255,255,255,.2); }
+
+/* Perfil filter pills */
+.ac-perfil-pills { display:flex; gap:4px; }
+.ac-perf-pill {
+  padding:5px 12px; border-radius:20px; border:1px solid transparent;
+  font-size:11px; font-weight:700; cursor:pointer; transition:all .18s;
+  background:rgba(255,255,255,.04); color:rgba(255,255,255,.3);
+}
+.ac-perf-pill:hover { color:rgba(255,255,255,.65); }
+.ac-perf-pill.active { background:rgba(255,215,0,.1); border-color:rgba(255,215,0,.3); color:#FFD700; }
+.ac-perf-pill.active[data-p="ADMIN"]     { background:rgba(248,113,113,.1);  border-color:rgba(248,113,113,.3);  color:#f87171; }
+.ac-perf-pill.active[data-p="LIDER"]     { background:rgba(74,222,128,.1);   border-color:rgba(74,222,128,.3);   color:#4ade80; }
+.ac-perf-pill.active[data-p="FLOW"]      { background:rgba(56,189,248,.1);   border-color:rgba(56,189,248,.3);   color:#38bdf8; }
+.ac-perf-pill.active[data-p="OBSERVADOR"]{ background:rgba(129,140,248,.1);  border-color:rgba(129,140,248,.3);  color:#818cf8; }
+.ac-perf-pill.active[data-p="PEOPLE"]    { background:rgba(251,146,60,.1);   border-color:rgba(251,146,60,.3);   color:#fb923c; }
+
+/* ─── Table ─────────────────────────────────────────────────────── */
+.ac-tbl-wrap { overflow-x:auto; }
+table.ac-table { width:100%; border-collapse:collapse; }
+table.ac-table thead tr { background:rgba(255,255,255,.02); }
+table.ac-table th {
+  padding:10px 16px; text-align:left; font-size:11px; font-weight:700;
+  color:rgba(255,255,255,.3); border-bottom:1px solid rgba(255,255,255,.06);
+  text-transform:uppercase; letter-spacing:.06em; white-space:nowrap;
+  cursor:pointer; user-select:none; transition:color .18s;
+}
+table.ac-table th:hover { color:rgba(255,215,0,.7); }
+table.ac-table th.sorted { color:#FFD700; }
+table.ac-table td {
+  padding:12px 16px; border-bottom:1px solid rgba(255,255,255,.04);
+  font-size:13px; vertical-align:middle; color:#d1d5db;
+}
+table.ac-table tbody tr:last-child td { border-bottom:none; }
+table.ac-table tbody tr { transition:background .12s; }
+table.ac-table tbody tr:hover td { background:rgba(255,215,0,.025); }
+
+/* Perfil badge */
+.ac-badge {
+  display:inline-flex; align-items:center; gap:5px;
+  padding:4px 11px; border-radius:20px; font-size:11px; font-weight:700; white-space:nowrap;
+  border:1px solid transparent;
+}
+.badge-ADMIN     { background:rgba(248,113,113,.1);  color:#f87171;  border-color:rgba(248,113,113,.2); }
+.badge-LIDER     { background:rgba(74,222,128,.1);   color:#4ade80;  border-color:rgba(74,222,128,.2); }
+.badge-FLOW      { background:rgba(56,189,248,.1);   color:#38bdf8;  border-color:rgba(56,189,248,.2); }
+.badge-OBSERVADOR{ background:rgba(129,140,248,.1);  color:#818cf8;  border-color:rgba(129,140,248,.2); }
+.badge-PEOPLE    { background:rgba(251,146,60,.1);   color:#fb923c;  border-color:rgba(251,146,60,.2); }
+.badge-default   { background:rgba(255,255,255,.06); color:rgba(255,255,255,.4); border-color:rgba(255,255,255,.1); }
+
+/* Action buttons */
+.ac-act { display:flex; gap:6px; }
+.ac-act-btn {
+  width:30px; height:30px; border-radius:7px; cursor:pointer; border:none;
+  display:flex; align-items:center; justify-content:center; transition:all .18s;
+}
+.ac-act-btn svg { width:13px; height:13px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; }
+.ac-act-edit { background:rgba(255,215,0,.08); color:#FFD700; border:1px solid rgba(255,215,0,.2); }
+.ac-act-edit:hover { background:rgba(255,215,0,.16); }
+.ac-act-del  { background:rgba(248,113,113,.08); color:#f87171; border:1px solid rgba(248,113,113,.2); }
+.ac-act-del:hover  { background:rgba(248,113,113,.18); }
+
+/* Owner protegido */
+.ac-owner-lock {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 10px; font-weight: 700; letter-spacing: .04em;
+  color: rgba(255,215,0,.55);
+  background: rgba(255,215,0,.05);
+  border: 1px solid rgba(255,215,0,.14);
+  border-radius: 7px; padding: 4px 9px;
+  white-space: nowrap; cursor: default;
+}
+.ac-owner-lock svg { width:11px; height:11px; fill:none; stroke:rgba(255,215,0,.6); stroke-width:2.2; stroke-linecap:round; }
+.ac-owner-crown { font-size:13px; line-height:1; }
+
+/* email cell */
+.ac-email-cell { display:flex; align-items:center; gap:10px; }
+.ac-avatar {
+  width:32px; height:32px; border-radius:8px; flex-shrink:0;
+  background:rgba(255,215,0,.1); border:1px solid rgba(255,215,0,.2);
+  display:flex; align-items:center; justify-content:center;
+  font-size:11px; font-weight:800; color:#FFD700; text-transform:uppercase;
+}
+.ac-email-txt strong { color:#f1f5f9; font-size:13px; font-weight:600; display:block; }
+.ac-email-txt span   { font-size:11px; color:rgba(255,255,255,.25); }
+
+/* ─── Modal ─────────────────────────────────────────────────────── */
+.ac-modal-bg {
+  display:none; position:fixed; inset:0; z-index:800;
+  background:rgba(0,0,0,.75); backdrop-filter:blur(6px);
+  align-items:center; justify-content:center;
+}
+.ac-modal-bg.show { display:flex; }
+.ac-modal {
+  background:rgba(10,16,34,.97); border:1px solid rgba(255,255,255,.12);
+  border-radius:16px; width:90%; max-width:440px;
+  box-shadow:0 24px 64px rgba(0,0,0,.6); overflow:hidden;
+}
+.ac-modal-hdr {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:18px 22px; border-bottom:1px solid rgba(255,255,255,.08);
+  background:rgba(255,255,255,.02);
+}
+.ac-modal-hdr h3 { margin:0; font-size:16px; font-weight:700; color:#fff; }
+.ac-modal-close {
+  width:28px; height:28px; border-radius:7px; background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.1); color:rgba(255,255,255,.5);
+  cursor:pointer; display:flex; align-items:center; justify-content:center;
+  font-size:14px; transition:all .2s;
+}
+.ac-modal-close:hover { background:rgba(248,113,113,.15); border-color:rgba(248,113,113,.3); color:#f87171; }
+.ac-modal-body { padding:22px; }
+.ac-form-grp { margin-bottom:18px; }
+.ac-form-grp label { display:block; font-size:11px; font-weight:700; color:rgba(255,255,255,.3); text-transform:uppercase; letter-spacing:.06em; margin-bottom:7px; }
+.ac-input {
+  width:100%; padding:10px 14px;
+  background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.12);
+  border-radius:9px; color:#e2e8f0; font-size:13px; font-family:inherit;
+  outline:none; transition:all .2s;
+}
+.ac-input:focus { border-color:rgba(255,215,0,.45); background:rgba(255,215,0,.03); }
+.ac-input:read-only { opacity:.5; cursor:not-allowed; }
+
+/* Perfil selector chips no modal */
+.ac-perfil-chips { display:flex; gap:8px; flex-wrap:wrap; }
+.ac-chip {
+  padding:8px 16px; border-radius:9px; font-size:12px; font-weight:700;
+  cursor:pointer; transition:all .18s; border:1px solid transparent;
+  background:rgba(255,255,255,.05); color:rgba(255,255,255,.35);
+}
+.ac-chip:hover { color:rgba(255,255,255,.7); }
+.ac-chip.sel[data-v="ADMIN"]     { background:rgba(248,113,113,.15); border-color:rgba(248,113,113,.3); color:#f87171; }
+.ac-chip.sel[data-v="LIDER"]     { background:rgba(74,222,128,.15);  border-color:rgba(74,222,128,.3);  color:#4ade80; }
+.ac-chip.sel[data-v="FLOW"]      { background:rgba(56,189,248,.15);  border-color:rgba(56,189,248,.3);  color:#38bdf8; }
+.ac-chip.sel[data-v="OBSERVADOR"]{ background:rgba(129,140,248,.15); border-color:rgba(129,140,248,.3); color:#818cf8; }
+.ac-chip.sel[data-v="PEOPLE"]    { background:rgba(251,146,60,.15);  border-color:rgba(251,146,60,.3);  color:#fb923c; }
+
+.ac-modal-ftr {
+  display:flex; gap:10px; justify-content:flex-end;
+  padding:16px 22px; border-top:1px solid rgba(255,255,255,.06);
+}
+.ac-modal-ftr .ac-btn { height:36px; font-size:13px; padding:0 18px; }
+
+/* Delete modal */
+.ac-del-modal {
+  background:rgba(10,16,34,.97); border:1px solid rgba(248,113,113,.2);
+  border-radius:16px; width:90%; max-width:380px;
+  box-shadow:0 24px 64px rgba(0,0,0,.6); padding:28px 26px; text-align:center;
+}
+.ac-del-ico { font-size:36px; margin-bottom:12px; }
+.ac-del-title { font-size:17px; font-weight:700; color:#fff; margin-bottom:8px; }
+.ac-del-sub   { font-size:13px; color:rgba(255,255,255,.4); line-height:1.5; }
+.ac-del-email { color:#f87171; font-weight:700; }
+.ac-del-btns  { display:flex; gap:10px; margin-top:22px; justify-content:center; }
+.ac-del-btns .ac-btn { height:38px; padding:0 20px; font-size:13px; }
+
+/* ─── Toast ─────────────────────────────────────────────────────── */
+.ac-toast {
+  position:fixed; bottom:24px; right:24px; z-index:9999;
+  padding:11px 18px; border-radius:11px; font-weight:600; font-size:13px;
+  display:flex; align-items:center; gap:9px;
+  box-shadow:0 8px 24px rgba(0,0,0,.45); min-width:220px;
+  opacity:0; transform:translateY(8px); transition:all .3s; pointer-events:none;
+}
+.ac-toast.show { opacity:1; transform:translateY(0); }
+.ac-toast.success { background:rgba(74,222,128,.15); border:1px solid rgba(74,222,128,.3);  color:#4ade80; }
+.ac-toast.error   { background:rgba(251,113,133,.15); border:1px solid rgba(251,113,133,.3); color:#fb7185; }
+.ac-toast.info    { background:rgba(56,189,248,.15);  border:1px solid rgba(56,189,248,.3);  color:#38bdf8; }
+.ac-toast svg { width:15px; height:15px; stroke:currentColor; fill:none; stroke-width:2.5; flex-shrink:0; }
+
+/* ─── Loading overlay ───────────────────────────────────────────── */
+.ac-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.65); z-index:900; align-items:center; justify-content:center; backdrop-filter:blur(4px); }
+.ac-overlay.show { display:flex; }
+.ac-loading-box { background:rgba(10,16,34,.97); border:1px solid rgba(255,255,255,.12); border-radius:16px; padding:30px 44px; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,.5); }
+.ac-spinner { width:36px; height:36px; border:3px solid rgba(255,255,255,.07); border-top-color:#FFD700; border-radius:50%; animation:acSpin .8s linear infinite; margin:0 auto 12px; }
+@keyframes acSpin { to{transform:rotate(360deg)} }
+.ac-loading-msg { font-size:13px; color:rgba(255,255,255,.4); }
+
+/* ─── Empty state ───────────────────────────────────────────────── */
+.ac-empty { text-align:center; padding:60px 20px; color:rgba(255,255,255,.2); font-size:14px; }
+.ac-empty .ico { font-size:38px; display:block; margin-bottom:12px; }
+
+/* ─── Profile Cards Section ─────────────────────────────────────── */
+.ac-prof-section {
+  padding: 18px 24px 0;
+}
+.ac-prof-section-title {
+  font-size: 11px; font-weight: 700; color: rgba(255,255,255,.25);
+  text-transform: uppercase; letter-spacing: .08em; margin-bottom: 14px;
+  display: flex; align-items: center; gap: 8px;
+}
+.ac-prof-section-title::after {
+  content: ''; flex: 1; height: 1px; background: rgba(255,255,255,.05);
+}
+.ac-prof-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+}
+@media(max-width:1100px) { .ac-prof-grid { grid-template-columns: repeat(3,1fr); } }
+@media(max-width:700px)  { .ac-prof-grid { grid-template-columns: repeat(2,1fr); } }
+
+.ac-prof-card {
+  background: rgba(10,16,34,.97);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 14px; overflow: hidden;
+  cursor: pointer; transition: all .22s;
+  display: flex; flex-direction: column;
+}
+.ac-prof-card:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(0,0,0,.35); }
+.ac-prof-card.active { border-color: var(--pc); box-shadow: 0 0 0 1px var(--pc), 0 8px 28px rgba(0,0,0,.35); }
+
+.ac-prof-card-top {
+  padding: 16px 18px 14px;
+  background: rgba(var(--pc-rgb),.07);
+  border-bottom: 1px solid rgba(var(--pc-rgb),.12);
+  display: flex; align-items: center; gap: 12px;
+}
+.ac-prof-card-ico {
+  width: 38px; height: 38px; border-radius: 10px; flex-shrink: 0;
+  background: rgba(var(--pc-rgb),.15); border: 1px solid rgba(var(--pc-rgb),.25);
+  display: flex; align-items: center; justify-content: center; font-size: 18px;
+}
+.ac-prof-card-name {
+  font-size: 13px; font-weight: 800; color: var(--pc); text-transform: uppercase;
+  letter-spacing: .04em; line-height: 1.1;
+}
+.ac-prof-card-count {
+  margin-left: auto; font-size: 22px; font-weight: 800; color: var(--pc);
+  font-variant-numeric: tabular-nums;
+}
+.ac-prof-card-lbl { font-size: 10px; color: rgba(255,255,255,.25); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+
+.ac-prof-card-body { padding: 14px 18px 16px; flex: 1; display: flex; flex-direction: column; gap: 12px; }
+.ac-prof-card-desc { font-size: 11px; color: rgba(255,255,255,.35); line-height: 1.5; flex: 1; }
+
+.ac-prof-perms { display: flex; flex-direction: column; gap: 4px; }
+.ac-prof-perm-row {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 10px; color: rgba(255,255,255,.3); font-weight: 600;
+}
+.ac-prof-perm-dot {
+  width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+}
+.ac-prof-perm-dot.ok  { background: rgba(var(--pc-rgb),.8); }
+.ac-prof-perm-dot.off { background: rgba(255,255,255,.1); }
+
+.ac-prof-avatars {
+  display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px;
+}
+.ac-prof-av {
+  width: 26px; height: 26px; border-radius: 7px; flex-shrink: 0;
+  background: rgba(var(--pc-rgb),.14); border: 1px solid rgba(var(--pc-rgb),.22);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; font-weight: 800; color: var(--pc); text-transform: uppercase;
+  title: attr(title);
+}
+.ac-prof-av-more {
+  width: 26px; height: 26px; border-radius: 7px; flex-shrink: 0;
+  background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; font-weight: 700; color: rgba(255,255,255,.3);
+}
+
+@media(max-width:780px) {
+  .ac-kpi-row { grid-template-columns:repeat(2,1fr); }
+}
+
+/* ─── Design System Override Block ────────────────── */
+/* Standardized borders and backgrounds */
+.ac-btn {
+  background: rgba(255,255,255,.07);
+  color: rgba(255,255,255,.55);
+  border: 1px solid rgba(255,255,255,.14);
+  transition: all .2s;
+}
+.ac-btn:hover:not(.ac-btn-gold):not(.ac-btn-red) {
+  background: rgba(255,255,255,.11);
+  color: rgba(255,255,255,.8);
+  border-color: rgba(255,215,0,.3);
+}
+/* Primary action button on hover */
+.ac-btn-gold:hover {
+  background: #FFD700;
+  color: #000;
+  border-color: #FFD700;
+}
+/* SVG stroke colors for icons */
+.ac-btn svg {
+  stroke: #ffffff;
+}
+.ac-btn-gold svg {
+  stroke: #000;
+}
+.ac-btn-red svg {
+  stroke: #f87171;
+}
+/* Table hover state */
+table.ac-table tbody tr:hover td {
+  background: rgba(255,215,0,.018);
+}
+
+/* ─── MOBILE ──────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .ac-topbar { padding: 0 12px; height: 52px; }
+  .ac-topbar-actions { gap: 5px; }
+  .ac-btn { padding: 6px 9px; font-size: 11px; gap: 3px; }
+  .ac-btn svg { width: 12px; height: 12px; }
+  .ac-body { padding: 12px 12px 40px; gap: 12px; }
+  .ac-form { padding: 16px; }
+  .ac-form-row, .form-row { flex-direction: column; gap: 8px; }
+  .ac-form-group { width: 100%; }
+  .ac-form-group input, .ac-form-group select { width: 100%; min-width: 0; }
+  .ac-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table.ac-table { min-width: 560px; }
+  .ac-filter-row { flex-wrap: wrap; gap: 8px; }
+  .ac-filter-row input, .ac-filter-row select { flex: 1 1 calc(50% - 8px); min-width: 0; }
+}
+@media (max-width: 480px) {
+  .ac-topbar-sub { display: none; }
+  .ac-btn-ghost span:last-child { display: none; }
+  .ac-btn { padding: 6px 8px; }
+  .ac-filter-row input, .ac-filter-row select { flex: 1 1 100%; }
+}
+
+  /* ── Botão Menu Principal ─────────────────────────────────── */
+  #btnMenuHome {
+    height: 42px !important;
+    font-size: 14px !important;
+    padding: 0 22px !important;
+    font-weight: 700 !important;
+    border-radius: 10px !important;
+  }
+  #btnMenuHome svg { width: 16px !important; height: 16px !important; }
+  </style>
+</head>
+<body>
+
+<!-- ─── LOADING ─────────────────────────────────────────────────── -->
+<div class="ac-overlay" id="acOverlay"></div>
+
+<!-- ─── TOAST ───────────────────────────────────────────────────── -->
+<div class="ac-toast" id="acToast">
+  <svg id="acToastIco" viewBox="0 0 24 24"></svg>
+  <span id="acToastMsg"></span>
+</div>
+
+<!-- ─── TOPBAR ──────────────────────────────────────────────────── -->
+<div class="ac-topbar">
+  <div class="ac-tb-left">
+    <div class="ac-tb-icon">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#818cf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+      </svg>
+    </div>
+    <div class="ac-tb-brand">Gerenciamento de <span>Acessos</span></div>
+    <div class="ac-sep"></div>
+    <div class="ac-pill">Controle de permissões</div>
+  </div>
+  <div class="ac-tb-right">
+    <span id="acNomeUser" style="font-size:12px;color:rgba(255,255,255,.3);font-weight:500;"></span>
+    <div class="ac-clock" id="acClock"></div>
+    <div class="ac-sep"></div>
+    <button class="ac-btn ac-btn-gold" onclick="abrirModalAdicionar()">
+      <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Novo Acesso
+    </button>
+    <button class="ac-btn" id="btnDedup" onclick="abrirModalDedup()"
+      style="background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.25);color:#fbbf24;">
+      <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+      Limpar duplicatas
+    </button>
+    <button class="ac-btn ac-btn-ghost" id="btnMenuHome" onclick="navegar('')">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+      Menu
+    </button>
+  </div>
+</div>
+
+
+<!-- ─── KPI CARDS ────────────────────────────────────────────────── -->
+<div class="ac-kpi-row" id="acKpiRow">
+
+  <div class="ac-kpi-card" style="--kc-rgb:255,215,0;">
+    <div class="ac-kpi-left">
+      <div class="ac-kpi-ico-wrap" style="--kc:#FFD700;--kc-rgb:255,215,0;">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      </div>
+      <div>
+        <div class="ac-kpi-val" id="kpiTotal" style="color:#FFD700;">—</div>
+        <div class="ac-kpi-lbl">Total usuários</div>
+      </div>
+    </div>
+    <div class="ac-kpi-trend" id="kpiTotalBar" style="--kc-rgb:255,215,0;"></div>
+  </div>
+
+  <div class="ac-kpi-card">
+    <div class="ac-kpi-left">
+      <div class="ac-kpi-ico-wrap" style="--kc:#f87171;--kc-rgb:248,113,113;">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+      </div>
+      <div>
+        <div class="ac-kpi-val" id="kpiAdmin" style="color:#f87171;">—</div>
+        <div class="ac-kpi-lbl">Admins</div>
+      </div>
+    </div>
+    <div class="ac-kpi-pct" id="kpiAdminPct" style="color:#f87171;">—%</div>
+  </div>
+
+  <div class="ac-kpi-card">
+    <div class="ac-kpi-left">
+      <div class="ac-kpi-ico-wrap" style="--kc:#4ade80;--kc-rgb:74,222,128;">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </div>
+      <div>
+        <div class="ac-kpi-val" id="kpiLider" style="color:#4ade80;">—</div>
+        <div class="ac-kpi-lbl">Líderes</div>
+      </div>
+    </div>
+    <div class="ac-kpi-pct" id="kpiLiderPct" style="color:#4ade80;">—%</div>
+  </div>
+
+  <div class="ac-kpi-card">
+    <div class="ac-kpi-left">
+      <div class="ac-kpi-ico-wrap" style="--kc:#38bdf8;--kc-rgb:56,189,248;">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      </div>
+      <div>
+        <div class="ac-kpi-val" id="kpiFlow" style="color:#38bdf8;">—</div>
+        <div class="ac-kpi-lbl">Flow</div>
+      </div>
+    </div>
+    <div class="ac-kpi-pct" id="kpiFlowPct" style="color:#38bdf8;">—%</div>
+  </div>
+
+  <div class="ac-kpi-card">
+    <div class="ac-kpi-left">
+      <div class="ac-kpi-ico-wrap" style="--kc:#818cf8;--kc-rgb:129,140,248;">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      </div>
+      <div>
+        <div class="ac-kpi-val" id="kpiObs" style="color:#818cf8;">—</div>
+        <div class="ac-kpi-lbl">Observadores</div>
+      </div>
+    </div>
+    <div class="ac-kpi-pct" id="kpiObsPct" style="color:#818cf8;">—%</div>
+  </div>
+
+  <div class="ac-kpi-card">
+    <div class="ac-kpi-left">
+      <div class="ac-kpi-ico-wrap" style="--kc:#fb923c;--kc-rgb:251,146,60;">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </div>
+      <div>
+        <div class="ac-kpi-val" id="kpiPeople" style="color:#fb923c;">—</div>
+        <div class="ac-kpi-lbl">People</div>
+      </div>
+    </div>
+    <div class="ac-kpi-pct" id="kpiPeoplePct" style="color:#fb923c;">—%</div>
+  </div>
+
+</div>
+
+<!-- ─── PROFILE CARDS ────────────────────────────────────────────── -->
+<div class="ac-prof-section" id="profSection">
+  <div class="ac-prof-section-title">Perfis do sistema</div>
+  <div class="ac-prof-grid" id="profGrid"></div>
+</div>
+
+<!-- ─── BODY ─────────────────────────────────────────────────────── -->
+<div class="ac-body">
+
+  <!-- Painel de permissões -->
+  <div class="ac-panel">
+    <div class="ac-panel-hdr">
+      <div class="ac-panel-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFD700" stroke-width="2" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        Usuários com Permissão
+        <span class="ac-panel-badge" id="panelCount">—</span>
+      </div>
+
+      <!-- Filtro por perfil -->
+      <div class="ac-perfil-pills" id="perfilPills">
+        <button class="ac-perf-pill active" data-p="TODOS"      onclick="filtrarPerfil(this)">Todos</button>
+        <button class="ac-perf-pill"        data-p="ADMIN"      onclick="filtrarPerfil(this)">Admin</button>
+        <button class="ac-perf-pill"        data-p="LIDER"      onclick="filtrarPerfil(this)">Líder</button>
+        <button class="ac-perf-pill"        data-p="FLOW"       onclick="filtrarPerfil(this)">Flow</button>
+        <button class="ac-perf-pill"        data-p="OBSERVADOR" onclick="filtrarPerfil(this)">Observador</button>
+        <button class="ac-perf-pill"        data-p="PEOPLE"     onclick="filtrarPerfil(this)">People</button>
+      </div>
+
+      <!-- Busca -->
+      <div class="ac-search" style="margin-left:auto;">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="acBusca" placeholder="Buscar por e-mail, perfil ou responsável..." autocomplete="off" oninput="aplicarFiltros()"/>
+      </div>
+
+      <button class="ac-btn ac-btn-ghost" onclick="recarregar()" title="Recarregar">
+        <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+      </button>
+    </div>
+
+    <div class="ac-tbl-wrap">
+      <table class="ac-table">
+        <thead>
+          <tr>
+            <th onclick="sortBy('email')"       id="sth-email"       class="sorted">E-mail <span id="sico-email">↑</span></th>
+            <th onclick="sortBy('perfil')"      id="sth-perfil">Perfil <span id="sico-perfil" style="opacity:.3">↕</span></th>
+            <th onclick="sortBy('responsavel')" id="sth-responsavel">Adicionado por <span id="sico-responsavel" style="opacity:.3">↕</span></th>
+            <th onclick="sortBy('data_criacao')" id="sth-data_criacao">Data criação <span id="sico-data_criacao" style="opacity:.3">↕</span></th>
+            <th onclick="sortBy('data_atualizacao')" id="sth-data_atualizacao">Última atualização <span id="sico-data_atualizacao" style="opacity:.3">↕</span></th>
+            <th style="width:90px;">Ações</th>
+          </tr>
+        </thead>
+        <tbody id="acTbody">
+          <tr><td colspan="6"><div class="ac-empty"><span class="ico">⏳</span>Carregando...</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- ─── MODAL ADICIONAR / EDITAR ─────────────────────────────────── -->
+<div class="ac-modal-bg" id="acModalBg">
+  <div class="ac-modal">
+    <div class="ac-modal-hdr">
+      <h3 id="acModalTitle">Novo Acesso</h3>
+      <button class="ac-modal-close" onclick="fecharModal()">✕</button>
+    </div>
+    <div class="ac-modal-body">
+      <div class="ac-form-grp">
+        <label>E-mail do usuário</label>
+        <input type="email" id="acModalEmail" class="ac-input" placeholder="usuario@mercadolivre.com" autocomplete="off"/>
+      </div>
+      <div class="ac-form-grp">
+        <label>Perfil de acesso</label>
+        <div class="ac-perfil-chips" id="acChips">
+          <div class="ac-chip" data-v="ADMIN"      onclick="selecionarPerfil(this)">👑 Admin</div>
+          <div class="ac-chip" data-v="LIDER"      onclick="selecionarPerfil(this)">👤 Líder</div>
+          <div class="ac-chip" data-v="FLOW"       onclick="selecionarPerfil(this)">🌊 Flow</div>
+          <div class="ac-chip" data-v="OBSERVADOR" onclick="selecionarPerfil(this)">👁 Observador</div>
+          <div class="ac-chip" data-v="PEOPLE"     onclick="selecionarPerfil(this)">🧑‍💼 People</div>
+        </div>
+        <input type="hidden" id="acModalPerfil"/>
+      </div>
+      <div id="acModalPerfilDesc" style="font-size:12px;color:rgba(255,255,255,.3);padding:10px 14px;background:rgba(255,255,255,.03);border-radius:9px;border:1px solid rgba(255,255,255,.06);display:none;line-height:1.6;"></div>
+    </div>
+    <div class="ac-modal-ftr">
+      <button class="ac-btn ac-btn-ghost" onclick="fecharModal()">Cancelar</button>
+      <button class="ac-btn ac-btn-gold" id="acModalSalvarBtn" onclick="salvarModal()">
+        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        Salvar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── MODAL DEDUPLICAR ─────────────────────────────────────────── -->
+<div class="ac-modal-bg" id="acDedupBg">
+  <div class="ac-del-modal" style="border-color:rgba(251,191,36,.25);max-width:420px;">
+    <div class="ac-del-ico">🧹</div>
+    <div class="ac-del-title">Remover duplicatas?</div>
+    <div class="ac-del-sub" id="dedupSubtitle" style="margin-bottom:14px;">—</div>
+    <div style="background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.18);border-radius:10px;padding:12px 16px;font-size:12px;color:rgba(255,215,0,.7);text-align:left;line-height:1.6;">
+      ⚡ O sistema irá manter <strong>1 registro por e-mail</strong> (o mais antigo),
+      apagar todos os demais e reconstruir a tabela limpa.
+    </div>
+    <div class="ac-del-btns">
+      <button class="ac-btn ac-btn-ghost" onclick="fecharDedupModal()">Cancelar</button>
+      <button class="ac-btn" onclick="executarDedup()"
+        style="background:rgba(251,191,36,.15);border:1px solid rgba(251,191,36,.3);color:#fbbf24;height:38px;padding:0 20px;font-size:13px;font-weight:700;">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        Limpar agora
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── MODAL DELETE ─────────────────────────────────────────────── -->
+<div class="ac-modal-bg" id="acDelBg">
+  <div class="ac-del-modal">
+    <div class="ac-del-ico">🗑️</div>
+    <div class="ac-del-title">Remover acesso?</div>
+    <div class="ac-del-sub">O usuário <span class="ac-del-email" id="delEmail">—</span> perderá acesso ao sistema imediatamente.</div>
+    <div class="ac-del-btns">
+      <button class="ac-btn ac-btn-ghost" onclick="fecharDelModal()">Cancelar</button>
+      <button class="ac-btn ac-btn-red"   onclick="confirmarDelete()">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+        Remover
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SCRIPT_URL = '<?= scriptUrl ?>';
+
+// ── Formatação com separador de milhar (pt-BR) ──────────────────────
+const fmt = n => (n == null || n === '' ? '—' : Number(n).toLocaleString('pt-BR'));
+
+// ── Owners protegidos (espelho da lista do backend) ──────────────────
+const OWNERS_PROTEGIDOS = [
+  'gabrielvie.vieira@mercadolivre.com',
+  'lucas.leal@mercadolivre.com'
+];
+const isOwner = email => OWNERS_PROTEGIDOS.includes((email || '').trim().toLowerCase());
+
+// ── Estado ──────────────────────────────────────────────────────────
+let todasPermissoes  = [];
+let dadosFiltrados   = [];
+let perfilFiltro     = 'TODOS';
+let sortCol = 'email';
+let sortAsc = true;
+let modoEdicao       = false;
+let emailEmEdicao    = '';
+let emailParaDelete  = '';
+let toastTimer;
+
+const descPerfil = {
+  ADMIN:     '👑 Acesso total — gerencia permissões, vê e edita todos os módulos.',
+  LIDER:     '👤 Líder — vê Chamada, Ausências, Available Time, Matrix, Flow, Histórico e Início. Edita Chamada, Ausências e Matrix.',
+  FLOW:      '🌊 Flow — vê Flow, Histórico, Matrix e Início. Edita Flow e Histórico.',
+  OBSERVADOR:'👁 Observador — vê Chamada, Available Time, Matrix, Flow, Histórico e Início. Somente leitura.',
+  PEOPLE:    '🧑‍💼 People — vê Available Time, Matrix, People e Início. Somente leitura.'
+};
+
+// ── Init ─────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  iniciarRelogio();
+  try {
+    google.script.run
+      .withSuccessHandler(e => {
+        if (e) document.getElementById('acNomeUser').textContent = e.split('@')[0].replace('.', ' ');
+      }).getUsuarioEmail();
+  } catch(e) {}
+  carregarPermissoes();
+});
+
+function navegar(pg) {
+  window.top.location.href = SCRIPT_URL + (pg ? '?page=' + pg : '');
+}
+
+// ── Relógio ──────────────────────────────────────────────────────────
+function iniciarRelogio() {
+  function tick() {
+    const el = document.getElementById('acClock');
+    if (!el) return;
+    const n = new Date(), p = v => String(v).padStart(2,'0');
+    el.textContent = p(n.getHours()) + ':' + p(n.getMinutes()) + ':' + p(n.getSeconds());
+  }
+  tick(); setInterval(tick, 1000);
+}
+
+// ── Carregar ─────────────────────────────────────────────────────────
+function carregarPermissoes() {
+  mostrarLoading('Carregando permissões...');
+  google.script.run
+    .withSuccessHandler(data => {
+      esconderLoading();
+      todasPermissoes = data || [];
+      aplicarFiltros();
+      atualizarKPIs();
+    })
+    .withFailureHandler(err => {
+      esconderLoading();
+      mostrarToast('Erro: ' + err.message, 'error');
+    })
+    .getPermissoes();
+}
+
+function recarregar() { carregarPermissoes(); }
+
+// ── KPIs ─────────────────────────────────────────────────────────────
+function atualizarKPIs() {
+  const total   = todasPermissoes.length;
+  const pct     = n => total > 0 ? Math.round(n / total * 100) + '%' : '—%';
+  const cnt     = pf => todasPermissoes.filter(p => (p.perfil||'').toUpperCase() === pf).length;
+
+  const admins  = cnt('ADMIN');
+  const liders  = cnt('LIDER');
+  const flows   = cnt('FLOW');
+  const obs     = cnt('OBSERVADOR');
+  const people  = cnt('PEOPLE');
+
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+
+  set('kpiTotal',     fmt(total));
+  set('kpiAdmin',     fmt(admins));    set('kpiAdminPct',  pct(admins));
+  set('kpiLider',     fmt(liders));    set('kpiLiderPct',  pct(liders));
+  set('kpiFlow',      fmt(flows));     set('kpiFlowPct',   pct(flows));
+  set('kpiObs',       fmt(obs));       set('kpiObsPct',    pct(obs));
+  set('kpiPeople',    fmt(people));    set('kpiPeoplePct', pct(people));
+
+  renderProfCards();
+}
+
+// ── Profile Cards ────────────────────────────────────────────────────
+const PROF_ICONS = {
+  ADMIN: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+  </svg>`,
+  LIDER: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+    <circle cx="9" cy="7" r="4"/>
+    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+  </svg>`,
+  FLOW: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+  </svg>`,
+  OBSERVADOR: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+    <circle cx="12" cy="12" r="3"/>
+  </svg>`,
+  PEOPLE: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+    <circle cx="12" cy="7" r="4"/>
+    <line x1="12" y1="14" x2="12" y2="17"/>
+    <line x1="9" y1="15.5" x2="15" y2="15.5"/>
+  </svg>`
+};
+
+const PROF_CFG = {
+  ADMIN:     { color:'#f87171', rgb:'248,113,113',
+               desc:'Acesso total ao sistema. Gerencia permissões, vê e edita todos os módulos.',
+               perms:['Ver todos os módulos','Editar tudo','Gerenciar acessos','Owner Master'] },
+  LIDER:     { color:'#4ade80', rgb:'74,222,128',
+               desc:'Gerencia a equipe — faz chamada, registra ausências e edita a matrix.',
+               perms:['Ver Chamada, Ausências, Flow, Histórico','Editar Chamada e Ausências','Editar Matrix','— Sem acesso a Acessos'] },
+  FLOW:      { color:'#38bdf8', rgb:'56,189,248',
+               desc:'Acesso ao painel Flow e Histórico para acompanhamento operacional.',
+               perms:['Ver Flow, Histórico, Matrix','Editar Flow e Histórico','— Sem Chamada nem Ausências','— Sem acesso a Acessos'] },
+  OBSERVADOR:{ color:'#818cf8', rgb:'129,140,248',
+               desc:'Visualização completa sem permissão de edição. Perfil somente leitura.',
+               perms:['Ver Chamada, Flow, Histórico','Ver Available Time e Matrix','— Sem edição','— Sem acesso a Acessos'] },
+  PEOPLE:    { color:'#fb923c', rgb:'251,146,60',
+               desc:'Acesso ao módulo People e Available Time. Perfil somente leitura.',
+               perms:['Ver Available Time e Matrix','Ver módulo People','— Sem Chamada nem Flow','— Sem acesso a Acessos'] }
+};
+const PROF_ORDER = ['ADMIN','LIDER','FLOW','OBSERVADOR','PEOPLE'];
+
+function renderProfCards() {
+  const grid = document.getElementById('profGrid');
+  if (!grid) return;
+
+  grid.innerHTML = PROF_ORDER.map(pf => {
+    const cfg   = PROF_CFG[pf];
+    const users = todasPermissoes.filter(p => (p.perfil||'').toUpperCase() === pf);
+    const count = users.length;
+    const isActive = perfilFiltro === pf;
+
+    const avatars = users.slice(0,5).map(u => {
+      const init = (u.email||'?').slice(0,2).toUpperCase();
+      const tip  = (u.email||'').split('@')[0];
+      return `<div class="ac-prof-av" title="${tip}">${init}</div>`;
+    }).join('');
+    const more = count > 5
+      ? `<div class="ac-prof-av-more">+${count - 5}</div>`
+      : '';
+
+    const permsHtml = cfg.perms.map(p => {
+      const ok = !p.startsWith('—');
+      return `<div class="ac-prof-perm-row">
+        <div class="ac-prof-perm-dot ${ok ? 'ok' : 'off'}"></div>
+        <span style="${ok ? '' : 'opacity:.4;text-decoration:line-through;'}">${ok ? p : p.slice(2)}</span>
+      </div>`;
+    }).join('');
+
+    return `
+      <div class="ac-prof-card ${isActive ? 'active' : ''}"
+           style="--pc:${cfg.color};--pc-rgb:${cfg.rgb};"
+           onclick="filtrarPerfilCard('${pf}', this)">
+        <div class="ac-prof-card-top">
+          <div class="ac-prof-card-ico" style="color:${cfg.color};">${PROF_ICONS[pf]}</div>
+          <div>
+            <div class="ac-prof-card-name">${pf}</div>
+            <div class="ac-prof-card-lbl">perfil</div>
+          </div>
+          <div style="text-align:right;margin-left:auto;">
+            <div class="ac-prof-card-count">${count}</div>
+            <div class="ac-prof-card-lbl">usuário${count !== 1 ? 's' : ''}</div>
+          </div>
+        </div>
+        <div class="ac-prof-card-body">
+          <div class="ac-prof-card-desc">${cfg.desc}</div>
+          <div class="ac-prof-perms">${permsHtml}</div>
+          ${count > 0 ? `<div class="ac-prof-avatars">${avatars}${more}</div>` : ''}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function filtrarPerfilCard(pf, el) {
+  // Toggle: clica no mesmo → volta para TODOS
+  if (perfilFiltro === pf) {
+    perfilFiltro = 'TODOS';
+    document.querySelectorAll('.ac-perf-pill').forEach(b => {
+      b.classList.toggle('active', b.dataset.p === 'TODOS');
+    });
+  } else {
+    perfilFiltro = pf;
+    document.querySelectorAll('.ac-perf-pill').forEach(b => {
+      b.classList.toggle('active', b.dataset.p === pf);
+    });
+  }
+  aplicarFiltros();
+  renderProfCards();
+  // Scroll suave até a tabela
+  document.querySelector('.ac-panel')?.scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+// ── Filtros ──────────────────────────────────────────────────────────
+function filtrarPerfil(btn) {
+  document.querySelectorAll('.ac-perf-pill').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  perfilFiltro = btn.dataset.p;
+  aplicarFiltros();
+  renderProfCards();
+}
+
+function aplicarFiltros() {
+  const busca = (document.getElementById('acBusca').value || '').toLowerCase().trim();
+
+  dadosFiltrados = todasPermissoes.filter(p => {
+    if (perfilFiltro !== 'TODOS' && (p.perfil||'').toUpperCase() !== perfilFiltro) return false;
+    if (busca) {
+      const em = (p.email        || '').toLowerCase();
+      const pf = (p.perfil       || '').toLowerCase();
+      const re = (p.responsavel  || '').toLowerCase();
+      if (!em.includes(busca) && !pf.includes(busca) && !re.includes(busca)) return false;
+    }
+    return true;
+  });
+
+  dadosFiltrados = ordenar(dadosFiltrados);
+  document.getElementById('panelCount').textContent = fmt(dadosFiltrados.length);
+  renderTabela();
+}
+
+// ── Sort ─────────────────────────────────────────────────────────────
+function sortBy(col) {
+  const colunas = ['email','perfil','responsavel','data_criacao','data_atualizacao'];
+  colunas.forEach(c => {
+    const th  = document.getElementById('sth-' + c);
+    const ico = document.getElementById('sico-' + c);
+    if (!th || !ico) return;
+    if (c === col) {
+      if (sortCol === col) sortAsc = !sortAsc;
+      else { sortCol = col; sortAsc = true; }
+      th.classList.add('sorted');
+      ico.textContent = sortAsc ? '↑' : '↓';
+      ico.style.opacity = '1';
+    } else {
+      th.classList.remove('sorted');
+      ico.textContent = '↕';
+      ico.style.opacity = '.3';
+    }
+  });
+  aplicarFiltros();
+}
+
+function ordenar(lista) {
+  return [...lista].sort((a, b) => {
+    let va = (a[sortCol] || '').toString().toLowerCase();
+    let vb = (b[sortCol] || '').toString().toLowerCase();
+    if (va < vb) return sortAsc ? -1 : 1;
+    if (va > vb) return sortAsc ? 1 : -1;
+    return 0;
+  });
+}
+
+// ── Render ───────────────────────────────────────────────────────────
+function renderTabela() {
+  const tbody = document.getElementById('acTbody');
+  if (!dadosFiltrados.length) {
+    tbody.innerHTML = '<tr><td colspan="6"><div class="ac-empty"><span class="ico">📭</span>Nenhum registro encontrado.</div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = dadosFiltrados.map(p => {
+    const initials = (p.email || '?').slice(0,2).toUpperCase();
+    const pf       = (p.perfil || '').toUpperCase();
+    const owner    = isOwner(p.email);
+    const badgeCls = ['ADMIN','LIDER','FLOW','OBSERVADOR','PEOPLE'].includes(pf) ? 'badge-' + pf : 'badge-default';
+    const icon     = '';
+    const dtCr     = formatarData(p.data_criacao);
+    const dtAt     = formatarData(p.data_atualizacao);
+
+    const acoes = owner
+      ? `<div class="ac-owner-lock" title="Owner protegido — não pode ser removido ou editado">
+           <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+           OWNER
+         </div>`
+      : `<div class="ac-act">
+           <button class="ac-act-btn ac-act-edit" onclick="abrirModalEditar('${escape(p.email)}','${p.perfil}')" title="Editar perfil">
+             <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+           </button>
+           <button class="ac-act-btn ac-act-del" onclick="confirmarRemover('${escape(p.email)}')" title="Remover acesso">
+             <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+           </button>
+         </div>`;
+
+    return `
+      <tr>
+        <td>
+          <div class="ac-email-cell">
+            <div class="ac-avatar">${initials}</div>
+            <div class="ac-email-txt">
+              <strong>${p.email || '—'}${owner ? ' <span style="font-size:11px;" title="Owner protegido">👑</span>' : ''}</strong>
+              <span>${p.responsavel ? 'por ' + p.responsavel.split('@')[0] : ''}</span>
+            </div>
+          </div>
+        </td>
+        <td><span class="ac-badge ${badgeCls}">${icon} ${p.perfil || '—'}</span></td>
+        <td style="font-size:12px;color:rgba(255,255,255,.4);">${(p.responsavel||'').split('@')[0] || '—'}</td>
+        <td style="font-size:12px;color:rgba(255,255,255,.3);font-variant-numeric:tabular-nums;">${dtCr}</td>
+        <td style="font-size:12px;color:rgba(255,255,255,.3);font-variant-numeric:tabular-nums;">${dtAt}</td>
+        <td>${acoes}</td>
+      </tr>`;
+  }).join('');
+}
+
+function formatarData(val) {
+  if (!val) return '—';
+  try {
+    const d = new Date(val);
+    if (isNaN(d)) return val;
+    const p = v => String(v).padStart(2,'0');
+    return `${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
+  } catch(e) { return val; }
+}
+
+// ── Modal Adicionar ──────────────────────────────────────────────────
+function abrirModalAdicionar() {
+  modoEdicao = false;
+  emailEmEdicao = '';
+  document.getElementById('acModalTitle').textContent = '+ Novo Acesso';
+  document.getElementById('acModalEmail').value = '';
+  document.getElementById('acModalEmail').readOnly = false;
+  document.getElementById('acModalPerfil').value = '';
+  document.getElementById('acModalPerfilDesc').style.display = 'none';
+  document.querySelectorAll('.ac-chip').forEach(c => c.classList.remove('sel'));
+  document.getElementById('acModalBg').classList.add('show');
+  setTimeout(() => document.getElementById('acModalEmail').focus(), 100);
+}
+
+function abrirModalEditar(emailEnc, perfil) {
+  const email = unescape(emailEnc);
+  if (isOwner(email)) {
+    mostrarToast('👑 Owner protegido — o perfil deste usuário não pode ser alterado.', 'error');
+    return;
+  }
+  modoEdicao = true;
+  emailEmEdicao = email;
+  document.getElementById('acModalTitle').textContent = '✏️ Editar Acesso';
+  document.getElementById('acModalEmail').value = email;
+  document.getElementById('acModalEmail').readOnly = true;
+  document.getElementById('acModalPerfil').value = perfil;
+  document.querySelectorAll('.ac-chip').forEach(c => {
+    c.classList.toggle('sel', c.dataset.v === perfil);
+  });
+  mostrarDescPerfil(perfil);
+  document.getElementById('acModalBg').classList.add('show');
+}
+
+function fecharModal() { document.getElementById('acModalBg').classList.remove('show'); }
+
+function selecionarPerfil(chip) {
+  document.querySelectorAll('.ac-chip').forEach(c => c.classList.remove('sel'));
+  chip.classList.add('sel');
+  document.getElementById('acModalPerfil').value = chip.dataset.v;
+  mostrarDescPerfil(chip.dataset.v);
+}
+
+function mostrarDescPerfil(p) {
+  const desc = document.getElementById('acModalPerfilDesc');
+  desc.textContent = descPerfil[p] || '';
+  desc.style.display = descPerfil[p] ? 'block' : 'none';
+}
+
+function salvarModal() {
+  const email  = (document.getElementById('acModalEmail').value || '').trim().toLowerCase();
+  const perfil = document.getElementById('acModalPerfil').value;
+
+  if (!email) { mostrarToast('Informe o e-mail do usuário', 'error'); return; }
+  if (!email.includes('@')) { mostrarToast('E-mail inválido', 'error'); return; }
+  if (!perfil) { mostrarToast('Selecione um perfil de acesso', 'error'); return; }
+
+  const btn = document.getElementById('acModalSalvarBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="animation:acSpin .7s linear infinite"><path d="M12 2a10 10 0 1 0 10 10"/></svg> Salvando...';
+
+  const fn = modoEdicao ? 'atualizarPermissao' : 'adicionarPermissao';
+  google.script.run
+    .withSuccessHandler(res => {
+      btn.disabled = false;
+      btn.innerHTML = '<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Salvar';
+      if (res && res.success) {
+        fecharModal();
+        mostrarToast(modoEdicao ? 'Perfil atualizado!' : 'Acesso adicionado!', 'success');
+        carregarPermissoes();
+      } else {
+        mostrarToast((res && res.message) || 'Erro ao salvar', 'error');
+      }
+    })
+    .withFailureHandler(err => {
+      btn.disabled = false;
+      btn.innerHTML = '<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Salvar';
+      mostrarToast('Erro: ' + err.message, 'error');
+    })
+    [fn](email, perfil);
+}
+
+// ── Modal Delete ─────────────────────────────────────────────────────
+function confirmarRemover(emailEnc) {
+  const email = unescape(emailEnc);
+  if (isOwner(email)) {
+    mostrarToast('👑 Owner protegido — este usuário não pode ser removido.', 'error');
+    return;
+  }
+  emailParaDelete = email;
+  document.getElementById('delEmail').textContent = emailParaDelete;
+  document.getElementById('acDelBg').classList.add('show');
+}
+function fecharDelModal() { document.getElementById('acDelBg').classList.remove('show'); }
+
+function confirmarDelete() {
+  fecharDelModal();
+  mostrarLoading('Removendo acesso...');
+  google.script.run
+    .withSuccessHandler(res => {
+      esconderLoading();
+      if (res && res.success) {
+        mostrarToast('Acesso removido!', 'success');
+        carregarPermissoes();
+      } else {
+        mostrarToast((res && res.message) || 'Erro ao remover', 'error');
+      }
+    })
+    .withFailureHandler(err => {
+      esconderLoading();
+      mostrarToast('Erro: ' + err.message, 'error');
+    })
+    .removerPermissao(emailParaDelete);
+}
+
+// ── Deduplicar ───────────────────────────────────────────────────────
+function abrirModalDedup() {
+  // Conta duplicatas antes de abrir
+  const emailCounts = {};
+  todasPermissoes.forEach(p => {
+    const k = (p.email||'').toLowerCase();
+    emailCounts[k] = (emailCounts[k] || 0) + 1;
+  });
+  const totalDups = Object.values(emailCounts).filter(c => c > 1).reduce((s,c) => s + (c-1), 0);
+  const uniqueEmails = Object.keys(emailCounts).length;
+
+  if (totalDups === 0) {
+    mostrarToast('Nenhuma duplicata encontrada — tabela já está limpa!', 'info');
+    return;
+  }
+
+  document.getElementById('dedupSubtitle').innerHTML =
+    `Encontrados <strong style="color:#fbbf24;">${fmt(todasPermissoes.length)} registros</strong> com
+     <strong style="color:#f87171;">${fmt(totalDups)} duplicata${totalDups > 1 ? 's'  : ''}</strong>.
+     Serão mantidos apenas <strong style="color:#4ade80;">${fmt(uniqueEmails)} e-mails únicos</strong>.`;
+
+  document.getElementById('acDedupBg').classList.add('show');
+}
+
+function fecharDedupModal() { document.getElementById('acDedupBg').classList.remove('show'); }
+
+function executarDedup() {
+  fecharDedupModal();
+  mostrarLoading('Removendo duplicatas... Isso pode levar alguns segundos.');
+  google.script.run
+    .withSuccessHandler(res => {
+      esconderLoading();
+      if (res && res.success) {
+        mostrarToast(`✓ Limpeza concluída! ${fmt(res.removed)} duplicata${res.removed !== 1 ? 's' : ''} removida${res.removed !== 1 ? 's' : ''}. ${fmt(res.total)} usuário${res.total !== 1 ? 's' : ''} mantido${res.total !== 1 ? 's' : ''}.`, 'success');
+        carregarPermissoes();
+        // Esconde botão se não houver mais duplicatas
+        setTimeout(() => {
+          const dup = todasPermissoes.length;
+          const uniq = new Set(todasPermissoes.map(p => (p.email||'').toLowerCase())).size;
+          if (dup === uniq) document.getElementById('btnDedup').style.display = 'none';
+        }, 2000);
+      } else {
+        mostrarToast('Erro: ' + ((res && res.message) || 'falha ao limpar'), 'error');
+      }
+    })
+    .withFailureHandler(err => {
+      esconderLoading();
+      mostrarToast('Erro: ' + err.message, 'error');
+    })
+    .limparPermissoesDuplicatas();
+}
+
+// Fechar modais com Esc
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { fecharModal(); fecharDelModal(); fecharDedupModal(); }
+});
+
+// ── Helpers ──────────────────────────────────────────────────────────
+function mostrarLoading(msg) {
+  ChaLoader.start('acOverlay', msg || 'Carregando...');
+  document.getElementById('acOverlay').classList.add('show');
+}
+function esconderLoading() {
+  ChaLoader.complete();
+  document.getElementById('acOverlay').classList.remove('show');
+}
+
+function mostrarToast(msg, tipo) {
+  const t   = document.getElementById('acToast');
+  const ico = document.getElementById('acToastIco');
+  const txt = document.getElementById('acToastMsg');
+  const icones = {
+    success: '<polyline points="20 6 9 17 4 12"/>',
+    error:   '<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>',
+    info:    '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><circle cx="12" cy="16" r="1"/>'
+  };
+  ico.innerHTML = icones[tipo] || icones.info;
+  txt.textContent = msg;
+  t.className = 'ac-toast ' + (tipo || 'info') + ' show';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3500);
+}
+</script>
+</body>
+</html>

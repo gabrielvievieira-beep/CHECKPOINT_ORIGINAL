@@ -1,0 +1,3033 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkpoint BA01</title>
+    <link rel="icon" href="https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsoutlined/event_available/default/48px.svg" type="image/svg+xml">
+    <?!= include('style'); ?>
+    <style>
+        /* ── RESET PARA LAYOUT FULL ── */
+        html, body {
+            width: 100%; height: 100%;
+            margin: 0; padding: 0;
+            overflow: hidden;
+        }
+
+        body {
+            display: flex;
+            background: #131722;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+
+        /* ══ SIDEBAR SLIM ══════════════════════════════════════════ */
+        :root {
+            --sb-w:        64px;
+            --sb-w-open:  220px;
+            --sb-speed:   .28s;
+            --sb-ease:    cubic-bezier(.4,0,.2,1);
+        }
+
+        .idx-sidebar {
+            width: var(--sb-w);
+            background: linear-gradient(180deg,#111827 0%,#141b2d 60%,#0f172a 100%);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            height: 100vh;
+            position: fixed;
+            left: 0; top: 0;
+            z-index: 200;
+            border-right: 1px solid rgba(255,255,255,0.06);
+            box-shadow: 4px 0 32px rgba(0,0,0,0.4);
+            overflow: hidden;
+            transition: width var(--sb-speed) var(--sb-ease),
+                        box-shadow var(--sb-speed) var(--sb-ease);
+        }
+
+        /* Expande no hover OU quando pinado */
+        .idx-sidebar:hover,
+        .idx-sidebar.sb-pinned {
+            width: var(--sb-w-open);
+            box-shadow: 6px 0 48px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,215,0,0.04);
+        }
+
+        /* ── Logo area ── */
+        .idx-sidebar-logo {
+            height: 58px;
+            padding: 0 0 0 17px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            display: flex;
+            align-items: center;
+            gap: 0;
+            flex-shrink: 0;
+            background: rgba(255,215,0,0.025);
+            position: relative;
+        }
+
+        /* ══ SIDEBAR RETICLE — boot sequence ══════════════════ */
+        .idx-sb-reticle {
+            width: 30px; height: 30px;
+            flex-shrink: 0;
+            position: relative;
+            display: flex; align-items: center; justify-content: center;
+            overflow: hidden; /* confina scan line */
+        }
+
+        /* ── SCAN LINE (activo durante .booting e .rescanning) ── */
+        .idx-sb-reticle.booting::before,
+        .idx-sb-reticle.rescanning::before {
+            content: '';
+            position: absolute; left: 0; right: 0; height: 1.5px;
+            background: linear-gradient(90deg,
+                transparent 0%,
+                rgba(255,215,0,0.5) 20%,
+                rgba(255,255,255,0.96) 50%,
+                rgba(255,215,0,0.5) 80%,
+                transparent 100%);
+            top: 0; opacity: 0;
+            pointer-events: none; z-index: 5;
+        }
+        .idx-sb-reticle.booting::before {
+            animation: sbScanLine 0.9s ease-in-out 0.85s both;
+        }
+        .idx-sb-reticle.rescanning::before {
+            animation: sbScanLine 0.7s ease-in-out both;
+        }
+        @keyframes sbScanLine {
+            0%   { top: 0%;   opacity: 0; }
+            5%   { opacity: 1; }
+            93%  { opacity: 0.85; }
+            100% { top: 100%; opacity: 0; }
+        }
+
+        /* ── CONFIRM RIPPLE (outline — não clippado pelo próprio overflow) ── */
+        .idx-sb-reticle.booting {
+            animation: sbRippleBoot 0.85s ease-out 1.9s both;
+        }
+        @keyframes sbRippleBoot {
+            0%   { outline: 0px solid rgba(255,255,255,0.9); }
+            35%  { outline: 9px  solid rgba(255,215,0,0.5); }
+            100% { outline: 20px solid rgba(255,215,0,0); }
+        }
+
+        /* ── CORNERS ── */
+        .idx-sb-corner {
+            position: absolute;
+            width: 9px; height: 9px;
+            border-style: solid;
+            border-color: rgba(255,215,0,0.65);
+            transition: border-color .25s;
+        }
+        .idx-sb-corner.tl { top:0; left:0;   border-width:1.5px 0 0 1.5px; border-radius:2px 0 0 0; }
+        .idx-sb-corner.tr { top:0; right:0;  border-width:1.5px 1.5px 0 0; border-radius:0 2px 0 0; }
+        .idx-sb-corner.br { bottom:0; right:0; border-width:0 1.5px 1.5px 0; border-radius:0 0 2px 0; }
+        .idx-sb-corner.bl { bottom:0; left:0;  border-width:0 0 1.5px 1.5px; border-radius:0 0 0 2px; }
+
+        /* Boot: corners invisíveis → snap sequencial → flash na confirmação */
+        .idx-sb-reticle.booting .idx-sb-corner { opacity: 0; }
+        .idx-sb-reticle.booting .idx-sb-corner.tl {
+            animation: sbCornerSnap 0.24s cubic-bezier(0.175,0.885,0.32,2.3) 0.2s  both,
+                       sbCornerFlash 0.5s ease-out 1.9s both;
+        }
+        .idx-sb-reticle.booting .idx-sb-corner.tr {
+            animation: sbCornerSnap 0.24s cubic-bezier(0.175,0.885,0.32,2.3) 0.37s both,
+                       sbCornerFlash 0.5s ease-out 1.9s both;
+        }
+        .idx-sb-reticle.booting .idx-sb-corner.br {
+            animation: sbCornerSnap 0.24s cubic-bezier(0.175,0.885,0.32,2.3) 0.54s both,
+                       sbCornerFlash 0.5s ease-out 1.9s both;
+        }
+        .idx-sb-reticle.booting .idx-sb-corner.bl {
+            animation: sbCornerSnap 0.24s cubic-bezier(0.175,0.885,0.32,2.3) 0.71s both,
+                       sbCornerFlash 0.5s ease-out 1.9s both;
+        }
+        @keyframes sbCornerSnap {
+            0%   { opacity: 0; transform: scale(0.25); filter: brightness(6); }
+            55%  { opacity: 1; transform: scale(1.3);  filter: brightness(3); }
+            85%  { filter: brightness(1.6); }
+            100% { opacity: 1; transform: scale(1);    filter: brightness(1); }
+        }
+        @keyframes sbCornerFlash {
+            0%   { filter: brightness(7); border-color: rgba(255,255,255,0.95); }
+            30%  { filter: brightness(3); border-color: rgba(255,215,0,1); }
+            100% { filter: brightness(1); border-color: rgba(255,215,0,0.65); }
+        }
+        /* Re-scan: corners piscam rapidamente */
+        .idx-sb-reticle.rescanning .idx-sb-corner {
+            animation: sbCornerRescan 0.5s ease-out both;
+        }
+        @keyframes sbCornerRescan {
+            0%   { filter: brightness(1);   border-color: rgba(255,215,0,0.65); }
+            35%  { filter: brightness(3.5); border-color: rgba(255,215,0,1); }
+            100% { filter: brightness(1);   border-color: rgba(255,215,0,0.65); }
+        }
+
+        /* Hover / pinned */
+        .idx-sidebar:hover .idx-sb-corner,
+        .idx-sidebar.sb-pinned .idx-sb-corner {
+            border-color: rgba(255,215,0,0.92);
+        }
+
+        /* ── INNER / CHECKMARK ── */
+        .idx-sb-inner {
+            width: 20px; height: 20px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .idx-sb-inner svg {
+            width: 13px; height: 13px;
+            overflow: visible;
+            filter: drop-shadow(0 0 4px rgba(255,215,0,0.45));
+        }
+        /* Dasharray sempre setado — offset zerado = visível */
+        .idx-sb-inner svg polyline {
+            stroke-dasharray: 24;
+            stroke-dashoffset: 0;
+        }
+        /* Boot: checkmark oculto → draw → confirm pulse */
+        .idx-sb-reticle.booting .idx-sb-inner svg {
+            animation: sbConfirmPulse 0.5s cubic-bezier(0.34,1.56,0.64,1) 1.9s both;
+        }
+        .idx-sb-reticle.booting .idx-sb-inner svg polyline {
+            stroke-dashoffset: 24;
+            animation: sbCheckDraw 0.4s ease-out 1.52s both;
+        }
+        @keyframes sbCheckDraw {
+            0%   { stroke-dashoffset: 24; opacity: 0.4; }
+            100% { stroke-dashoffset: 0;  opacity: 1; }
+        }
+        @keyframes sbConfirmPulse {
+            0%   { transform: scale(0.65); filter: drop-shadow(0 0 2px rgba(255,215,0,0.2)); }
+            55%  { transform: scale(1.4);
+                   filter: drop-shadow(0 0 16px rgba(255,255,255,1))
+                           drop-shadow(0 0 28px rgba(255,215,0,1)); }
+            100% { transform: scale(1);   filter: drop-shadow(0 0 5px rgba(255,215,0,0.55)); }
+        }
+        /* Idle breathing (classe adicionada via JS após boot) */
+        .idx-sb-inner svg.sb-breathing {
+            animation: sbBreathing 4s ease-in-out infinite;
+        }
+        @keyframes sbBreathing {
+            0%, 100% { filter: drop-shadow(0 0 3px rgba(255,215,0,0.38)); }
+            50%       { filter: drop-shadow(0 0 10px rgba(255,215,0,0.85))
+                                drop-shadow(0 0 20px rgba(255,215,0,0.22)); }
+        }
+        /* Re-scan: checkmark pulsa durante varredura */
+        .idx-sb-reticle.rescanning .idx-sb-inner svg.sb-breathing {
+            animation: sbRescanConfirm 1s ease-in-out both;
+        }
+        @keyframes sbRescanConfirm {
+            0%   { filter: drop-shadow(0 0 3px rgba(255,215,0,0.38));  opacity: 1; }
+            30%  { filter: drop-shadow(0 0 2px rgba(255,215,0,0.15));  opacity: 0.55; }
+            70%  { filter: drop-shadow(0 0 14px rgba(255,255,255,0.8)) drop-shadow(0 0 22px rgba(255,215,0,0.9)); opacity: 1; }
+            100% { filter: drop-shadow(0 0 3px rgba(255,215,0,0.38));  opacity: 1; }
+        }
+        /* Hover */
+        .idx-sidebar:hover .idx-sb-inner svg,
+        .idx-sidebar.sb-pinned .idx-sb-inner svg {
+            filter: drop-shadow(0 0 8px rgba(255,215,0,0.9)) !important;
+        }
+
+        .idx-logo-text {
+            line-height: 1.2;
+            padding-left: 12px;
+            white-space: nowrap;
+            opacity: 0;
+            transform: translateX(-8px);
+            transition: opacity var(--sb-speed) var(--sb-ease),
+                        transform var(--sb-speed) var(--sb-ease);
+        }
+        .idx-sidebar:hover .idx-logo-text,
+        .idx-sidebar.sb-pinned .idx-logo-text { opacity: 1; transform: translateX(0); }
+
+        .idx-logo-title-row {
+            display: flex; align-items: center; gap: 6px;
+        }
+        .idx-logo-title {
+            background: linear-gradient(90deg, #fff 0%, rgba(255,255,255,0.75) 100%);
+            -webkit-background-clip: text; background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800; font-size: 14px;
+        }
+        .idx-logo-ba {
+            font-size: 9px; font-weight: 800; letter-spacing: 0.6px;
+            color: rgba(255,215,0,0.75);
+            border: 1px solid rgba(255,215,0,0.25);
+            border-radius: 4px;
+            padding: 1px 5px;
+            background: rgba(255,215,0,0.06);
+            line-height: 1.6;
+        }
+        .idx-logo-sub { color: rgba(255,255,255,0.4); font-size: 9.5px; margin-top: 2px; }
+
+        /* Pin button */
+        .idx-sidebar-pin {
+            position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+            width: 22px; height: 22px;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 6px;
+            background: rgba(255,255,255,0.04);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity .18s, background .18s;
+            color: rgba(255,255,255,0.4);
+            font-size: 11px;
+        }
+        .idx-sidebar:hover .idx-sidebar-pin,
+        .idx-sidebar.sb-pinned .idx-sidebar-pin { opacity: 1; }
+        .idx-sidebar-pin:hover { background: rgba(255,215,0,0.12); color: #FFD700; border-color: rgba(255,215,0,0.25); }
+        .idx-sidebar.sb-pinned .idx-sidebar-pin { color: #FFD700; border-color: rgba(255,215,0,0.3); background: rgba(255,215,0,0.08); }
+
+        /* ── Nav section ── */
+        .idx-nav-section {
+            padding: 10px 8px 4px;
+        }
+
+        .idx-nav-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: rgba(255,255,255,0.3);
+            font-size: 9.5px;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            padding: 0 8px;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            opacity: 0;
+            height: 0;
+            overflow: hidden;
+            transition: opacity var(--sb-speed) var(--sb-ease),
+                        height var(--sb-speed) var(--sb-ease);
+        }
+        .idx-sidebar:hover .idx-nav-label,
+        .idx-sidebar.sb-pinned .idx-nav-label {
+            opacity: 1; height: 20px;
+        }
+
+        .idx-nav-label::after {
+            content: '';
+            flex: 1; height: 1px;
+            background: rgba(255,255,255,0.06);
+        }
+
+        .idx-nav-label.operacional { color: rgba(255,255,255,0.22); }
+        .idx-nav-label.gestao      { color: rgba(255,255,255,0.22); }
+        .idx-nav-label.admin       { color: rgba(255,255,255,0.22); }
+
+        /* ── Nav item ── */
+        .idx-nav-item {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            padding: 0 8px;
+            height: 38px;
+            border-radius: 10px;
+            cursor: pointer;
+            color: rgba(255,255,255,0.65);
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: background .18s, color .18s;
+            position: relative;
+            margin-bottom: 1px;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        .idx-nav-item:hover {
+            background: rgba(255,255,255,0.07);
+            color: #ffffff;
+        }
+        .idx-nav-item.active {
+            background: rgba(255,215,0,0.1);
+            color: #FFD700;
+            font-weight: 700;
+        }
+        .idx-nav-item.active::before {
+            content: '';
+            position: absolute;
+            left: 0; top: 20%; bottom: 20%;
+            width: 2.5px;
+            background: linear-gradient(180deg,#FFD700,#f59e0b);
+            border-radius: 0 3px 3px 0;
+        }
+
+        /* ── Icon wrap ── */
+        .idx-nav-icon-wrap {
+            width: 30px; height: 30px;
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+            transition: background .18s, transform .22s cubic-bezier(0.34,1.56,0.64,1);
+        }
+        /* ── Todos os ícones: neutro em repouso, gold no hover ── */
+        .op .idx-nav-icon-wrap,
+        .ge .idx-nav-icon-wrap,
+        .ad .idx-nav-icon-wrap { background: rgba(255,255,255,0.05); }
+
+        .op:hover .idx-nav-icon-wrap,
+        .ge:hover .idx-nav-icon-wrap,
+        .ad:hover .idx-nav-icon-wrap,
+        .idx-nav-item.active .idx-nav-icon-wrap { background: rgba(255,215,0,0.13); }
+
+        .idx-nav-item:hover .idx-nav-icon-wrap { transform: scale(1.1); }
+
+        .idx-nav-icon-wrap svg {
+            width: 14px; height: 14px;
+            fill: none; stroke-width: 1.9;
+            stroke-linecap: round; stroke-linejoin: round;
+            transition: stroke .18s, filter .18s;
+        }
+        .op .idx-nav-icon-wrap svg,
+        .ge .idx-nav-icon-wrap svg,
+        .ad .idx-nav-icon-wrap svg { stroke: rgba(148,163,184,0.45); }
+
+        .op:hover .idx-nav-icon-wrap svg,
+        .ge:hover .idx-nav-icon-wrap svg,
+        .ad:hover .idx-nav-icon-wrap svg,
+        .idx-nav-item.active .idx-nav-icon-wrap svg { stroke: #FFD700; filter: drop-shadow(0 0 5px rgba(255,215,0,0.65)); }
+
+        /* ── Label text (inside nav item, fades in) ── */
+        .idx-nav-label-text {
+            padding-left: 10px;
+            opacity: 0;
+            transform: translateX(-6px);
+            transition: opacity var(--sb-speed) var(--sb-ease),
+                        transform var(--sb-speed) var(--sb-ease);
+            pointer-events: none;
+        }
+        .idx-sidebar:hover .idx-nav-label-text,
+        .idx-sidebar.sb-pinned .idx-nav-label-text {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        /* ── Tooltip (collapsed only) ── */
+        .idx-nav-item::after {
+            content: attr(data-tip);
+            position: absolute;
+            left: calc(var(--sb-w) + 6px);
+            top: 50%; transform: translateY(-50%);
+            background: #1e293b;
+            color: #e2e8f0;
+            font-size: 11.5px;
+            font-weight: 600;
+            padding: 5px 10px;
+            border-radius: 7px;
+            white-space: nowrap;
+            pointer-events: none;
+            opacity: 0;
+            border: 1px solid rgba(255,255,255,0.08);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+            transition: opacity .15s .05s;
+            z-index: 400;
+        }
+        /* Tooltip visível só no estado recolhido (não hover de sidebar) */
+        .idx-nav-item:hover::after { opacity: 1; }
+        .idx-sidebar:hover .idx-nav-item::after,
+        .idx-sidebar.sb-pinned .idx-nav-item::after { opacity: 0 !important; }
+
+        /* ── Divider ── */
+        .idx-divider {
+            height: 1px;
+            background: rgba(255,255,255,0.05);
+            margin: 4px 10px;
+        }
+
+        .idx-nav-badge {
+            margin-left: auto;
+            font-size: 10px; font-weight: 700;
+            padding: 2px 6px; border-radius: 10px;
+            min-width: 16px; text-align: center;
+            opacity: 0;
+            transition: opacity var(--sb-speed) var(--sb-ease);
+        }
+        .idx-sidebar:hover .idx-nav-badge,
+        .idx-sidebar.sb-pinned .idx-nav-badge { opacity: 1; }
+        .idx-nav-badge.red   { background: rgba(239,68,68,0.2);   color: #f87171; }
+        .idx-nav-badge.amber { background: rgba(245,158,11,0.2);  color: #fbbf24; }
+        .idx-nav-badge.muted { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.35); }
+
+        /* ── Footer / user ── */
+        .idx-sidebar-footer {
+            margin-top: auto;
+            padding: 10px 8px 12px;
+            border-top: 1px solid rgba(255,255,255,0.06);
+            background: rgba(0,0,0,0.1);
+        }
+
+        .idx-user-card {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            padding: 8px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.06);
+            transition: background .18s;
+            overflow: hidden;
+        }
+        .idx-user-card:hover { background: rgba(255,255,255,0.07); }
+
+        .idx-user-avatar {
+            width: 30px; height: 30px;
+            border-radius: 50%;
+            background: linear-gradient(135deg,#FFD700,#f59e0b);
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 900; font-size: 11px; color: #111;
+            flex-shrink: 0;
+            box-shadow: 0 0 0 2px rgba(255,215,0,0.2);
+        }
+
+        .idx-user-info {
+            padding-left: 10px;
+            min-width: 0;
+            opacity: 0;
+            transform: translateX(-6px);
+            transition: opacity var(--sb-speed) var(--sb-ease),
+                        transform var(--sb-speed) var(--sb-ease);
+        }
+        .idx-sidebar:hover .idx-user-info,
+        .idx-sidebar.sb-pinned .idx-user-info { opacity: 1; transform: translateX(0); }
+
+        .idx-user-name { color: #ffffff; font-size: 12px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .idx-user-role {
+            font-size: 10px; margin-top: 1px;
+            display: flex; align-items: center; gap: 4px;
+            color: rgba(255,255,255,0.3);
+        }
+        .idx-user-online {
+            width: 5px; height: 5px; border-radius: 50%;
+            background: #22c55e;
+            display: inline-block;
+            box-shadow: 0 0 4px rgba(34,197,94,0.6);
+            animation: onlinePulse 2.5s ease-in-out infinite;
+        }
+        @keyframes onlinePulse {
+            0%,100% { box-shadow: 0 0 4px rgba(34,197,94,0.6); }
+            50%      { box-shadow: 0 0 10px rgba(34,197,94,1); }
+        }
+
+        /* ── MAIN AREA ── */
+        .idx-main {
+            margin-left: var(--sb-w);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow-y: auto;
+            transition: margin-left var(--sb-speed) var(--sb-ease);
+        }
+        /* Main empurra quando sidebar pinada */
+        body.sb-open .idx-main { margin-left: var(--sb-w-open); }
+
+        /* ══ TOPBAR PREMIUM ══════════════════════════════════════ */
+        .idx-topbar {
+            background: linear-gradient(180deg,
+                rgba(18,23,42,1) 0%,
+                rgba(13,18,35,1) 100%
+            );
+            border-bottom: none;
+            padding: 0 28px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            flex-shrink: 0;
+            box-shadow: 0 1px 0 rgba(255,255,255,0.04), 0 4px 24px rgba(0,0,0,0.5);
+        }
+
+        /* Aurora sweep — 2px, mais vívido */
+        .idx-topbar::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg,
+                transparent 0%,
+                rgba(255,215,0,0.0)  5%,
+                rgba(255,215,0,0.65) 22%,
+                rgba(99,102,241,0.55) 50%,
+                rgba(56,189,248,0.55) 72%,
+                rgba(255,215,0,0.35) 88%,
+                transparent 100%
+            );
+            background-size: 220% 100%;
+            animation: toparAurora 7s ease-in-out infinite;
+            pointer-events: none;
+        }
+        @keyframes toparAurora {
+            0%,100% { background-position: 0%   center; opacity: .65; }
+            50%     { background-position: 100% center; opacity: 1;   }
+        }
+
+        /* ── Left ─────────────────────────────────────────── */
+        .idx-tb-left {
+            display: flex; align-items: center; gap: 14px;
+        }
+
+        .idx-tb-brand {
+            display: flex; align-items: center; gap: 11px;
+        }
+
+        /* Scan frame */
+        .idx-scan-frame {
+            width: 38px; height: 38px; flex-shrink: 0;
+            border-radius: 10px;
+            background: rgba(255,215,0,0.07);
+            border: 1px solid rgba(255,215,0,0.22);
+            display: flex; align-items: center; justify-content: center;
+            position: relative; overflow: hidden;
+            box-shadow: 0 0 18px rgba(255,215,0,0.08);
+        }
+        /* Linha de scan animada */
+        .idx-scan-frame::after {
+            content: '';
+            position: absolute; left: 0; right: 0;
+            height: 1.5px;
+            background: linear-gradient(90deg, transparent, rgba(255,215,0,0.8), transparent);
+            animation: idxScanLine 2.6s ease-in-out infinite;
+            top: 0;
+        }
+        @keyframes idxScanLine {
+            0%   { top: 0%;   opacity: 0.9; }
+            80%  { top: 100%; opacity: 0.2; }
+            100% { top: 100%; opacity: 0;   }
+        }
+        .idx-scan-check {
+            width: 17px; height: 17px;
+            position: relative; z-index: 1;
+            filter: drop-shadow(0 0 4px rgba(255,215,0,0.4));
+        }
+
+        /* Wordmark */
+        .idx-tb-text {
+            display: flex; flex-direction: column; gap: 3px;
+        }
+
+        .idx-topbar-title {
+            font-size: 15px;
+            font-weight: 900;
+            letter-spacing: -0.025em;
+            background: linear-gradient(90deg, #f1f5f9 0%, rgba(255,215,0,0.9) 100%);
+            -webkit-background-clip: text; background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1;
+        }
+
+        /* Meta row: badge BA01 + subtítulo */
+        .idx-tb-meta {
+            display: flex; align-items: center; gap: 6px;
+        }
+        .idx-tb-ba {
+            background: rgba(255,215,0,0.12);
+            border: 1px solid rgba(255,215,0,0.22);
+            color: #fbbf24;
+            font-size: 8px; font-weight: 900;
+            padding: 1px 5px; border-radius: 4px;
+            letter-spacing: 0.07em;
+            flex-shrink: 0; line-height: 1.5;
+        }
+        .idx-topbar-greeting {
+            font-size: 9.5px; font-weight: 600;
+            letter-spacing: 0.06em; text-transform: uppercase;
+            color: rgba(148,163,184,0.5);
+            white-space: nowrap;
+        }
+
+        /* ══ IDENTITY CHIP ═══════════════════════════════════ */
+        .idx-id-chip {
+            display: flex; align-items: center; gap: 0;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.09);
+            border-radius: 40px;
+            overflow: hidden;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .idx-id-chip:hover {
+            border-color: rgba(255,255,255,0.14);
+            box-shadow: 0 0 0 3px rgba(255,215,0,0.06);
+        }
+
+        /* Avatar */
+        .idx-id-avatar {
+            width: 32px; height: 32px; border-radius: 50%;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.12);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 11px; font-weight: 800; color: rgba(255,255,255,0.75);
+            letter-spacing: 0.02em; flex-shrink: 0;
+            margin: 4px 0 4px 4px;
+        }
+
+        /* Info: saudação + nome */
+        .idx-id-info {
+            padding: 0 12px 0 10px;
+            display: flex; flex-direction: column; gap: 3px;
+        }
+        .idx-id-greet {
+            font-size: 8.5px; font-weight: 700;
+            letter-spacing: 0.08em; text-transform: uppercase;
+            color: rgba(255,255,255,0.42);
+        }
+
+        /* Nome + badge inline — sem caixa */
+        .idx-name-badge {
+            display: inline-flex; align-items: center; gap: 5px;
+        }
+        .idx-id-name {
+            font-size: 12.5px; font-weight: 800;
+            letter-spacing: -0.01em; line-height: 1;
+            color: #ffffff;
+        }
+        /* Verified badge */
+        .idx-name-chk {
+            width: 20px; height: 20px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            filter: drop-shadow(0 0 5px rgba(0,149,246,0.7)) drop-shadow(0 0 10px rgba(0,149,246,0.4));
+        }
+        .idx-name-chk svg { width: 20px; height: 20px; display: block; }
+
+        /* Divisores internos */
+        .idx-id-div {
+            width: 1px; height: 30px;
+            background: rgba(255,255,255,0.08); flex-shrink: 0;
+        }
+
+        /* Hora + data */
+        .idx-id-time-block {
+            padding: 0 15px;
+            display: flex; flex-direction: column;
+            align-items: center; gap: 1px;
+        }
+        .idx-id-time {
+            font-family: ui-monospace, 'SF Mono', monospace !important;
+            font-size: 16px !important; font-weight: 700 !important;
+            color: #f1f5f9 !important; letter-spacing: -0.02em !important;
+            line-height: 1 !important;
+        }
+        .idx-id-date {
+            font-size: 9px; font-weight: 600;
+            color: rgba(148,163,184,0.5);
+            letter-spacing: 0.05em; text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        /* Status */
+        .idx-id-status {
+            padding: 0 14px 0 12px;
+            display: flex; flex-direction: column;
+            align-items: center; gap: 3px;
+        }
+        .idx-id-status-label {
+            font-size: 8.5px; font-weight: 700;
+            color: #4ade80; letter-spacing: 0.07em;
+            text-transform: uppercase;
+        }
+
+        /* ── Right ────────────────────────────────────────── */
+        .idx-topbar-right {
+            display: flex; align-items: center; gap: 10px;
+        }
+
+        /* Glass group: clock + separator + status */
+        .idx-tb-glass {
+            display: flex; align-items: center; gap: 10px;
+            padding: 7px 14px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            backdrop-filter: blur(12px);
+        }
+
+        .idx-tb-vline {
+            width: 1px; height: 16px;
+            background: rgba(255,255,255,0.1);
+            flex-shrink: 0;
+        }
+
+        .idx-clock {
+            font-size: 11.5px;
+            font-family: 'SF Mono', ui-monospace, 'Cascadia Code', 'Fira Code', monospace;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            color: rgba(203,213,225,0.8);
+            font-variant-numeric: tabular-nums;
+            white-space: nowrap;
+        }
+
+        .idx-status-pill {
+            display: flex; align-items: center; gap: 6px;
+            font-size: 11px; font-weight: 700;
+            letter-spacing: 0.04em;
+            color: #4ade80;
+        }
+
+        .idx-status-dot {
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            background: #22c55e;
+            box-shadow: 0 0 0 0 rgba(34,197,94,0.7);
+            animation: idxHeartbeat 2.4s ease-in-out infinite;
+            flex-shrink: 0;
+        }
+
+        @keyframes idxHeartbeat {
+            0%   { box-shadow: 0 0 0 0   rgba(34,197,94,0.7); transform: scale(1);   }
+            35%  { box-shadow: 0 0 0 5px rgba(34,197,94,0);   transform: scale(1.15); }
+            70%  { box-shadow: 0 0 0 0   rgba(34,197,94,0);   transform: scale(1);   }
+            100% { box-shadow: 0 0 0 0   rgba(34,197,94,0);   transform: scale(1);   }
+        }
+
+        /* ── Identity chip animations ─────────────────────── */
+
+        /* 1. Entrada: slide-in da direita */
+        @keyframes idxChipEntry {
+            0%   { opacity: 0; transform: translateX(18px); }
+            100% { opacity: 1; transform: translateX(0);    }
+        }
+
+
+        /* 3. Scan line: barra vertical varrendo o chip */
+        @keyframes idxChipScan {
+            0%   { left: -2%;   opacity: 0;   }
+            4%   { opacity: 1; }
+            96%  { opacity: 0.7; }
+            100% { left: 103%;  opacity: 0;   }
+        }
+
+        /* 4. Relógio: micro-flash no tick do minuto */
+        @keyframes idxClockTick {
+            0%   { opacity: 1;   transform: scaleY(1);    }
+            18%  { opacity: 0.4; transform: scaleY(0.88); }
+            55%  { opacity: 1;   transform: scaleY(1.04); }
+            100% { opacity: 1;   transform: scaleY(1);    }
+        }
+
+        /* 5. Nome glitch: chromatic aberration via filter */
+        @keyframes idxNameGlitch {
+            0%   { filter: drop-shadow(0 0 5px rgba(255,215,0,0.2)); transform: translate(0); }
+            8%   { filter: drop-shadow(-2px 0 rgba(255,60,60,0.9)) drop-shadow(2px 0 rgba(60,210,255,0.9)); transform: translate(2px,0); }
+            16%  { filter: drop-shadow(2px 0 rgba(255,60,60,0.8)) drop-shadow(-2px 0 rgba(60,210,255,0.8)); transform: translate(-2px,0); }
+            24%  { filter: drop-shadow(0 0 5px rgba(255,215,0,0.2)); transform: translate(0); }
+            32%  { filter: drop-shadow(-1px 0 rgba(255,215,0,0.6)); transform: translate(1px,0); }
+            40%  { filter: drop-shadow(0 0 5px rgba(255,215,0,0.2)); transform: translate(0); }
+            100% { filter: drop-shadow(0 0 5px rgba(255,215,0,0.2)); transform: translate(0); }
+        }
+
+        /* Aplica as animações */
+        .idx-id-chip {
+            animation: idxChipEntry 0.55s cubic-bezier(0.22,1,0.36,1) 0.25s both;
+            position: relative;
+        }
+
+
+        /* Hover shimmer sweep */
+        .idx-id-chip::before {
+            content: '';
+            position: absolute; inset: 0;
+            border-radius: inherit;
+            background: linear-gradient(105deg,
+                transparent 0%,
+                rgba(255,215,0,0.0) 35%,
+                rgba(255,215,0,0.06) 50%,
+                rgba(255,215,0,0.0) 65%,
+                transparent 100%);
+            background-size: 250% 100%;
+            background-position: 200% 0;
+            pointer-events: none; z-index: 1;
+            transition: background-position 0s;
+        }
+        .idx-id-chip:hover::before {
+            background-position: -50% 0;
+            transition: background-position 0.65s ease;
+        }
+
+
+        .idx-clock.tick {
+            animation: idxClockTick 0.35s ease both;
+        }
+
+        /* Content */
+        .idx-content {
+            padding: 26px 32px 48px;
+            flex: 1;
+        }
+
+        /* Alert banner */
+        .idx-alert {
+            background: rgba(245,158,11,0.08);
+            border: 1px solid rgba(245,158,11,0.2);
+            border-radius: 12px;
+            padding: 13px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 22px;
+            animation: idxSlideUp 0.4s ease both;
+        }
+
+        .idx-alert-icon { font-size: 18px; }
+        .idx-alert-text { flex: 1; }
+        .idx-alert-title { font-size: 13px; font-weight: 700; color: #fbbf24; }
+        .idx-alert-sub   { font-size: 11px; color: rgba(251,191,36,0.6); margin-top: 1px; }
+
+        @keyframes idxSlideUp {
+            from { opacity: 0; transform: translateY(14px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Section */
+        .idx-section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+
+        .idx-section-title { font-size: 15px; font-weight: 800; color: #ffffff; letter-spacing: 0.1px; }
+        .idx-section-sub   { font-size: 12px; color: rgba(255,255,255,0.45); margin-top: 3px; }
+
+        /* Cards grid */
+        .idx-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        /* People card oculto por padrão */
+        #cardPeople  { display: none; }
+        #cardAcessos { display: none; }
+
+        /* ── CARD DARK TECH ── */
+        .idx-card {
+            background: #2A2F3A;
+            border-radius: 20px;
+            padding: 28px 26px 22px;
+            border: 1px solid rgba(255,255,255,0.07);
+            cursor: pointer;
+            transition: box-shadow 0.22s ease, border-color 0.22s, transform 0.5s cubic-bezier(0.23,1,0.32,1);
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            text-decoration: none;
+            color: inherit;
+            animation: idxSlideUp 0.4s cubic-bezier(.22,.68,0,1.2) both;
+            position: relative;
+            overflow: hidden;
+            min-height: 200px;
+            transform-style: preserve-3d;
+            will-change: transform;
+        }
+
+        /* Linha de cor no topo */
+        .idx-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            border-radius: 16px 16px 0 0;
+            opacity: 0.85;
+            transition: opacity 0.25s;
+        }
+
+        /* Brilho de fundo sutil no hover */
+        .idx-card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+
+        .idx-card:hover {
+            border-color: rgba(255,255,255,0.14);
+        }
+
+        .idx-card:hover::before { opacity: 1; }
+        .idx-card:hover::after  { opacity: 1; }
+
+        /* Delays */
+        .idx-card:nth-child(1) { animation-delay: 0.22s; }
+        .idx-card:nth-child(2) { animation-delay: 0.27s; }
+        .idx-card:nth-child(3) { animation-delay: 0.32s; }
+        .idx-card:nth-child(4) { animation-delay: 0.37s; }
+        .idx-card:nth-child(5) { animation-delay: 0.42s; }
+        .idx-card:nth-child(6) { animation-delay: 0.47s; }
+        .idx-card:nth-child(7) { animation-delay: 0.52s; }
+
+        /* ── CARD SHINE: varredura de luz ── */
+        .idx-card-shine {
+            position: absolute; inset: 0; border-radius: inherit;
+            background: linear-gradient(105deg,
+                transparent 30%,
+                rgba(255,255,255,0.055) 50%,
+                transparent 70%
+            );
+            background-size: 400% 100%;
+            background-position: -300% center;
+            pointer-events: none;
+            animation: cardShimmer 8s ease-in-out infinite;
+            opacity: 0;
+        }
+        #cardChamada   .idx-card-shine { animation-delay: 0s; }
+        #cardFlow      .idx-card-shine { animation-delay: 1.1s; }
+        #cardAusencia  .idx-card-shine { animation-delay: 2.2s; }
+        #cardHistorico .idx-card-shine { animation-delay: 3.3s; }
+        #cardPeople    .idx-card-shine { animation-delay: 4.4s; }
+        #cardMatrix    .idx-card-shine { animation-delay: 5.5s; }
+        #cardAcessos        .idx-card-shine { animation-delay: 6.6s; }
+        #cardAvailableTime  .idx-card-shine { animation-delay: 7.7s; }
+
+        @keyframes cardShimmer {
+            0%,100% { background-position: -300% center; opacity: 0; }
+            8%  { opacity: 1; }
+            35% { background-position: 300% center; opacity: 0; }
+            36%, 99% { opacity: 0; background-position: -300% center; }
+        }
+
+        /* ── TEMA AMARELO / PRETO ───────────────────────────────── */
+
+        /* ── TODOS OS CARDS: repouso igual (escuro neutro, borda cinza) ── */
+        #cardChamada, #cardAusencia, #cardPeople, #cardAcessos,
+        #cardFlow, #cardHistorico, #cardMatrix, #cardAvailableTime {
+            background: linear-gradient(145deg, #0d0d0d 0%, #161616 55%);
+            border-color: rgba(255,255,255,0.12);
+        }
+
+        /* Barra top: amarela nos amarelos — oculta no repouso, visível no hover */
+        #cardChamada::before,
+        #cardAusencia::before,
+        #cardPeople::before,
+        #cardAcessos::before  { background: linear-gradient(90deg,#FFD700,#f59e0b); opacity: 0; }
+
+        #cardChamada:hover::before,
+        #cardAusencia:hover::before,
+        #cardPeople:hover::before,
+        #cardAcessos:hover::before { opacity: 1; }
+
+        /* Barra top: pretos — amarela, oculta no repouso, visível no hover */
+        #cardFlow::before,
+        #cardHistorico::before,
+        #cardMatrix::before,
+        #cardAvailableTime::before { background: linear-gradient(90deg,#FFD700,#f59e0b); opacity: 0; }
+
+        #cardFlow:hover::before,
+        #cardHistorico:hover::before,
+        #cardMatrix:hover::before,
+        #cardAvailableTime:hover::before { opacity: 1; }
+
+        /* Hover TODOS: borda amarela + glow */
+        #cardChamada:hover, #cardAusencia:hover,
+        #cardPeople:hover,  #cardAcessos:hover,
+        #cardFlow:hover,    #cardHistorico:hover,
+        #cardMatrix:hover,  #cardAvailableTime:hover {
+            box-shadow: 0 20px 50px rgba(255,215,0,0.14), 0 0 0 1px rgba(255,215,0,0.18);
+            border-color: rgba(255,215,0,0.45);
+        }
+
+        /* Radial após hover — amarelos */
+        #cardChamada::after,
+        #cardAusencia::after,
+        #cardPeople::after,
+        #cardAcessos::after   { background: radial-gradient(ellipse at top left,rgba(255,215,0,0.12),transparent 60%); }
+
+        /* Radial após hover — pretos */
+        #cardFlow::after,
+        #cardHistorico::after,
+        #cardMatrix::after,
+        #cardAvailableTime::after { background: radial-gradient(ellipse at top left,rgba(255,255,255,0.04),transparent 60%); }
+
+        /* ── CARD HEADER: ícone + tag ── */
+        .idx-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .idx-card-icon {
+            width: 56px; height: 56px;
+            border-radius: 16px;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .idx-card-icon svg {
+            width: 30px; height: 30px;
+            stroke-width: 1.6;
+            transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), filter 0.22s ease;
+        }
+
+        .idx-card:hover .idx-card-icon svg {
+            transform: scale(1.18) rotate(-5deg);
+        }
+
+        /* Ícone: sem background, branco por padrão */
+        .idx-card-icon {
+            background: transparent !important;
+        }
+        .idx-card .idx-card-icon svg {
+            stroke: #ffffff;
+            filter: none;
+            transition: stroke 0.22s ease, filter 0.22s ease, transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+        }
+
+        /* Hover ícones — todos amarelo com glow */
+        .idx-card:hover .idx-card-icon svg {
+            stroke: #FFD700;
+            filter: drop-shadow(0 0 8px rgba(255,215,0,0.7));
+        }
+
+        .idx-card-tag {
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 0.9px;
+            text-transform: uppercase;
+            padding: 3px 9px;
+            border-radius: 20px;
+            background: rgba(255,255,255,0.09);
+            color: rgba(255,255,255,0.5);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        /* Tags — cinza no repouso, amarelo no hover */
+        .idx-card .idx-card-tag {
+            background: rgba(255,255,255,0.07);
+            color: rgba(255,255,255,0.55);
+            border-color: rgba(255,255,255,0.12);
+            transition: background 0.22s, color 0.22s, border-color 0.22s;
+        }
+        .idx-card:hover .idx-card-tag {
+            background: rgba(255,215,0,0.13);
+            color: #FFD700;
+            border-color: rgba(255,215,0,0.35);
+        }
+
+        /* ── CARD BODY ── */
+        .idx-card-title {
+            font-size: 16px;
+            font-weight: 800;
+            color: #ffffff;
+            margin-bottom: 6px;
+            line-height: 1.2;
+            letter-spacing: 0.1px;
+        }
+        .idx-card-desc {
+            font-size: 12.5px;
+            color: rgba(255,255,255,0.6);
+            line-height: 1.5;
+            font-weight: 400;
+        }
+
+        /* ── CARD FOOTER: CTA ── */
+        .idx-card-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: auto;
+            padding-top: 14px;
+            border-top: 1px solid rgba(255,255,255,0.08);
+            transition: border-color 0.22s;
+        }
+        .idx-card:hover .idx-card-footer {
+            border-color: rgba(255,215,0,0.18);
+        }
+
+        .idx-card-cta {
+            font-size: 12px;
+            font-weight: 600;
+            color: rgba(255,255,255,0.45);
+            letter-spacing: 0.2px;
+            transition: color 0.2s;
+        }
+
+        .idx-card-arrow {
+            width: 26px; height: 26px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.14);
+            display: flex; align-items: center; justify-content: center;
+            color: rgba(255,255,255,0.55);
+            font-size: 14px;
+            flex-shrink: 0;
+            transition: all 0.22s cubic-bezier(0.34,1.56,0.64,1);
+        }
+
+        .idx-card:hover .idx-card-cta  { color: #FFD700; }
+        .idx-card:hover .idx-card-arrow {
+            background: #FFD700;
+            border-color: #FFD700;
+            color: #000000;
+            transform: translateX(4px);
+            box-shadow: 0 0 14px rgba(255,215,0,0.45);
+        }
+
+        /* ── HERO TITLE ── */
+        .idx-hero {
+            position: relative;
+            border-radius: 22px;
+            padding: 52px 48px 44px;
+            margin-bottom: 28px;
+            background: linear-gradient(160deg, #060b15 0%, #0b1322 50%, #080e1c 100%);
+            border: 1px solid rgba(255,215,0,0.18);
+            overflow: hidden;
+            text-align: center;
+            cursor: default;
+            transform-style: preserve-3d;
+            transition: box-shadow 0.4s ease;
+            will-change: transform;
+            animation: heroBorderCycle 7s ease-in-out infinite;
+        }
+        @keyframes heroBorderCycle {
+            0%,100% { border-color: rgba(255,215,0,0.28);  box-shadow: 0 0 40px rgba(255,215,0,0.05)  inset; }
+            28%     { border-color: rgba(99,102,241,0.28);  box-shadow: 0 0 40px rgba(99,102,241,0.05)  inset; }
+            55%     { border-color: rgba(56,189,248,0.28);  box-shadow: 0 0 40px rgba(56,189,248,0.05)  inset; }
+            82%     { border-color: rgba(16,185,129,0.28);  box-shadow: 0 0 40px rgba(16,185,129,0.05)  inset; }
+        }
+        .idx-hero:hover {
+            box-shadow: 0 30px 80px rgba(0,0,0,0.55), 0 0 60px rgba(255,215,0,0.08);
+        }
+
+        /* Grade sutil */
+        .idx-hero-grid {
+            position: absolute; inset: 0; pointer-events: none;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+            background-size: 52px 52px;
+            mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+        }
+
+        /* ── MORPHING BLOBS ── */
+        .idx-hero-blobs { position: absolute; inset: 0; pointer-events: none; overflow: hidden; border-radius: 22px; }
+
+        .idx-blob {
+            position: absolute; border-radius: 50%;
+            filter: blur(70px); will-change: transform;
+        }
+        .idx-blob.b1 {
+            width: 420px; height: 280px;
+            background: radial-gradient(ellipse, rgba(255,200,0,0.16) 0%, transparent 70%);
+            top: -80px; left: -60px;
+            animation: blobA 14s ease-in-out infinite alternate;
+        }
+        .idx-blob.b2 {
+            width: 360px; height: 360px;
+            background: radial-gradient(ellipse, rgba(99,102,241,0.13) 0%, transparent 70%);
+            bottom: -100px; right: -80px;
+            animation: blobB 18s ease-in-out infinite alternate;
+        }
+        .idx-blob.b3 {
+            width: 280px; height: 200px;
+            background: radial-gradient(ellipse, rgba(56,189,248,0.10) 0%, transparent 70%);
+            top: 30%; left: 35%;
+            animation: blobC 22s ease-in-out infinite alternate;
+        }
+        .idx-blob.b4 {
+            width: 200px; height: 200px;
+            background: radial-gradient(ellipse, rgba(139,92,246,0.09) 0%, transparent 70%);
+            top: 10%; right: 15%;
+            animation: blobD 16s ease-in-out infinite alternate;
+        }
+        @keyframes blobA { from{transform:translate(0,0) scale(1)} to{transform:translate(80px,50px) scale(1.2)} }
+        @keyframes blobB { from{transform:translate(0,0) scale(1)} to{transform:translate(-60px,-40px) scale(1.15)} }
+        @keyframes blobC { from{transform:translate(0,0) scale(1)} to{transform:translate(-50px,60px) scale(0.85)} }
+        @keyframes blobD { from{transform:translate(0,0) scale(1)} to{transform:translate(40px,-30px) scale(1.3)} }
+
+        /* Ripple no clique */
+        .idx-hero-ripple {
+            position: absolute; pointer-events: none; border-radius: 50%;
+            border: 1.5px solid rgba(255,215,0,0.5);
+            width: 0; height: 0;
+            transform: translate(-50%,-50%);
+            animation: heroRipple 1s cubic-bezier(0,0.5,0.5,1) forwards;
+        }
+        @keyframes heroRipple {
+            from { width:0; height:0; opacity:0.8; }
+            to   { width:500px; height:500px; opacity:0; }
+        }
+
+        /* Micro-partículas flutuantes */
+        .idx-hero-particle {
+            position: absolute; border-radius: 50%; pointer-events: none;
+        }
+        @keyframes microFloat {
+            0%   { transform: translateY(0)   scale(1);   opacity: 0; }
+            12%  { opacity: 1; }
+            88%  { opacity: 1; }
+            100% { transform: translateY(-110px) scale(0.2); opacity: 0; }
+        }
+
+        /* ── ANÉIS DE PULSO ── */
+        .idx-hero-ring {
+            position: absolute;
+            border-radius: 50%;
+            top: 50%; left: 50%;
+            transform: translate(-50%,-50%) scale(0);
+            border: 1px solid rgba(255,215,0,0.35);
+            pointer-events: none;
+            animation: ringPulse 4s ease-out infinite;
+        }
+        .idx-hero-ring:nth-child(1) { width:120px; height:120px; animation-delay:0s;    }
+        .idx-hero-ring:nth-child(2) { width:120px; height:120px; animation-delay:1.3s;  }
+        .idx-hero-ring:nth-child(3) { width:120px; height:120px; animation-delay:2.6s;  }
+
+        @keyframes ringPulse {
+            0%   { transform:translate(-50%,-50%) scale(0.3); opacity:0.8; border-color:rgba(255,215,0,0.5); }
+            60%  { border-color:rgba(255,215,0,0.15); }
+            100% { transform:translate(-50%,-50%) scale(3.2); opacity:0; border-color:rgba(255,215,0,0); }
+        }
+
+        /* ── CORNER BRACKETS ── */
+        .idx-hero-corner {
+            position: absolute; width: 22px; height: 22px; pointer-events: none;
+            opacity: 0.55; animation: cornerPulse 3s ease-in-out infinite alternate;
+        }
+        .idx-hero-corner.tl { top:14px;    left:14px;  border-top:2px solid #FFD700; border-left:2px solid #FFD700; }
+        .idx-hero-corner.tr { top:14px;    right:14px; border-top:2px solid #FFD700; border-right:2px solid #FFD700; animation-delay:0.75s; }
+        .idx-hero-corner.bl { bottom:14px; left:14px;  border-bottom:2px solid #FFD700; border-left:2px solid #FFD700; animation-delay:1.5s; }
+        .idx-hero-corner.br { bottom:14px; right:14px; border-bottom:2px solid #FFD700; border-right:2px solid #FFD700; animation-delay:2.25s; }
+        @keyframes cornerPulse {
+            from { opacity:0.3; box-shadow: none; }
+            to   { opacity:0.9; box-shadow: 0 0 8px rgba(255,215,0,0.5); }
+        }
+
+        /* Glow de mouse (controlado por JS) */
+        .idx-hero-glow-follow {
+            position: absolute; pointer-events: none;
+            width: 500px; height: 500px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255,215,0,0.07) 0%, transparent 65%);
+            transform: translate(-50%,-50%);
+            transition: left 0.06s, top 0.06s;
+            will-change: left, top;
+            opacity: 0;
+        }
+
+        /* Decoração lateral — linhas de circuito */
+        .idx-hero-circuit {
+            position: absolute; top: 0; bottom: 0; pointer-events: none; opacity: 0.18;
+        }
+        .idx-hero-circuit.left  { left: 24px; }
+        .idx-hero-circuit.right { right: 24px; }
+
+        .idx-hero-inner { position: relative; z-index: 2; }
+
+        /* Eyebrow */
+        .idx-hero-eyebrow {
+            display: inline-flex; align-items: center; gap: 10px;
+            font-size: 10.5px; font-weight: 700; letter-spacing: 2.5px;
+            text-transform: uppercase; color: rgba(255,215,0,0.7);
+            margin-bottom: 16px;
+        }
+        .idx-hero-dot {
+            width: 6px; height: 6px; border-radius: 50%; display: inline-block;
+            background: #FFD700; box-shadow: 0 0 8px rgba(255,215,0,1);
+            animation: heroDot 1.8s ease-in-out infinite alternate;
+        }
+        .idx-hero-dot:last-child { animation-delay: 0.9s; }
+        @keyframes heroDot {
+            from { opacity:0.3; transform:scale(0.7); box-shadow:0 0 4px rgba(255,215,0,0.5); }
+            to   { opacity:1;   transform:scale(1.3); box-shadow:0 0 12px rgba(255,215,0,1); }
+        }
+
+        /* Título — letras individuais */
+        .idx-hero-title {
+            font-size: clamp(46px, 6.5vw, 80px);
+            font-weight: 900; letter-spacing: -2px;
+            line-height: 1; margin: 0 0 22px;
+            display: block;
+        }
+
+        .idx-hero-letter {
+            display: inline-block;
+            animation: letterReveal 0.7s cubic-bezier(0.22,0.68,0,1.2) both;
+            animation-delay: calc(var(--i) * 0.055s + 0.15s);
+            transition: transform 0.1s ease-out;
+        }
+        @keyframes letterReveal {
+            from { opacity:0; transform:translateY(40px) rotateX(-90deg); filter:blur(10px); }
+            to   { opacity:1; transform:translateY(0)    rotateX(0deg);    filter:blur(0); }
+        }
+
+        .idx-hero-check { color: #ffffff; display: inline; }
+        .idx-hero-check .idx-hero-letter {
+            text-shadow: 0 0 30px rgba(255,255,255,0.12);
+        }
+
+        .idx-hero-point { display: inline; }
+        .idx-hero-point .idx-hero-letter {
+            background: linear-gradient(135deg, #ffe566 0%, #FFD700 30%, #f59e0b 60%, #FFD700 80%, #ffe566 100%);
+            background-size: 300% auto;
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: letterReveal 0.7s cubic-bezier(0.22,0.68,0,1.2) both,
+                       heroShimmer 4s linear infinite;
+            animation-delay: calc(var(--i) * 0.055s + 0.15s), 1s;
+            filter: drop-shadow(0 0 18px rgba(255,215,0,0.5));
+        }
+        @keyframes heroShimmer {
+            0%   { background-position: 0%   center; }
+            100% { background-position: 300% center; }
+        }
+
+        /* Glitch ocasional */
+        .idx-hero-title.glitch::before,
+        .idx-hero-title.glitch::after {
+            content: attr(data-text);
+            position: absolute; left: 0; right: 0;
+            font-size: inherit; font-weight: inherit; letter-spacing: inherit;
+            pointer-events: none;
+        }
+        .idx-hero-title.glitch::before {
+            color: rgba(0,200,255,0.6);
+            animation: glitchTop 0.15s steps(2) forwards;
+        }
+        .idx-hero-title.glitch::after {
+            color: rgba(255,80,80,0.5);
+            animation: glitchBot 0.15s steps(2) forwards;
+        }
+        @keyframes glitchTop {
+            0%  { clip-path:inset(15% 0 70% 0); transform:translate(-4px,0); }
+            50% { clip-path:inset(50% 0 30% 0); transform:translate(3px,0); }
+            100%{ clip-path:inset(0 0 100% 0);  transform:translate(0,0); }
+        }
+        @keyframes glitchBot {
+            0%  { clip-path:inset(70% 0 10% 0); transform:translate(4px,0); }
+            50% { clip-path:inset(30% 0 55% 0); transform:translate(-3px,0); }
+            100%{ clip-path:inset(100% 0 0 0);  transform:translate(0,0); }
+        }
+
+        /* Linha inferior */
+        .idx-hero-sub {
+            display: inline-flex; align-items: center; gap: 14px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,215,0,0.15);
+            border-radius: 30px; padding: 8px 20px;
+            animation: letterReveal 0.6s ease both;
+            animation-delay: 0.75s;
+            box-shadow: 0 0 20px rgba(255,215,0,0.05);
+        }
+        .idx-hero-badge {
+            font-size: 11px; font-weight: 900; letter-spacing: 1.5px;
+            background: linear-gradient(135deg,#FFD700,#f59e0b);
+            color: #111; padding: 3px 10px; border-radius: 20px;
+            box-shadow: 0 0 10px rgba(255,215,0,0.4);
+        }
+        .idx-hero-sep { color: rgba(255,255,255,0.18); font-size: 14px; }
+        .idx-hero-meta { font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.5); letter-spacing: 0.3px; }
+
+        /* ── HC COUNTER animado ── */
+        #kpiHC { font-variant-numeric: tabular-nums; }
+
+        /* ── CANVAS AURORA (inserido por JS) ── */
+        #heroAurora {
+            position: absolute; inset: 0;
+            width: 100%; height: 100%;
+            border-radius: 22px;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* ── RESPONSIVIDADE ── */
+        @media (max-width: 1024px) {
+            .idx-cards-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        @media (max-width: 768px) {
+            .idx-sidebar { transform: translateX(-100%); transition: transform 0.25s ease; }
+            .idx-sidebar.mobile-open { transform: translateX(0); }
+            .idx-main { margin-left: 0; }
+            .idx-topbar { padding: 0 16px; }
+            .idx-content { padding: 16px 16px 40px; }
+            .idx-kpi-row { grid-template-columns: 1fr; }
+            .idx-cards-grid { grid-template-columns: 1fr; }
+            .idx-mobile-menu-btn { display: flex !important; }
+            .idx-clock { display: none; }
+        }
+
+        .idx-mobile-menu-btn {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            width: 48px; height: 48px;
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 24px;
+            color: rgba(255,255,255,0.7);
+        }
+
+        .idx-sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.4);
+            z-index: 199;
+        }
+
+        .idx-sidebar-overlay.active { display: block; }
+
+        /* ══ THEME TOGGLE + PIN ══════════════════════════════════ */
+        .idx-theme-controls {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Ícones SVG dentro do toggle */
+        .t-icon {
+            flex-shrink: 0;
+            transition: opacity 0.2s, color 0.2s;
+        }
+        /* Escuro: lua visível, sol apagado */
+        .t-moon { opacity: 1;   color: rgba(148,163,184,0.8); }
+        .t-sun  { opacity: 0.3; color: rgba(148,163,184,0.5); }
+        /* Claro: sol visível, lua apagado */
+        .theme-light .t-moon { opacity: 0.3; }
+        .theme-light .t-sun  { opacity: 1; color: #fbbf24; }
+
+        .idx-theme-toggle {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 5px 11px;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.05);
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            color: rgba(255,255,255,0.65);
+            transition: background 0.2s, border-color 0.2s, color 0.2s;
+            user-select: none;
+            white-space: nowrap;
+        }
+        .idx-theme-toggle:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: rgba(255,255,255,0.2);
+        }
+        .idx-theme-toggle .toggle-track {
+            width: 30px; height: 16px;
+            border-radius: 999px;
+            background: rgba(255,255,255,0.15);
+            position: relative;
+            transition: background 0.25s;
+            flex-shrink: 0;
+        }
+        .idx-theme-toggle .toggle-thumb {
+            position: absolute;
+            top: 2.5px; left: 2.5px;
+            width: 11px; height: 11px;
+            border-radius: 50%;
+            background: #fff;
+            transition: transform 0.25s cubic-bezier(.4,0,.2,1);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.35);
+        }
+
+        /* Pin button */
+        .idx-theme-pin {
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.05);
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 13px;
+            color: rgba(255,255,255,0.4);
+            transition: background 0.2s, border-color 0.2s, color 0.2s, transform 0.2s;
+            user-select: none;
+            title: "Fixar tema";
+            flex-shrink: 0;
+        }
+        .idx-theme-pin:hover {
+            background: rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.8);
+        }
+        .idx-theme-pin.pinned {
+            background: rgba(255,215,0,0.15);
+            border-color: rgba(255,215,0,0.4);
+            color: #FFD700;
+            transform: rotate(-30deg);
+        }
+        .idx-theme-pin.pinned:hover {
+            background: rgba(255,215,0,0.22);
+        }
+
+        /* ══ TEMA CLARO — estilo enterprise limpo ═════════════════ */
+        html.light-theme {
+            background: #f4f6f9;
+            color: #1a202c;
+        }
+
+        /* ── Sidebar completa no claro ── */
+        html.light-theme .idx-sidebar {
+            background: #ffffff;
+            border-right: 1px solid #e2e8f0;
+            box-shadow: 2px 0 12px rgba(0,0,0,0.06);
+        }
+        html.light-theme .idx-sidebar:hover,
+        html.light-theme .idx-sidebar.sb-pinned {
+            box-shadow: 4px 0 24px rgba(0,0,0,0.1);
+        }
+
+        /* Logo */
+        html.light-theme .idx-sidebar-logo {
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        html.light-theme .idx-logo-title {
+            background: linear-gradient(90deg, #1a202c 0%, #334155 100%);
+            -webkit-background-clip: text; background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        html.light-theme .idx-logo-sub  { color: #94a3b8; }
+        html.light-theme .idx-logo-ba   { color: rgba(180,120,0,0.85); border-color: rgba(180,120,0,0.25); background: rgba(255,215,0,0.08); }
+
+        /* Pin botão sidebar */
+        html.light-theme .idx-sidebar-pin {
+            border-color: #e2e8f0;
+            background: #f1f5f9;
+            color: #94a3b8;
+        }
+        html.light-theme .idx-sidebar-pin:hover {
+            background: #fef9c3;
+            color: #b45309;
+            border-color: #fde68a;
+        }
+        html.light-theme .idx-sidebar.sb-pinned .idx-sidebar-pin {
+            color: #b45309;
+            border-color: #fde68a;
+            background: #fef9c3;
+        }
+
+        /* Section labels */
+        html.light-theme .idx-nav-label { color: #94a3b8; }
+        html.light-theme .idx-nav-label::after { background: #e2e8f0; }
+        html.light-theme .idx-nav-label.operacional { color: #94a3b8; }
+        html.light-theme .idx-nav-label.gestao      { color: #94a3b8; }
+        html.light-theme .idx-nav-label.admin       { color: #94a3b8; }
+
+        /* Nav items */
+        html.light-theme .idx-nav-item {
+            color: #475569;
+        }
+        html.light-theme .idx-nav-item:hover {
+            background: #f1f5f9;
+            color: #1a202c;
+        }
+        html.light-theme .idx-nav-item.active {
+            background: #fef9c3;
+            color: #92400e;
+        }
+        html.light-theme .idx-nav-item.active::before {
+            background: linear-gradient(180deg, #f59e0b, #d97706);
+        }
+
+        /* Icon wraps — light: neutro em repouso, gold no hover */
+        html.light-theme .op .idx-nav-icon-wrap,
+        html.light-theme .ge .idx-nav-icon-wrap,
+        html.light-theme .ad .idx-nav-icon-wrap { background: rgba(0,0,0,0.05); }
+        html.light-theme .op:hover .idx-nav-icon-wrap,
+        html.light-theme .ge:hover .idx-nav-icon-wrap,
+        html.light-theme .ad:hover .idx-nav-icon-wrap,
+        html.light-theme .idx-nav-item.active .idx-nav-icon-wrap { background: rgba(180,83,9,0.1); }
+
+        /* SVG strokes — light */
+        html.light-theme .op .idx-nav-icon-wrap svg,
+        html.light-theme .ge .idx-nav-icon-wrap svg,
+        html.light-theme .ad .idx-nav-icon-wrap svg { stroke: rgba(71,85,105,0.5); filter: none; }
+        html.light-theme .op:hover .idx-nav-icon-wrap svg,
+        html.light-theme .ge:hover .idx-nav-icon-wrap svg,
+        html.light-theme .ad:hover .idx-nav-icon-wrap svg,
+        html.light-theme .idx-nav-item.active .idx-nav-icon-wrap svg { stroke: #b45309; filter: none; }
+
+        /* Tooltip no claro */
+        html.light-theme .idx-nav-item::after {
+            background: #1e293b;
+            color: #f1f5f9;
+            border-color: rgba(0,0,0,0.1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        /* Divider */
+        html.light-theme .idx-divider { background: #e2e8f0; }
+
+        /* Badges */
+        html.light-theme .idx-nav-badge.red   { background: #fee2e2; color: #dc2626; }
+        html.light-theme .idx-nav-badge.amber { background: #fef9c3; color: #b45309; }
+        html.light-theme .idx-nav-badge.muted { background: #f1f5f9; color: #94a3b8; }
+
+        /* Footer / user */
+        html.light-theme .idx-sidebar-footer {
+            border-top: 1px solid #e2e8f0;
+            background: #f8fafc;
+        }
+        html.light-theme .idx-user-card {
+            background: #f1f5f9;
+            border-color: #e2e8f0;
+        }
+        html.light-theme .idx-user-card:hover { background: #e2e8f0; }
+        html.light-theme .idx-user-name { color: #1a202c; }
+        html.light-theme .idx-user-role { color: #94a3b8; }
+
+        /* Topbar — light */
+        html.light-theme .idx-topbar {
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+        }
+        html.light-theme .idx-topbar::after { display: none; }
+
+        html.light-theme .idx-scan-frame {
+            background: rgba(245,158,11,0.06);
+            border-color: rgba(245,158,11,0.25);
+            box-shadow: none;
+        }
+        html.light-theme .idx-scan-check { stroke: #d97706; filter: none; }
+        html.light-theme .idx-scan-frame::after {
+            background: linear-gradient(90deg, transparent, rgba(217,119,6,0.7), transparent);
+        }
+        html.light-theme .idx-topbar-title {
+            background: linear-gradient(90deg, #0f172a 0%, #b45309 100%) !important;
+            -webkit-background-clip: text !important;
+            background-clip: text !important;
+            -webkit-text-fill-color: transparent !important;
+        }
+        html.light-theme .idx-tb-ba {
+            background: rgba(245,158,11,0.1);
+            border-color: rgba(245,158,11,0.25);
+            color: #b45309;
+        }
+        html.light-theme .idx-topbar-greeting { color: #94a3b8; }
+
+        /* Identity chip — claro */
+        html.light-theme .idx-id-chip {
+            background: #f8fafc;
+            border-color: #e2e8f0;
+        }
+        html.light-theme .idx-id-chip:hover {
+            border-color: #cbd5e1;
+            box-shadow: 0 0 0 3px rgba(245,158,11,0.08);
+        }
+        html.light-theme .idx-id-greet   { color: #94a3b8; }
+        html.light-theme .idx-id-name    { color: #1a202c; }
+        html.light-theme .idx-id-div     { background: #e2e8f0; }
+        html.light-theme .idx-id-time    { color: #0f172a !important; }
+        html.light-theme .idx-id-date    { color: #94a3b8; }
+        html.light-theme .idx-id-status-label { color: #166534; }
+
+        html.light-theme .idx-tb-glass {
+            background: #f8fafc;
+            border-color: #e2e8f0;
+        }
+        html.light-theme .idx-tb-vline { background: #e2e8f0; }
+        html.light-theme .idx-clock { color: #475569; font-weight: 600; }
+
+        html.light-theme .idx-status-pill { color: #166534; }
+        html.light-theme .idx-status-dot  { background: #16a34a; box-shadow: 0 0 0 0 rgba(22,163,74,0.6); }
+
+        /* Toggle / Pin no claro */
+        html.light-theme .idx-theme-toggle {
+            border-color: #e2e8f0;
+            background: #f8fafc;
+            color: #475569;
+        }
+        html.light-theme .idx-theme-toggle:hover { background: #edf2f7; border-color: #cbd5e1; }
+        /* Ícones no claro: lua apagada, sol ativo */
+        html.light-theme .t-moon { opacity: 0.3 !important; color: #94a3b8 !important; }
+        html.light-theme .t-sun  { opacity: 1   !important; color: #d97706 !important; }
+        html.light-theme .idx-theme-pin { border-color: #e2e8f0; background: #f8fafc; color: #94a3b8; }
+        html.light-theme .idx-theme-pin:hover  { background: #edf2f7; color: #475569; }
+        html.light-theme .idx-theme-pin.pinned { background: rgba(255,215,0,0.1); border-color: rgba(255,190,0,0.4); color: #b45309; }
+
+        /* Mobile btn */
+        html.light-theme .idx-mobile-menu-btn { background: #f8fafc; border-color: #e2e8f0; color: #475569; }
+
+        /* Content */
+        html.light-theme .idx-content { background: #f4f6f9; }
+
+        /* Alert */
+        html.light-theme .idx-alert {
+            background: #fffbeb;
+            border: 1px solid #fcd34d;
+        }
+        html.light-theme .idx-alert-title { color: #92400e; }
+        html.light-theme .idx-alert-sub   { color: #b45309; }
+
+        /* Section labels */
+        html.light-theme .idx-section-title { color: #1a202c; }
+        html.light-theme .idx-section-sub   { color: #718096; }
+
+        /* ── CARDS: fundo branco, borda esquerda colorida, sem gradiente ── */
+        html.light-theme .idx-card {
+            background: #ffffff !important;
+            border: 1px solid #e8edf3 !important;
+            border-left: 4px solid #e8edf3 !important;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+            border-radius: 10px;
+        }
+        html.light-theme .idx-card:hover {
+            box-shadow: 0 4px 16px rgba(0,0,0,0.09);
+            transform: translateY(-2px) !important;
+        }
+
+        /* Barra top (::before) desativada no claro — a cor vai para border-left */
+        html.light-theme .idx-card::before { display: none; }
+        html.light-theme .idx-card::after  { display: none; }
+        html.light-theme .idx-card-shine   { display: none; }
+
+        /* Border-left colorida por card */
+        html.light-theme #cardChamada  { border-left-color: #f59e0b !important; }
+        html.light-theme #cardFlow     { border-left-color: #f97316 !important; }
+        html.light-theme #cardAusencia { border-left-color: #0ea5e9 !important; }
+        html.light-theme #cardHistorico{ border-left-color: #8b5cf6 !important; }
+        html.light-theme #cardPeople   { border-left-color: #3b82f6 !important; }
+        html.light-theme #cardMatrix   { border-left-color: #10b981 !important; }
+        html.light-theme #cardAcessos  { border-left-color: #6366f1 !important; }
+
+        /* Card icon: fundo neutro claro */
+        html.light-theme .idx-card-icon {
+            background: #f4f6f9 !important;
+        }
+
+        /* SVG icons: mantém a cor original mas sem glow */
+        html.light-theme .idx-card .idx-card-icon svg { filter: none !important; }
+        html.light-theme .idx-card:hover .idx-card-icon svg {
+            filter: none !important;
+            transform: scale(1.12) !important;
+        }
+
+        /* Tag label */
+        html.light-theme .idx-card-tag {
+            background: #f4f6f9 !important;
+            color: #64748b !important;
+            border-color: #e2e8f0 !important;
+        }
+        /* Tags light — todos amarelo */
+        html.light-theme .idx-card .idx-card-tag { background: #fffbeb !important; color: #92400e !important; border-color: #fde68a !important; }
+
+        /* Textos do card */
+        html.light-theme .idx-card-title { color: #1a202c !important; font-size: 15px; }
+        html.light-theme .idx-card-desc  { color: #718096 !important; }
+        html.light-theme .idx-card-footer { border-top-color: #f0f4f8 !important; }
+        html.light-theme .idx-card-cta   { color: #718096 !important; font-weight: 600; }
+        html.light-theme .idx-card:hover .idx-card-cta { color: #1a202c !important; }
+        html.light-theme .idx-card-arrow {
+            background: #f4f6f9 !important;
+            border-color: #e2e8f0 !important;
+            color: #718096 !important;
+        }
+        html.light-theme .idx-card:hover .idx-card-arrow { background: #e2e8f0 !important; color: #1a202c !important; }
+
+        /* Hero — limpo, sem blobs visíveis */
+        html.light-theme .idx-hero {
+            background: #ffffff !important;
+            border: 1px solid #e2e8f0 !important;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+            animation: none !important;
+        }
+        html.light-theme .idx-hero-grid        { opacity: 0.5; }
+        html.light-theme .idx-hero-blobs       { opacity: 0.15; }
+        html.light-theme .idx-hero-ring        { border-color: rgba(245,158,11,0.2); }
+        html.light-theme .idx-hero-corner      { border-color: #f59e0b !important; opacity: 0.5; }
+        html.light-theme .idx-hero-eyebrow     { color: #b45309; }
+        html.light-theme .idx-hero-sub {
+            background: #f8fafc;
+            border-color: #e2e8f0;
+        }
+        html.light-theme .idx-hero-meta  { color: #718096; }
+        html.light-theme .idx-hero-sep   { color: #cbd5e1; }
+
+        /* Título hero: texto escuro no claro */
+        html.light-theme .idx-hero-check .idx-hero-letter {
+            color: #1a202c;
+            -webkit-text-fill-color: #1a202c;
+            text-shadow: none;
+        }
+
+        /* Status pill */
+        html.light-theme .idx-status-pill {
+            background: #f0fdf4;
+            color: #166534;
+            border-color: #bbf7d0;
+        }
+        html.light-theme .idx-status-dot { background: #16a34a; }
+    </style>
+</head>
+<body>
+
+<!-- ── SIDEBAR ──────────────────────────────────────────── -->
+<aside class="idx-sidebar">
+
+    <div class="idx-sidebar-logo">
+        <div class="idx-sb-reticle">
+            <div class="idx-sb-corner tl"></div>
+            <div class="idx-sb-corner tr"></div>
+            <div class="idx-sb-corner bl"></div>
+            <div class="idx-sb-corner br"></div>
+            <div class="idx-sb-inner">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#FFD700" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                </svg>
+            </div>
+        </div>
+        <div class="idx-logo-text">
+            <div class="idx-logo-title-row">
+                <div class="idx-logo-title">Checkpoint</div>
+                <div class="idx-logo-ba">BA01</div>
+            </div>
+            <div class="idx-logo-sub">Sistema de Absenteísmo</div>
+        </div>
+        <button class="idx-sidebar-pin" id="sidebarPinBtn" onclick="toggleSidebarPin()" title="Fixar sidebar">
+            <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 00-1.11-1.79l-1.78-.9A2 2 0 0115 10.76V6h1a2 2 0 000-4H8a2 2 0 000 4h1v4.76a2 2 0 01-1.11 1.79l-1.78.9A2 2 0 005 15.24V17z"/></svg>
+        </button>
+    </div>
+
+    <div class="idx-nav-section">
+        <div class="idx-nav-label operacional">Operacional</div>
+        <a class="idx-nav-item op active" data-tip="Início" onclick="navegar('index')">
+            <span class="idx-nav-icon-wrap">
+                <svg viewBox="0 0 24 24"><path d="M3 12L12 4l9 8"/><path d="M5 10v9a1 1 0 001 1h4v-5h4v5h4a1 1 0 001-1v-9"/></svg>
+            </span>
+            <span class="idx-nav-label-text">Início</span>
+        </a>
+        <a class="idx-nav-item op" data-tip="Chamada" onclick="navegar('chamada')">
+            <span class="idx-nav-icon-wrap">
+                <svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1.5"/><path d="m9 12 2 2 4-4"/></svg>
+            </span>
+            <span class="idx-nav-label-text">Chamada</span>
+        </a>
+        <a class="idx-nav-item op" data-tip="Visão de Flow" onclick="navegar('flow')">
+            <span class="idx-nav-icon-wrap">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="19" r="2"/><path d="M12 7v5M12 12l-5.5 4.5M12 12l5.5 4.5"/></svg>
+            </span>
+            <span class="idx-nav-label-text">Visão de Flow</span>
+        </a>
+        <a class="idx-nav-item op" data-tip="Histórico" onclick="navegar('historico')">
+            <span class="idx-nav-icon-wrap">
+                <svg viewBox="0 0 24 24"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 106 5.3L3 8"/><path d="M12 7v5l3.5 2"/></svg>
+            </span>
+            <span class="idx-nav-label-text">Histórico</span>
+        </a>
+    </div>
+
+    <div class="idx-divider"></div>
+
+    <div class="idx-nav-section">
+        <div class="idx-nav-label gestao">Gestão</div>
+        <a class="idx-nav-item ge" data-tip="Ausências" onclick="navegar('ausencia')">
+            <span class="idx-nav-icon-wrap">
+                <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M8.5 14.5h.01M12 14.5h.01M15.5 14.5h.01M8.5 18h.01M12 18h.01"/></svg>
+            </span>
+            <span class="idx-nav-label-text">Ausências</span>
+        </a>
+        <a class="idx-nav-item ge" id="sidebarPeople" data-tip="Visão de People" style="display:none;" onclick="navegar('people')">
+            <span class="idx-nav-icon-wrap">
+                <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.74"/></svg>
+            </span>
+            <span class="idx-nav-label-text">Visão de People</span>
+        </a>
+        <a class="idx-nav-item ge" id="sidebarMatrix" data-tip="Matrix" onclick="window.open('https://script.google.com/a/macros/mercadolivre.com/s/AKfycbyCzEjvmDW-ZmaLLK_B0mBWqc0FodOs1vE7KrwziaHD7FU8rOc1LIr6v3fn2Gj0bd_DHg/exec','_blank')">
+            <span class="idx-nav-icon-wrap">
+                <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg>
+            </span>
+            <span class="idx-nav-label-text">Matrix</span>
+        </a>
+        <a class="idx-nav-item ge" id="sidebarAvailableTime" data-tip="Available Time" onclick="window.open('https://script.google.com/a/macros/mercadolivre.com/s/AKfycby5_dwY0iDwLBQPE2OL3IDzg3U2J9tofBy8E7afm_Iz-WH75G9bhdHeYiCjmR1n8jK8ZQ/exec','_blank')">
+            <span class="idx-nav-icon-wrap">
+                <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 15.5"/></svg>
+            </span>
+            <span class="idx-nav-label-text">Available Time</span>
+        </a>
+    </div>
+
+    <div class="idx-divider"></div>
+
+    <div class="idx-nav-section">
+        <div class="idx-nav-label admin">Admin</div>
+        <a class="idx-nav-item ad" id="sidebarAcessos" data-tip="Acessos" style="display:none;" onclick="navegar('acessos')">
+            <span class="idx-nav-icon-wrap">
+                <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><circle cx="12" cy="11" r="2"/><path d="M12 13v3"/></svg>
+            </span>
+            <span class="idx-nav-label-text">Acessos</span>
+        </a>
+    </div>
+
+    <div class="idx-sidebar-footer">
+        <!-- Sobre o Sistema -->
+        <a class="idx-nav-item ad" data-tip="Sobre o Sistema" onclick="abrirSobre()" style="margin-bottom:6px;">
+            <span class="idx-nav-icon-wrap">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="8"/><line x1="12" y1="12" x2="12" y2="16"/></svg>
+            </span>
+            <span class="idx-nav-label-text" style="color:rgba(255,255,255,.35);font-size:10.5px;">Sobre o Sistema</span>
+        </a>
+        <div class="idx-user-card">
+            <div class="idx-user-avatar" id="userAvatar">?</div>
+            <div class="idx-user-info">
+                <div class="idx-user-name" id="userNameSidebar">Carregando...</div>
+                <div class="idx-user-role">
+                    <span class="idx-user-online"></span>
+                    Checkpoint · BA01
+                </div>
+            </div>
+        </div>
+    </div>
+
+</aside>
+<div class="idx-sidebar-overlay" id="idxOverlay"></div>
+
+<!-- ── MAIN AREA ────────────────────────────────────────── -->
+<div class="idx-main">
+
+    <!-- Topbar -->
+    <div class="idx-topbar">
+
+        <!-- Esquerda: scan frame + wordmark -->
+        <div class="idx-tb-left">
+            <button class="idx-mobile-menu-btn" id="idxMobileMenuBtn">☰</button>
+            <div class="idx-tb-brand">
+                <!-- Scan frame animado -->
+                <div class="idx-scan-frame">
+                    <svg class="idx-scan-check" viewBox="0 0 24 24" fill="none" stroke="#FFD700" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                </div>
+                <!-- Wordmark -->
+                <div class="idx-tb-text">
+                    <div class="idx-topbar-title">Checkpoint</div>
+                    <div class="idx-tb-meta">
+                        <span class="idx-tb-ba">BA01</span>
+                        <span class="idx-topbar-greeting">Sistema de Absenteísmo</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Direita: identity chip + toggle -->
+        <div class="idx-topbar-right">
+
+            <!-- Identity Chip -->
+            <div class="idx-id-chip">
+                <!-- Avatar -->
+                <div class="idx-id-avatar" id="idxAvChip">GV</div>
+
+                <!-- Saudação + Nome badge -->
+                <div class="idx-id-info">
+                    <div class="idx-id-greet" id="idxSaudacao">Boa tarde</div>
+                    <div class="idx-name-badge">
+                        <div class="idx-id-name" id="idxNomeUsuario">—</div>
+                        <div class="idx-name-chk">
+                            <svg viewBox="0 0 16 16" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                <polygon points="8,1 10,3.2 12.95,3.05 12.8,6 15,8 12.8,10 12.95,12.95 10,12.8 8,15 6,12.8 3.05,12.95 3.2,10 1,8 3.2,6 3.05,3.05 6,3.2" fill="#0095F6"/>
+                                <polyline points="5 8.5 7 10.5 11.2 6" stroke="#fff" stroke-width="1.65"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Divisor -->
+                <div class="idx-id-div"></div>
+
+                <!-- Hora + Data -->
+                <div class="idx-id-time-block">
+                    <div class="idx-clock idx-id-time" id="idxClock">--:--</div>
+                    <div class="idx-id-date" id="idxChipDate">— · —</div>
+                </div>
+
+                <!-- Divisor -->
+                <div class="idx-id-div"></div>
+
+                <!-- Status -->
+                <div class="idx-id-status">
+                    <div class="idx-status-dot"></div>
+                    <div class="idx-id-status-label">online</div>
+                </div>
+            </div>
+
+            <!-- Toggle tema -->
+            <div class="idx-theme-toggle" id="idxThemeToggle" onclick="idxToggleTheme()" title="Alternar tema claro/escuro">
+                <svg id="idxIconMoon" class="t-icon t-moon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
+                </svg>
+                <div class="toggle-track"><div class="toggle-thumb"></div></div>
+                <svg id="idxIconSun" class="t-icon t-sun" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="4"/>
+                    <line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                    <line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                </svg>
+            </div>
+            <div class="idx-theme-pin" id="idxThemePin" onclick="idxTogglePin()" title="Fixar tema preferido">
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="17" x2="12" y2="22"/>
+                    <path d="M5 17h14v-1.76a2 2 0 00-1.11-1.79l-1.78-.9A2 2 0 0115 10.76V6h1a2 2 0 000-4H8a2 2 0 000 4h1v4.76a2 2 0 01-1.11 1.79l-1.78.9A2 2 0 005 15.24V17z"/>
+                </svg>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Content -->
+    <div class="idx-content">
+
+        <!-- ── HERO TITLE ── -->
+        <div class="idx-hero" id="idxHero">
+            <div class="idx-hero-grid"></div>
+            <div class="idx-hero-blobs">
+                <div class="idx-blob b1"></div>
+                <div class="idx-blob b2"></div>
+                <div class="idx-blob b3"></div>
+                <div class="idx-blob b4"></div>
+            </div>
+            <!-- Canvas aurora fluid (inserido por JS) -->
+            <canvas id="heroAurora"></canvas>
+
+            <div class="idx-hero-ring"></div>
+            <div class="idx-hero-ring"></div>
+            <div class="idx-hero-ring"></div>
+            <div class="idx-hero-corner tl"></div>
+            <div class="idx-hero-corner tr"></div>
+            <div class="idx-hero-corner bl"></div>
+            <div class="idx-hero-corner br"></div>
+            <div class="idx-hero-glow-follow" id="heroGlow"></div>
+
+            <!-- Circuitos laterais SVG -->
+            <svg class="idx-hero-circuit left" width="24" viewBox="0 0 24 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <line x1="12" y1="0" x2="12" y2="60" stroke="#FFD700" stroke-width="1"/>
+                <circle cx="12" cy="62" r="3" stroke="#FFD700" stroke-width="1"/>
+                <line x1="12" y1="65" x2="12" y2="90" stroke="#FFD700" stroke-width="1"/>
+                <line x1="12" y1="90" x2="2" y2="100" stroke="#FFD700" stroke-width="1"/>
+                <line x1="12" y1="90" x2="22" y2="100" stroke="#FFD700" stroke-width="1"/>
+                <circle cx="2"  cy="102" r="2" fill="#FFD700" stroke="none"/>
+                <circle cx="22" cy="102" r="2" fill="#FFD700" stroke="none"/>
+                <line x1="12" y1="65" x2="12" y2="200" stroke="#FFD700" stroke-width="1" stroke-dasharray="4 8" opacity="0.4"/>
+            </svg>
+            <svg class="idx-hero-circuit right" width="24" viewBox="0 0 24 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <line x1="12" y1="0" x2="12" y2="60" stroke="#FFD700" stroke-width="1"/>
+                <circle cx="12" cy="62" r="3" stroke="#FFD700" stroke-width="1"/>
+                <line x1="12" y1="65" x2="12" y2="90" stroke="#FFD700" stroke-width="1"/>
+                <line x1="12" y1="90" x2="2"  y2="100" stroke="#FFD700" stroke-width="1"/>
+                <line x1="12" y1="90" x2="22" y2="100" stroke="#FFD700" stroke-width="1"/>
+                <circle cx="2"  cy="102" r="2" fill="#FFD700" stroke="none"/>
+                <circle cx="22" cy="102" r="2" fill="#FFD700" stroke="none"/>
+                <line x1="12" y1="65" x2="12" y2="200" stroke="#FFD700" stroke-width="1" stroke-dasharray="4 8" opacity="0.4"/>
+            </svg>
+
+            <div class="idx-hero-inner">
+                <div class="idx-hero-eyebrow">
+                    <span class="idx-hero-dot"></span>
+                    Sistema de Absenteísmo · MercadoLivre BA01
+                    <span class="idx-hero-dot"></span>
+                </div>
+
+                <h1 class="idx-hero-title" id="heroTitle" data-text="CHECKPOINT">
+                    <span class="idx-hero-check">
+                        <span class="idx-hero-letter" style="--i:0">C</span><span class="idx-hero-letter" style="--i:1">H</span><span class="idx-hero-letter" style="--i:2">E</span><span class="idx-hero-letter" style="--i:3">C</span><span class="idx-hero-letter" style="--i:4">K</span>
+                    </span><span class="idx-hero-point">
+                        <span class="idx-hero-letter" style="--i:5">P</span><span class="idx-hero-letter" style="--i:6">O</span><span class="idx-hero-letter" style="--i:7">I</span><span class="idx-hero-letter" style="--i:8">N</span><span class="idx-hero-letter" style="--i:9">T</span>
+                    </span>
+                </h1>
+
+                <div class="idx-hero-sub">
+                    <span class="idx-hero-badge">BA01</span>
+                    <span class="idx-hero-meta" id="kpiMes">—</span>
+                    <span class="idx-hero-sep">·</span>
+                    <span class="idx-hero-meta"><span id="kpiHC">—</span> colaboradores</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cards de navegação -->
+        <div class="idx-section-header">
+            <div>
+                <div class="idx-section-title">Acesso rápido</div>
+                <div class="idx-section-sub">Selecione uma funcionalidade</div>
+            </div>
+        </div>
+
+        <div class="idx-cards-grid">
+
+            <a class="idx-card" id="cardChamada" onclick="navegar('chamada')">
+                <div class="idx-card-shine"></div>
+                <div class="idx-card-header">
+                    <div class="idx-card-icon" style="background:rgba(255,215,0,0.13);">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
+                            <rect x="9" y="3" width="6" height="4" rx="1.5"/>
+                            <path d="m9 12 2 2 4-4"/>
+                        </svg>
+                    </div>
+                    <span class="idx-card-tag">Operacional</span>
+                </div>
+                <div class="idx-card-title">Chamada</div>
+                <div class="idx-card-desc">Registre presenças e ausências diárias da equipe</div>
+                <div class="idx-card-footer">
+                    <span class="idx-card-cta">Abrir módulo</span>
+                    <span class="idx-card-arrow">›</span>
+                </div>
+            </a>
+
+            <a class="idx-card" id="cardFlow" onclick="navegar('flow')">
+                <div class="idx-card-shine"></div>
+                <div class="idx-card-header">
+                    <div class="idx-card-icon" style="background:rgba(249,115,22,0.13);">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="5" r="2.5"/>
+                            <circle cx="5"  cy="19" r="2.5"/>
+                            <circle cx="19" cy="19" r="2.5"/>
+                            <path d="M12 7.5v5M12 12.5 6.5 17M12 12.5l5.5 4.5"/>
+                        </svg>
+                    </div>
+                    <span class="idx-card-tag">Operacional</span>
+                </div>
+                <div class="idx-card-title">Visão de Flow</div>
+                <div class="idx-card-desc">Acompanhe em tempo real quem está presente no dia</div>
+                <div class="idx-card-footer">
+                    <span class="idx-card-cta">Abrir módulo</span>
+                    <span class="idx-card-arrow">›</span>
+                </div>
+            </a>
+
+            <a class="idx-card" id="cardAusencia" onclick="navegar('ausencia')">
+                <div class="idx-card-shine"></div>
+                <div class="idx-card-header">
+                    <div class="idx-card-icon" style="background:rgba(14,165,233,0.13);">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="4" width="18" height="18" rx="2.5"/>
+                            <path d="M16 2v4M8 2v4M3 10h18"/>
+                            <path d="M8.5 14.5h.01M12 14.5h.01M15.5 14.5h.01M8.5 18h.01M12 18h.01"/>
+                        </svg>
+                    </div>
+                    <span class="idx-card-tag">Gestão</span>
+                </div>
+                <div class="idx-card-title">Ausências</div>
+                <div class="idx-card-desc">Gerencie férias, afastamentos e banco de horas</div>
+                <div class="idx-card-footer">
+                    <span class="idx-card-cta">Abrir módulo</span>
+                    <span class="idx-card-arrow">›</span>
+                </div>
+            </a>
+
+            <a class="idx-card" id="cardHistorico" onclick="navegar('historico')">
+                <div class="idx-card-shine"></div>
+                <div class="idx-card-header">
+                    <div class="idx-card-icon" style="background:rgba(139,92,246,0.13);">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 3v5h5"/>
+                            <path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/>
+                            <path d="M12 7v5l3.5 2"/>
+                        </svg>
+                    </div>
+                    <span class="idx-card-tag">Operacional</span>
+                </div>
+                <div class="idx-card-title">Histórico</div>
+                <div class="idx-card-desc">Consulte registros e ocorrências de períodos anteriores</div>
+                <div class="idx-card-footer">
+                    <span class="idx-card-cta">Abrir módulo</span>
+                    <span class="idx-card-arrow">›</span>
+                </div>
+            </a>
+
+            <a class="idx-card" id="cardPeople" onclick="navegar('people')">
+                <div class="idx-card-shine"></div>
+                <div class="idx-card-header">
+                    <div class="idx-card-icon" style="background:rgba(59,130,246,0.13);">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                            <circle cx="9" cy="7" r="4"/>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.74"/>
+                        </svg>
+                    </div>
+                    <span class="idx-card-tag">Gestão</span>
+                </div>
+                <div class="idx-card-title">Visão de People</div>
+                <div class="idx-card-desc">Analise o presenteísmo e perfil dos colaboradores</div>
+                <div class="idx-card-footer">
+                    <span class="idx-card-cta">Abrir módulo</span>
+                    <span class="idx-card-arrow">›</span>
+                </div>
+            </a>
+
+            <a class="idx-card" id="cardMatrix"
+               onclick="window.open('https://script.google.com/a/macros/mercadolivre.com/s/AKfycbyCzEjvmDW-ZmaLLK_B0mBWqc0FodOs1vE7KrwziaHD7FU8rOc1LIr6v3fn2Gj0bd_DHg/exec','_blank')">
+                <div class="idx-card-shine"></div>
+                <div class="idx-card-header">
+                    <div class="idx-card-icon" style="background:rgba(16,185,129,0.13);">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3"  y="3"  width="7" height="7" rx="1.5"/>
+                            <rect x="14" y="3"  width="7" height="7" rx="1.5"/>
+                            <rect x="14" y="14" width="7" height="7" rx="1.5"/>
+                            <rect x="3"  y="14" width="7" height="7" rx="1.5"/>
+                        </svg>
+                    </div>
+                    <span class="idx-card-tag">Gestão</span>
+                </div>
+                <div class="idx-card-title">Matrix</div>
+                <div class="idx-card-desc">Visualize contratações e movimentações da equipe</div>
+                <div class="idx-card-footer">
+                    <span class="idx-card-cta">Abrir módulo</span>
+                    <span class="idx-card-arrow">›</span>
+                </div>
+            </a>
+
+            <a class="idx-card" id="cardAcessos" onclick="navegar('acessos')">
+                <div class="idx-card-shine"></div>
+                <div class="idx-card-header">
+                    <div class="idx-card-icon" style="background:rgba(99,102,241,0.13);">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                            <rect x="9" y="11" width="6" height="5" rx="1"/>
+                            <path d="M12 11V9a2 2 0 0 0-4 0v2"/>
+                        </svg>
+                    </div>
+                    <span class="idx-card-tag">Admin</span>
+                </div>
+                <div class="idx-card-title">Acessos</div>
+                <div class="idx-card-desc">Gerencie permissões e níveis de acesso dos usuários</div>
+                <div class="idx-card-footer">
+                    <span class="idx-card-cta">Abrir módulo</span>
+                    <span class="idx-card-arrow">›</span>
+                </div>
+            </a>
+
+            <a class="idx-card" id="cardAvailableTime"
+               onclick="window.open('https://script.google.com/a/macros/mercadolivre.com/s/AKfycby5_dwY0iDwLBQPE2OL3IDzg3U2J9tofBy8E7afm_Iz-WH75G9bhdHeYiCjmR1n8jK8ZQ/exec','_blank')">
+                <div class="idx-card-shine"></div>
+                <div class="idx-card-header">
+                    <div class="idx-card-icon" style="background:rgba(245,158,11,0.13);">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="9"/>
+                            <polyline points="12 7 12 12 15.5 15.5"/>
+                            <path d="M16.5 4.5 C18.5 6 20 8.5 20 11.5"/>
+                        </svg>
+                    </div>
+                    <span class="idx-card-tag">Gestão</span>
+                </div>
+                <div class="idx-card-title">Available Time</div>
+                <div class="idx-card-desc">Visualize e gerencie o available time da equipe</div>
+                <div class="idx-card-footer">
+                    <span class="idx-card-cta">Abrir módulo</span>
+                    <span class="idx-card-arrow">›</span>
+                </div>
+            </a>
+
+        </div>
+    </div><!-- /idx-content -->
+</div><!-- /idx-main -->
+
+<script>
+    const SCRIPT_URL = '<?= scriptUrl ?>';
+
+    // intro removido
+
+    function navegar(pagina) {
+        window.top.location.href = SCRIPT_URL + '?page=' + pagina;
+    }
+
+    // ── SIDEBAR PIN ──────────────────────────────────────────────────
+    (function() {
+        const SB_KEY = 'idx_sb_pinned';
+        const sidebar = document.querySelector('.idx-sidebar');
+        const btn     = document.getElementById('sidebarPinBtn');
+        const body    = document.body;
+
+        function applyPin(pinned) {
+            if (pinned) {
+                sidebar.classList.add('sb-pinned');
+                body.classList.add('sb-open');
+                btn && btn.classList.add('pinned');
+                btn && (btn.title = 'Desafixar sidebar');
+                try { localStorage.setItem(SB_KEY, '1'); } catch(e) {}
+            } else {
+                sidebar.classList.remove('sb-pinned');
+                body.classList.remove('sb-open');
+                btn && btn.classList.remove('pinned');
+                btn && (btn.title = 'Fixar sidebar');
+                try { localStorage.removeItem(SB_KEY); } catch(e) {}
+            }
+        }
+
+        // Restore persisted preference
+        try { if (localStorage.getItem(SB_KEY)) applyPin(true); } catch(e) {}
+
+        window.toggleSidebarPin = function() {
+            applyPin(!sidebar.classList.contains('sb-pinned'));
+        };
+    })();
+
+    // ── HERO: tilt 3D + blobs parallax + letras magnéticas + ripple + partículas ──
+    (function() {
+        const hero    = document.getElementById('idxHero');
+        const glow    = document.getElementById('heroGlow');
+        const title   = document.getElementById('heroTitle');
+        const blobs   = hero ? hero.querySelectorAll('.idx-blob') : [];
+        const letters = hero ? hero.querySelectorAll('.idx-hero-letter') : [];
+        if (!hero) return;
+
+        let raf;
+
+        // ── 1. Tilt 3D + parallax dos blobs + magnética das letras ──
+        hero.addEventListener('mousemove', function(e) {
+            const r  = hero.getBoundingClientRect();
+            const mx = e.clientX - r.left;
+            const my = e.clientY - r.top;
+            const nx = (mx / r.width)  - 0.5;
+            const ny = (my / r.height) - 0.5;
+
+            cancelAnimationFrame(raf);
+            raf = requestAnimationFrame(() => {
+                hero.style.transform =
+                    `perspective(1100px) rotateX(${ny * -6}deg) rotateY(${nx * 9}deg) scale3d(1.008,1.008,1.008)`;
+
+                blobs.forEach((b, i) => {
+                    const depth = (i + 1) * 18;
+                    b.style.transform = `translate(${nx * depth}px, ${ny * depth}px)`;
+                });
+
+                letters.forEach(letter => {
+                    const lr  = letter.getBoundingClientRect();
+                    const lx  = lr.left + lr.width  / 2 - r.left;
+                    const ly  = lr.top  + lr.height / 2 - r.top;
+                    const dx  = mx - lx, dy = my - ly;
+                    const d   = Math.sqrt(dx*dx + dy*dy);
+                    const MAX = 90;
+                    if (d < MAX && d > 0) {
+                        const f = (MAX - d) / MAX;
+                        letter.style.transform =
+                            `translate(${-(dx/d)*f*8}px, ${-(dy/d)*f*6}px)`;
+                    } else {
+                        letter.style.transform = '';
+                    }
+                });
+
+                if (glow) {
+                    glow.style.left    = mx + 'px';
+                    glow.style.top     = my + 'px';
+                    glow.style.opacity = '1';
+                }
+            });
+        });
+
+        // Reset suave ao sair
+        hero.addEventListener('mouseleave', function() {
+            cancelAnimationFrame(raf);
+            hero.style.transition = 'transform 0.7s cubic-bezier(0.23,1,0.32,1), box-shadow 0.4s ease';
+            hero.style.transform  = 'perspective(1100px) rotateX(0deg) rotateY(0deg) scale3d(1,1,1)';
+            blobs.forEach(b => b.style.transform = '');
+            letters.forEach(l => l.style.transform = '');
+            if (glow) glow.style.opacity = '0';
+            setTimeout(() => hero.style.transition = 'box-shadow 0.4s ease', 700);
+        });
+
+        // ── 2. Ripple no clique ──────────────────────────────
+        hero.addEventListener('click', function(e) {
+            const r = hero.getBoundingClientRect();
+            const rpl = document.createElement('div');
+            rpl.className = 'idx-hero-ripple';
+            rpl.style.left = (e.clientX - r.left) + 'px';
+            rpl.style.top  = (e.clientY - r.top)  + 'px';
+            hero.appendChild(rpl);
+            rpl.addEventListener('animationend', () => rpl.remove());
+        });
+
+        // ── 3. Glitch periódico ──────────────────────────────
+        function triggerGlitch() {
+            if (!title) return;
+            title.classList.add('glitch');
+            setTimeout(() => title.classList.remove('glitch'), 160);
+            setTimeout(triggerGlitch, Math.random() * 9000 + 5000);
+        }
+        setTimeout(triggerGlitch, 4000);
+
+        // ── 4. CANVAS AURORA + CHECKMARK ────────────────────
+        (function() {
+            const cvs = document.getElementById('heroAurora');
+            if (!cvs) return;
+            const ctx = cvs.getContext('2d');
+            const dpr = window.devicePixelRatio || 1;
+            let W, H, t = 0;
+            let mx = 0.5, my = 0.4;
+
+            function resize() {
+                const r = hero.getBoundingClientRect();
+                W = cvs.width  = r.width  * dpr;
+                H = cvs.height = r.height * dpr;
+                cvs.style.width  = r.width  + 'px';
+                cvs.style.height = r.height + 'px';
+            }
+            resize();
+            window.addEventListener('resize', resize);
+
+            hero.addEventListener('mousemove', function(e) {
+                const r = hero.getBoundingClientRect();
+                mx = (e.clientX - r.left) / r.width;
+                my = (e.clientY - r.top)  / r.height;
+            });
+            hero.addEventListener('mouseleave', function() { mx = 0.5; my = 0.4; });
+
+            // ── Fontes de luz aurora ─────────────────────────────
+            const SOURCES = [
+                { ox:0.18, oy:0.35, ax:0.22, ay:0.20, spd:0.50, ph:0.0, r:0.70, rgb:[255,200,0],  a:0.28 },
+                { ox:0.78, oy:0.60, ax:0.14, ay:0.22, spd:0.37, ph:1.5, r:0.60, rgb:[99,102,241], a:0.24 },
+                { ox:0.50, oy:0.22, ax:0.24, ay:0.18, spd:0.65, ph:3.0, r:0.55, rgb:[56,189,248], a:0.22 },
+                { ox:0.82, oy:0.25, ax:0.12, ay:0.24, spd:0.42, ph:4.5, r:0.50, rgb:[139,92,246], a:0.20 },
+                { ox:0.22, oy:0.72, ax:0.18, ay:0.16, spd:0.58, ph:2.2, r:0.48, rgb:[16,185,129], a:0.18 },
+                { ox:0.60, oy:0.55, ax:0.10, ay:0.14, spd:0.80, ph:0.8, r:0.40, rgb:[249,115,22], a:0.15 },
+            ];
+
+            // ── Estado do checkmark ──────────────────────────────
+            var ckProgress = 0, ckAlpha = 0, ckTimer = 0;
+            var ckPhase = 'delay';
+            var CK = { delay:55, draw:110, hold:210, fade:75, wait:80 };
+
+            function updateCheck() {
+                ckTimer++;
+                if (ckPhase === 'delay') {
+                    if (ckTimer >= CK.delay) { ckPhase = 'draw'; ckTimer = 0; }
+                } else if (ckPhase === 'draw') {
+                    // easeInOut
+                    var p = ckTimer / CK.draw;
+                    ckProgress = p < 0.5 ? 2*p*p : -1+(4-2*p)*p;
+                    ckAlpha    = Math.min(p * 3, 1) * 0.88;
+                    if (ckTimer >= CK.draw) { ckProgress = 1; ckAlpha = 0.88; ckPhase = 'hold'; ckTimer = 0; }
+                } else if (ckPhase === 'hold') {
+                    ckProgress = 1; ckAlpha = 0.88;
+                    if (ckTimer >= CK.hold) { ckPhase = 'fade'; ckTimer = 0; }
+                } else if (ckPhase === 'fade') {
+                    ckAlpha = 0.88 * Math.pow(1 - ckTimer / CK.fade, 2);
+                    if (ckTimer >= CK.fade) { ckAlpha = 0; ckProgress = 0; ckPhase = 'wait'; ckTimer = 0; }
+                } else if (ckPhase === 'wait') {
+                    if (ckTimer >= CK.wait) { ckPhase = 'draw'; ckTimer = 0; }
+                }
+            }
+
+            function drawCheckmark() {
+                if (ckAlpha < 0.01) return;
+
+                // Geometria do ✓ — centralizado no hero
+                var sc = Math.min(W, H) * 0.46;
+                var cx = W * 0.50, cy = H * 0.50;
+                var p1 = [cx - sc*0.42, cy + sc*0.04];
+                var p2 = [cx - sc*0.10, cy + sc*0.35];
+                var p3 = [cx + sc*0.48, cy - sc*0.38];
+
+                var d1    = Math.hypot(p2[0]-p1[0], p2[1]-p1[1]);
+                var d2    = Math.hypot(p3[0]-p2[0], p3[1]-p2[1]);
+                var total = d1 + d2;
+                var drawn = total * ckProgress;
+
+                ctx.save();
+                ctx.globalCompositeOperation = 'screen';
+                ctx.lineCap  = 'round';
+                ctx.lineJoin = 'round';
+                ctx.setLineDash([drawn, total + 2]);
+                ctx.lineDashOffset = 0;
+
+                function stroke(lw, alpha, color) {
+                    ctx.globalAlpha = ckAlpha * alpha;
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth   = lw;
+                    ctx.beginPath();
+                    ctx.moveTo(p1[0], p1[1]);
+                    ctx.lineTo(p2[0], p2[1]);
+                    ctx.lineTo(p3[0], p3[1]);
+                    ctx.stroke();
+                }
+
+                // Bloom em camadas — cria o efeito de luz real
+                stroke(72, 0.04, '#FFD700');  // halo externo
+                stroke(40, 0.09, '#FFD700');  // glow largo
+                stroke(20, 0.22, '#FFE066');  // glow médio
+                stroke(9,  0.55, '#FFE566');  // glow fino
+                stroke(3,  0.95, '#FFFFFF');  // núcleo brilhante
+
+                ctx.restore();
+            }
+
+            // ── Loop principal ───────────────────────────────────
+            function draw() {
+                t += 0.005;
+                ctx.clearRect(0, 0, W, H);
+                ctx.globalCompositeOperation = 'screen';
+
+                SOURCES.forEach(function(s) {
+                    var px  = (s.ox + Math.sin(t * s.spd + s.ph) * s.ax) * W;
+                    var py  = (s.oy + Math.cos(t * s.spd * 0.75 + s.ph * 1.3) * s.ay) * H;
+                    var rad = s.r * Math.min(W, H);
+                    var g   = ctx.createRadialGradient(px, py, 0, px, py, rad);
+                    g.addColorStop(0,    'rgba('+s.rgb+','+s.a+')');
+                    g.addColorStop(0.35, 'rgba('+s.rgb+','+(s.a*0.45)+')');
+                    g.addColorStop(1,    'rgba(0,0,0,0)');
+                    ctx.fillStyle = g;
+                    ctx.fillRect(0, 0, W, H);
+                });
+
+                // Cursor glow
+                var cg = ctx.createRadialGradient(mx*W, my*H, 0, mx*W, my*H, 0.38*Math.min(W,H));
+                cg.addColorStop(0,   'rgba(255,215,0,0.22)');
+                cg.addColorStop(0.5, 'rgba(255,180,0,0.08)');
+                cg.addColorStop(1,   'rgba(0,0,0,0)');
+                ctx.fillStyle = cg;
+                ctx.fillRect(0, 0, W, H);
+
+                ctx.globalCompositeOperation = 'source-over';
+
+                // Checkmark sobre a aurora
+                updateCheck();
+                drawCheckmark();
+
+                requestAnimationFrame(draw);
+            }
+            draw();
+        })();
+    })();
+
+    // ── CARDS: tilt 3D individual ────────────────────────────
+    (function() {
+        document.querySelectorAll('.idx-card').forEach(function(card) {
+            let rafCard;
+            card.addEventListener('mousemove', function(e) {
+                const r  = card.getBoundingClientRect();
+                const x  = (e.clientX - r.left) / r.width  - 0.5;
+                const y  = (e.clientY - r.top)  / r.height - 0.5;
+                cancelAnimationFrame(rafCard);
+                rafCard = requestAnimationFrame(() => {
+                    card.style.transform =
+                        `translateY(-5px) perspective(700px) rotateX(${y * -7}deg) rotateY(${x * 9}deg)`;
+                });
+            });
+            card.addEventListener('mouseleave', function() {
+                cancelAnimationFrame(rafCard);
+                card.style.transition = 'transform 0.6s cubic-bezier(0.23,1,0.32,1), box-shadow 0.22s ease, border-color 0.22s';
+                card.style.transform = '';
+                setTimeout(() => {
+                    card.style.transition = 'box-shadow 0.22s ease, border-color 0.22s, transform 0.5s cubic-bezier(0.23,1,0.32,1)';
+                }, 600);
+            });
+        });
+    })();
+
+    // ── Menu mobile ──────────────────────────────────────────
+    const idxSidebar   = document.querySelector('.idx-sidebar');
+    const idxOverlay   = document.getElementById('idxOverlay');
+    const idxMobileBtn = document.getElementById('idxMobileMenuBtn');
+
+    function abrirSidebarMobile() {
+        idxSidebar.classList.add('mobile-open');
+        idxOverlay.classList.add('active');
+    }
+    function fecharSidebarMobile() {
+        idxSidebar.classList.remove('mobile-open');
+        idxOverlay.classList.remove('active');
+    }
+
+    if (idxMobileBtn) idxMobileBtn.addEventListener('click', abrirSidebarMobile);
+    if (idxOverlay)   idxOverlay.addEventListener('click', fecharSidebarMobile);
+
+    // ── Theme Toggle + Pin ────────────────────────────────────
+    function _applyToggleIcons(light) {
+        const tog = document.getElementById('idxThemeToggle');
+        if (tog) tog.classList.toggle('theme-light', light);
+        const thumb = document.querySelector('#idxThemeToggle .toggle-thumb');
+        if (thumb) thumb.style.transform = light ? 'translateX(14px)' : '';
+        const track = document.querySelector('#idxThemeToggle .toggle-track');
+        if (track) track.style.background = light ? '#6366f1' : '';
+    }
+
+    (function() {
+        const saved  = localStorage.getItem('checkpointTheme');
+        const pinned = localStorage.getItem('checkpointThemePinned') === 'true';
+        const pinEl  = document.getElementById('idxThemePin');
+        const isLight = saved === 'light';
+
+        document.documentElement.classList.toggle('light-theme', isLight);
+        _applyToggleIcons(isLight);
+
+        if (pinEl) {
+            pinEl.classList.toggle('pinned', pinned);
+            pinEl.title = pinned ? 'Tema fixado — clique para desafixar' : 'Fixar tema preferido';
+        }
+    })();
+
+    function idxToggleTheme() {
+        if (localStorage.getItem('checkpointThemePinned') === 'true') {
+            const pin = document.getElementById('idxThemePin');
+            if (pin) {
+                pin.style.transform = 'scale(1.25) rotate(-20deg)';
+                setTimeout(function() { pin.style.transform = ''; pin.style.transition = ''; }, 280);
+            }
+            return;
+        }
+        const isLight = document.documentElement.classList.toggle('light-theme');
+        _applyToggleIcons(isLight);
+        localStorage.setItem('checkpointTheme', isLight ? 'light' : 'dark');
+    }
+
+    function idxTogglePin() {
+        const wasPinned = localStorage.getItem('checkpointThemePinned') === 'true';
+        const nowPinned = !wasPinned;
+        const pinEl = document.getElementById('idxThemePin');
+        const theme = document.documentElement.classList.contains('light-theme') ? 'light' : 'dark';
+
+        localStorage.setItem('checkpointThemePinned', nowPinned ? 'true' : 'false');
+        if (nowPinned) localStorage.setItem('checkpointTheme', theme);
+
+        if (pinEl) {
+            pinEl.classList.toggle('pinned', nowPinned);
+            pinEl.title = nowPinned ? 'Tema fixado — clique para desafixar' : 'Fixar tema preferido';
+        }
+    }
+
+    let _lastMinute = -1;
+    function idxTick() {
+        const now = new Date();
+        const dias     = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+        const meses    = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+        const mesesFull= ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+        const hh = String(now.getHours()).padStart(2,'0');
+        const mi = String(now.getMinutes()).padStart(2,'0');
+
+        const clockEl = document.getElementById('idxClock');
+        if (clockEl) {
+            clockEl.textContent = `${hh}:${mi}`;
+            /* micro-flash quando o minuto vira */
+            if (now.getMinutes() !== _lastMinute) {
+                _lastMinute = now.getMinutes();
+                clockEl.classList.remove('tick');
+                void clockEl.offsetWidth; /* força reflow para reiniciar a animation */
+                clockEl.classList.add('tick');
+                clockEl.addEventListener('animationend', () => clockEl.classList.remove('tick'), { once: true });
+            }
+        }
+
+        const saudacao = now.getHours() < 12 ? 'Bom dia' : now.getHours() < 18 ? 'Boa tarde' : 'Boa noite';
+        const sEl = document.getElementById('idxSaudacao');
+        if (sEl) sEl.textContent = saudacao;
+
+        const dateEl = document.getElementById('idxChipDate');
+        if (dateEl) dateEl.textContent = `${dias[now.getDay()]} · ${meses[now.getMonth()]}`;
+
+        document.getElementById('kpiMes').textContent = `${mesesFull[now.getMonth()]} ${now.getFullYear()}`;
+    }
+    idxTick();
+    setInterval(idxTick, 1000);
+
+    // ── Reticle boot sequence ─────────────────────────────────
+    (function initReticleBoot() {
+        const ret = document.querySelector('.idx-sb-reticle');
+        if (!ret) return;
+
+        /* 1. Inicia com a classe .booting */
+        ret.classList.add('booting');
+
+        /* 2. Após a sequência completa (~2.7s): remove boot, inicia breathing */
+        setTimeout(() => {
+            const svg = ret.querySelector('.idx-sb-inner svg');
+            ret.classList.remove('booting');
+            /* restaura corners para estado idle */
+            ret.querySelectorAll('.idx-sb-corner').forEach(c => {
+                c.style.opacity = '1';
+                c.style.transform = 'scale(1)';
+                c.style.filter = '';
+            });
+            /* breathing idle no checkmark */
+            if (svg) {
+                svg.style.filter = '';
+                svg.classList.add('sb-breathing');
+            }
+        }, 2750);
+
+        /* 3. Re-scan periódico a cada 28s */
+        setTimeout(function loop() {
+            const retEl = document.querySelector('.idx-sb-reticle');
+            if (!retEl || retEl.classList.contains('booting')) return;
+            retEl.classList.remove('rescanning');
+            void retEl.offsetWidth; /* reflow para reiniciar animation */
+            retEl.classList.add('rescanning');
+            setTimeout(() => retEl.classList.remove('rescanning'), 1400);
+            setTimeout(loop, 28000);
+        }, 28000);
+    })();
+
+
+    // ── Usuário ──────────────────────────────────────────────
+    google.script.run
+        .withSuccessHandler(function(email) {
+            if (!email) return;
+            const nome = email.split('@')[0];
+            document.getElementById('userNameSidebar').textContent = nome;
+            const partes = nome.split('.');
+            // Primeiro nome capitalizado para a saudação
+            const primeiroNome = partes[0]
+                ? partes[0].charAt(0).toUpperCase() + partes[0].slice(1)
+                : nome;
+            const nomeEl = document.getElementById('idxNomeUsuario');
+            if (nomeEl) nomeEl.textContent = primeiroNome;
+            const iniciais = partes.length >= 2
+                ? (partes[0][0] + partes[1][0]).toUpperCase()
+                : nome.substring(0,2).toUpperCase();
+            document.getElementById('userAvatar').textContent = iniciais;
+            // Chip avatar
+            const chipAv = document.getElementById('idxAvChip');
+            if (chipAv) chipAv.textContent = iniciais;
+        })
+        .withFailureHandler(function() {})
+        .getUsuarioEmail();
+
+    // ── Total HC real (mesma fonte da chamada) com animação count-up ─────
+    google.script.run
+        .withSuccessHandler(function(lista) {
+            if (lista && lista.length > 0) {
+                // Deduplica por IDGROOT para contar colaboradores únicos
+                const unicos = new Set(lista.map(r => r.idgroot).filter(Boolean));
+                const target  = unicos.size;
+                const el      = document.getElementById('kpiHC');
+                let current   = 0;
+                const duration  = 1400;
+                const startTime = performance.now();
+                function easeOutQuart(t) { return 1 - Math.pow(1 - t, 4); }
+                function tick(now) {
+                    const elapsed  = now - startTime;
+                    const progress = Math.min(elapsed / duration, 1);
+                    current = Math.round(easeOutQuart(progress) * target);
+                    el.textContent = current.toLocaleString('pt-BR');
+                    if (progress < 1) requestAnimationFrame(tick);
+                }
+                requestAnimationFrame(tick);
+            }
+        })
+        .withFailureHandler(function() {})
+        .getRegistrosDiaAtual();
+
+    // ── Permissões ───────────────────────────────────────────
+    google.script.run
+        .withSuccessHandler(function(podeVer) {
+            if (podeVer) {
+                document.getElementById('cardPeople').style.display    = 'flex';
+                document.getElementById('sidebarPeople').style.display = 'flex';
+            }
+        })
+        .withFailureHandler(function() {})
+        .podeVerPagina('people');
+
+    google.script.run
+        .withSuccessHandler(function(podeVer) {
+            if (podeVer) {
+                document.getElementById('cardAcessos').style.display    = 'flex';
+                document.getElementById('sidebarAcessos').style.display = 'flex';
+            }
+        })
+        .withFailureHandler(function() {})
+        .podeVerPagina('acessos');
+
+    ['chamada','flow','ausencia','historico'].forEach(function(page) {
+        const card = document.getElementById('card' + page.charAt(0).toUpperCase() + page.slice(1));
+        if (!card) return;
+        google.script.run
+            .withSuccessHandler(function(podeVer) {
+                card.style.display = podeVer ? 'flex' : 'none';
+            })
+            .withFailureHandler(function() {
+                card.style.display = 'flex';
+            })
+            .podeVerPagina(page);
+    });
+</script>
+
+<!-- ── MODAL SOBRE O SISTEMA ──────────────────────────────────────────── -->
+<div id="sobreOverlay" style="
+  display:none; position:fixed; inset:0; z-index:9000;
+  background:rgba(0,0,0,.72); backdrop-filter:blur(10px);
+  align-items:center; justify-content:center;
+" onclick="if(event.target===this)fecharSobre()">
+
+  <div style="
+    background:rgba(10,16,34,.98);
+    border:1px solid rgba(255,215,0,.18);
+    border-radius:20px;
+    width:380px; max-width:calc(100vw - 32px);
+    box-shadow:0 32px 80px rgba(0,0,0,.7), 0 0 0 1px rgba(255,215,0,.06);
+    overflow:hidden; animation:sobreIn .28s cubic-bezier(.34,1.56,.64,1);
+  ">
+
+    <!-- Faixa dourada no topo -->
+    <div style="height:3px;background:linear-gradient(90deg,transparent,rgba(255,215,0,.8) 30%,rgba(255,215,0,.9) 50%,rgba(99,102,241,.5) 80%,transparent);"></div>
+
+    <!-- Header -->
+    <div style="padding:24px 24px 18px;display:flex;align-items:flex-start;gap:16px;">
+      <!-- Ícone do app -->
+      <div style="
+        width:56px;height:56px;flex-shrink:0;
+        background:rgba(255,215,0,.08);
+        border:1px solid rgba(255,215,0,.22);
+        border-radius:15px;
+        display:flex;align-items:center;justify-content:center;
+      ">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FFD700" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          <polyline points="9 12 11 14 15 10"/>
+        </svg>
+      </div>
+      <!-- Nome e versão -->
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:18px;font-weight:800;color:#fff;letter-spacing:-.3px;margin-bottom:2px;">
+          Checkpoint <span style="color:#FFD700;">BA01</span>
+        </div>
+        <div style="font-size:11px;color:rgba(148,163,184,.5);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Sistema de Absenteísmo</div>
+        <div style="display:inline-flex;align-items:center;gap:5px;padding:2px 9px;background:rgba(255,215,0,.07);border:1px solid rgba(255,215,0,.18);border-radius:6px;">
+          <div style="width:5px;height:5px;background:#4ade80;border-radius:50%;box-shadow:0 0 5px rgba(74,222,128,.6);"></div>
+          <span style="font-size:9px;font-weight:700;color:rgba(255,215,0,.65);letter-spacing:.07em;text-transform:uppercase;">Sistema ativo</span>
+        </div>
+      </div>
+      <!-- Fechar -->
+      <button onclick="fecharSobre()" style="
+        width:28px;height:28px;flex-shrink:0;
+        background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);
+        border-radius:8px;color:rgba(255,255,255,.4);
+        cursor:pointer;font-size:14px;line-height:1;
+        display:flex;align-items:center;justify-content:center;
+        transition:all .18s;
+      " onmouseover="this.style.background='rgba(255,255,255,.12)';this.style.color='#fff'"
+         onmouseout="this.style.background='rgba(255,255,255,.06)';this.style.color='rgba(255,255,255,.4)'">✕</button>
+    </div>
+
+    <!-- Divisor -->
+    <div style="height:1px;background:rgba(255,255,255,.06);margin:0 24px;"></div>
+
+    <!-- Tabela de informações — padrão Google Apps Script -->
+    <div style="padding:18px 24px;">
+      <div style="font-size:9px;font-weight:700;color:rgba(255,215,0,.45);text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px;">Informações do aplicativo</div>
+
+      <!-- Bloco: Desenvolvedores -->
+      <div style="padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05);">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,215,0,.45)" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+          <span style="font-size:11px;color:rgba(148,163,184,.5);text-transform:uppercase;letter-spacing:.06em;font-weight:600;">Desenvolvedores</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <!-- Dev 1 -->
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:rgba(255,215,0,.04);border:1px solid rgba(255,215,0,.09);border-radius:8px;">
+            <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,rgba(255,215,0,.25),rgba(255,215,0,.08));border:1px solid rgba(255,215,0,.3);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <span style="font-size:11px;font-weight:800;color:#FFD700;letter-spacing:-.5px;">GV</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:2px;">
+              <span style="font-size:12.5px;font-weight:800;color:#FFD700;letter-spacing:-.1px;line-height:1.2;">Gabriel Vieira</span>
+              <span style="font-size:10px;color:rgba(148,163,184,.45);font-weight:500;">Desenvolvedor</span>
+              <a href="mailto:gabrielvie.vieira@mercadolivre.com" style="font-size:9.5px;color:rgba(255,215,0,.4);text-decoration:none;font-weight:500;letter-spacing:.01em;" onmouseover="this.style.color='rgba(255,215,0,.8)'" onmouseout="this.style.color='rgba(255,215,0,.4)'">gabrielvie.vieira@mercadolivre.com</a>
+            </div>
+          </div>
+          <!-- Dev 2 -->
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:rgba(255,215,0,.04);border:1px solid rgba(255,215,0,.09);border-radius:8px;">
+            <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,rgba(255,215,0,.25),rgba(255,215,0,.08));border:1px solid rgba(255,215,0,.3);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <span style="font-size:11px;font-weight:800;color:#FFD700;letter-spacing:-.5px;">LL</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:2px;">
+              <span style="font-size:12.5px;font-weight:800;color:#FFD700;letter-spacing:-.1px;line-height:1.2;">Lucas Leal</span>
+              <span style="font-size:10px;color:rgba(148,163,184,.45);font-weight:500;">Desenvolvedor</span>
+              <a href="mailto:lucas.leal@mercadolivre.com" style="font-size:9.5px;color:rgba(255,215,0,.4);text-decoration:none;font-weight:500;letter-spacing:.01em;" onmouseover="this.style.color='rgba(255,215,0,.8)'" onmouseout="this.style.color='rgba(255,215,0,.4)'">lucas.leal@mercadolivre.com</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Linha: Organização -->
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05);">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,215,0,.45)" stroke-width="2" stroke-linecap="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>
+          <span style="font-size:11px;color:rgba(148,163,184,.5);text-transform:uppercase;letter-spacing:.06em;font-weight:600;">Organização</span>
+        </div>
+        <span style="font-size:12px;font-weight:700;color:rgba(255,255,255,.7);">MercadoLibre</span>
+      </div>
+
+      <!-- Linha: Plataforma -->
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05);">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,215,0,.45)" stroke-width="2" stroke-linecap="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          <span style="font-size:11px;color:rgba(148,163,184,.5);text-transform:uppercase;letter-spacing:.06em;font-weight:600;">Plataforma</span>
+        </div>
+        <span style="font-size:12px;font-weight:700;color:rgba(255,255,255,.7);">Google Apps Script</span>
+      </div>
+
+      <!-- Linha: Versão -->
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05);">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,215,0,.45)" stroke-width="2" stroke-linecap="round"><path d="M20.24 12.24a6 6 0 00-8.49-8.49L5 10.5V19h8.5z"/><line x1="16" y1="8" x2="2" y2="22"/><line x1="17.5" y1="15" x2="9" y2="15"/></svg>
+          <span style="font-size:11px;color:rgba(148,163,184,.5);text-transform:uppercase;letter-spacing:.06em;font-weight:600;">Versão</span>
+        </div>
+        <span style="font-size:12px;font-weight:700;color:rgba(255,255,255,.7);">1.0.0</span>
+      </div>
+
+      <!-- Linha: Ano -->
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,215,0,.45)" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <span style="font-size:11px;color:rgba(148,163,184,.5);text-transform:uppercase;letter-spacing:.06em;font-weight:600;">Ano</span>
+        </div>
+        <span style="font-size:12px;font-weight:700;color:rgba(255,255,255,.7);">2026</span>
+      </div>
+    </div>
+
+    <!-- Footer copyright -->
+    <div style="
+      padding:12px 24px 20px;
+      border-top:1px solid rgba(255,255,255,.05);
+      text-align:center;
+    ">
+      <div style="font-size:10px;color:rgba(148,163,184,.28);line-height:1.6;">
+        © 2026 <strong style="color:rgba(255,215,0,.45);font-weight:700;">Gabriel Vieira</strong> · <strong style="color:rgba(255,215,0,.45);font-weight:700;">Lucas Leal</strong> · MercadoLibre<br>
+        Todos os direitos reservados
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<style>
+@keyframes sobreIn {
+  from { opacity:0; transform:scale(.88) translateY(12px); }
+  to   { opacity:1; transform:scale(1)   translateY(0);    }
+}
+
+/* ─── MOBILE ──────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  :root { --sb-w: 52px; --sb-w-open: 200px; }
+  .idx-main { margin-left: var(--sb-w) !important; }
+  .idx-content { padding: 16px 12px 40px; }
+  .idx-cards-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .idx-card { padding: 18px 16px 14px; border-radius: 14px; }
+  .idx-hero { padding: 24px 20px; border-radius: 16px; }
+  .idx-hero-grid { flex-direction: column; gap: 10px; }
+  .idx-nav-section { padding: 0 4px; }
+}
+@media (max-width: 480px) {
+  .idx-cards-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .idx-card { padding: 14px 12px 12px; border-radius: 12px; }
+  .idx-hero { display: none; }
+}
+</style>
+
+<script>
+function abrirSobre() {
+  const el = document.getElementById('sobreOverlay');
+  el.style.display = 'flex';
+  requestAnimationFrame(() => { el.style.opacity = '1'; });
+}
+function fecharSobre() {
+  document.getElementById('sobreOverlay').style.display = 'none';
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') fecharSobre(); });
+</script>
+
+</body>
+</html>

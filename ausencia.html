@@ -1,0 +1,1468 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ausências Programadas — Checkpoint BA01</title>
+  <?!= include('style') ?>
+  <style>
+/* ─── Reset & Base ─────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0; padding: 0;
+  background: #0f172a;
+  color: #e2e8f0;
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  min-height: 100vh;
+}
+
+/* ─── Topbar ────────────────────────────────────────────────────── */
+.aus-topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 24px; height: 56px;
+  background: rgba(10,16,34,.98);
+  border-bottom: 1px solid rgba(255,255,255,.05);
+  position: sticky; top: 0; z-index: 200;
+  backdrop-filter: blur(12px);
+  position: relative;
+}
+.aus-topbar::after {
+  content:''; position:absolute; bottom:0; left:0; right:0; height:2px;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,215,0,.75) 18%, rgba(99,102,241,.6) 48%, rgba(56,189,248,.6) 72%, rgba(255,215,0,.45) 90%, transparent 100%);
+  background-size:300% 100%; animation:ausFlow 7s ease-in-out infinite; pointer-events:none;
+}
+@keyframes ausFlow { 0%,100%{background-position:0%;opacity:.6} 50%{background-position:100%;opacity:1} }
+.aus-tb-left { display: flex; align-items: center; gap: 12px; }
+.aus-tb-icon {
+  width: 32px; height: 32px;
+  background: rgba(255,215,0,.12);
+  border: 1px solid rgba(255,215,0,.25);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px;
+}
+.aus-tb-brand { font-size: 16px; font-weight: 700; color: #fff; letter-spacing: -.3px; }
+.aus-tb-brand span { color: #FFD700; }
+.aus-tb-right { display: flex; align-items: center; gap: 12px; }
+
+/* ── Créditos Dev ─────────────────────────────────────────── */
+.dev-info-btn {
+  position:relative; background:none; border:none; cursor:default;
+  color:rgba(148,163,184,.3); padding:3px 5px; font-size:14px; line-height:1;
+  border-radius:4px; transition:color .2s; display:flex; align-items:center;
+}
+.dev-info-btn:hover { color:rgba(255,215,0,.65); }
+.dev-info-tooltip {
+  position:absolute; right:0; top:calc(100% + 8px);
+  background:rgba(10,16,34,.98); border:1px solid rgba(255,215,0,.14);
+  border-radius:8px; padding:9px 14px; white-space:nowrap; font-size:11px;
+  color:rgba(226,232,240,.65); pointer-events:none; opacity:0;
+  transform:translateY(-4px); transition:opacity .18s,transform .18s;
+  z-index:9999; box-shadow:0 8px 24px rgba(0,0,0,.45);
+}
+.dev-info-btn:hover .dev-info-tooltip { opacity:1; transform:translateY(0); }
+.dev-footer {
+  text-align:center; padding:9px 0; font-size:10px;
+  color:rgba(148,163,184,.2); border-top:1px solid rgba(255,255,255,.04);
+  letter-spacing:.03em;
+}
+.aus-clock {
+  font-size: 12px; font-weight: 600;
+  color: rgba(255,255,255,.45);
+  font-variant-numeric: tabular-nums; letter-spacing: .5px;
+}
+.aus-btn-ghost {
+  display: flex; align-items: center; gap: 6px;
+  padding: 0 14px; height: 32px; border-radius: 8px;
+  font-size: 12px; font-weight: 600; cursor: pointer;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.1);
+  color: #e2e8f0; transition: all .2s;
+  text-decoration: none;
+}
+.aus-btn-ghost:hover { background: rgba(255,255,255,.1); color: #fff; }
+.aus-btn-ghost svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+
+/* ─── Layout ────────────────────────────────────────────────────── */
+.aus-body { padding: 28px 24px; max-width: 1000px; margin: 0 auto; }
+
+/* ─── Page Title ────────────────────────────────────────────────── */
+.aus-page-header { margin-bottom: 24px; }
+.aus-page-title { font-size: 22px; font-weight: 700; color: #fff; margin: 0 0 4px; }
+.aus-page-title span { color: #FFD700; }
+.aus-page-sub { font-size: 13px; color: rgba(255,255,255,.35); margin: 0; }
+
+/* ─── Tabs ──────────────────────────────────────────────────────── */
+.aus-tabs {
+  display: flex; gap: 4px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 12px; padding: 4px;
+  margin-bottom: 24px; width: fit-content;
+}
+.aus-tab-btn {
+  padding: 8px 20px; border: none; border-radius: 8px;
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  background: none; color: rgba(255,255,255,.45);
+  transition: all .2s; display: flex; align-items: center; gap: 7px;
+}
+.aus-tab-btn svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+.aus-tab-btn.active {
+  background: rgba(255,215,0,.12);
+  color: #FFD700;
+  border: 1px solid rgba(255,215,0,.2);
+}
+.aus-tab-btn:not(.active):hover { color: rgba(255,255,255,.7); background: rgba(255,255,255,.05); }
+.aus-tab-panel { display: none; }
+.aus-tab-panel.active { display: block; }
+
+/* ─── Glass Card ────────────────────────────────────────────────── */
+.aus-card {
+  background: rgba(10,16,34,.97);
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 16px; padding: 28px;
+  backdrop-filter: blur(12px);
+}
+
+/* ─── Form ──────────────────────────────────────────────────────── */
+.form-section-title {
+  font-size: 11px; font-weight: 700; letter-spacing: .08em;
+  color: rgba(255,255,255,.3); text-transform: uppercase;
+  margin: 0 0 16px; padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+.form-group { margin-bottom: 18px; }
+.form-group label {
+  display: block; font-size: 11px; font-weight: 700;
+  color: rgba(255,255,255,.5); text-transform: uppercase;
+  letter-spacing: .06em; margin-bottom: 7px;
+}
+.form-group label .req { color: #FFD700; margin-left: 2px; }
+.form-group input,
+.form-group select {
+  width: 100%; padding: 10px 14px;
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 10px; color: #e2e8f0;
+  font-size: 14px; font-family: inherit;
+  transition: all .2s; outline: none;
+}
+.form-group input::placeholder { color: rgba(255,255,255,.25); }
+.form-group input:focus,
+.form-group select:focus {
+  border-color: rgba(255,215,0,.5);
+  background: rgba(255,215,0,.05);
+  box-shadow: 0 0 0 3px rgba(255,215,0,.08);
+}
+.form-group input:disabled,
+.form-group select:disabled {
+  background: rgba(255,255,255,.03);
+  color: rgba(255,255,255,.3);
+  cursor: not-allowed;
+  border-color: rgba(255,255,255,.06);
+}
+.form-group select option { background: #0f172a; color: #e2e8f0; }
+.form-row { display: flex; gap: 16px; }
+.form-row .form-group { flex: 1; }
+
+/* Autocomplete */
+.autocomplete-wrap { position: relative; }
+.autocomplete-list {
+  position: absolute; z-index: 300;
+  background: #0d1a2e;
+  border: 1px solid rgba(255,215,0,.2);
+  border-radius: 12px;
+  max-height: 220px; overflow-y: auto;
+  box-shadow: 0 12px 32px rgba(0,0,0,.5);
+  width: 100%; top: calc(100% + 6px); left: 0;
+  display: none;
+}
+.autocomplete-list.show { display: block; }
+.autocomplete-item {
+  padding: 10px 14px; cursor: pointer;
+  font-size: 13px; color: #e2e8f0;
+  border-bottom: 1px solid rgba(255,255,255,.05);
+  display: flex; align-items: center; justify-content: space-between;
+  transition: background .15s;
+}
+.autocomplete-item:hover { background: rgba(255,215,0,.08); }
+.autocomplete-item:last-child { border-bottom: none; }
+.autocomplete-item .item-setor {
+  font-size: 11px; color: rgba(255,255,255,.35);
+  background: rgba(255,255,255,.06);
+  padding: 2px 8px; border-radius: 10px;
+}
+
+/* Chips de justificativa */
+.just-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.just-chip {
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 14px; border-radius: 10px;
+  font-size: 12px; font-weight: 600; cursor: pointer;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.1);
+  color: rgba(255,255,255,.5); transition: all .2s;
+  user-select: none;
+}
+.just-chip:hover { background: rgba(255,255,255,.1); color: rgba(255,255,255,.8); }
+.just-chip.selected { border-color: rgba(255,215,0,.5); background: rgba(255,215,0,.12); color: #FFD700; }
+.just-chip svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+/* Hidden select para chips */
+#inputJustificativa { display: none; }
+
+/* Btn salvar */
+.btn-salvar {
+  width: 100%; height: 46px; border: none; border-radius: 12px;
+  background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+  color: #030713; font-size: 14px; font-weight: 700;
+  cursor: pointer; transition: all .25s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  margin-top: 8px; letter-spacing: .02em;
+}
+.btn-salvar:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(255,215,0,.25); }
+.btn-salvar:active { transform: translateY(0); }
+.btn-salvar:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+.btn-salvar svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2.5; stroke-linecap: round; }
+
+/* Auto-fill badge */
+.auto-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 10px; font-weight: 700; letter-spacing: .05em;
+  color: rgba(255,215,0,.6); background: rgba(255,215,0,.08);
+  border: 1px solid rgba(255,215,0,.15);
+  padding: 2px 7px; border-radius: 8px; margin-left: 6px; vertical-align: middle;
+}
+
+/* ─── Stats Cards ───────────────────────────────────────────────── */
+.aus-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+.aus-stat-card {
+  background: rgba(10,16,34,.97);
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 12px; padding: 16px 18px;
+  display: flex; align-items: center; gap: 14px;
+}
+.aus-stat-ico {
+  width: 38px; height: 38px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.aus-stat-ico svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+.aus-stat-ico.gold { background: rgba(255,215,0,.12); color: #FFD700; }
+.aus-stat-ico.blue { background: rgba(255,255,255,.06); color: rgba(148,163,184,.6); }
+.aus-stat-ico.green { background: rgba(74,222,128,.12); color: #4ade80; }
+.aus-stat-ico.orange { background: rgba(251,146,60,.12); color: #fb923c; }
+.aus-stat-info {}
+.aus-stat-val { font-size: 22px; font-weight: 700; color: #fff; line-height: 1; }
+.aus-stat-lbl { font-size: 11px; color: rgba(255,255,255,.35); margin-top: 4px; font-weight: 500; }
+
+/* ─── Filter Bar ────────────────────────────────────────────────── */
+.aus-filter-bar {
+  display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+  margin-bottom: 16px;
+}
+.aus-filter-select,
+.aus-filter-input {
+  padding: 8px 12px;
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 9px; color: #e2e8f0;
+  font-size: 13px; font-family: inherit;
+  outline: none; transition: all .2s;
+}
+.aus-filter-select option { background: #0f172a; }
+.aus-filter-select:focus,
+.aus-filter-input:focus {
+  border-color: rgba(255,215,0,.4);
+  background: rgba(255,215,0,.04);
+}
+.aus-filter-input::placeholder { color: rgba(255,255,255,.25); }
+.aus-filter-input { min-width: 210px; }
+.aus-filter-input.has-value { border-color: rgba(255,215,0,.3); background: rgba(255,215,0,.04); }
+.aus-filter-btn {
+  padding: 8px 14px; border-radius: 9px; border: none;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.1);
+  color: rgba(255,255,255,.6); font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: all .2s; display: flex; align-items: center; gap: 6px;
+}
+.aus-filter-btn:hover { background: rgba(255,255,255,.12); color: #fff; }
+.aus-filter-btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+.aus-filter-count {
+  margin-left: auto; font-size: 12px; color: rgba(255,255,255,.3); font-weight: 500;
+  display: flex; align-items: center; gap: 4px;
+}
+.aus-filter-count strong { color: rgba(255,215,0,.7); font-weight: 700; }
+
+/* ─── Table ─────────────────────────────────────────────────────── */
+.aus-table-wrap {
+  background: rgba(10,16,34,.97);
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 16px; overflow: hidden;
+}
+table { width: 100%; border-collapse: collapse; }
+thead tr { background: rgba(255,255,255,.03); }
+th {
+  padding: 11px 14px; text-align: left;
+  font-size: 11px; font-weight: 700; color: rgba(255,255,255,.35);
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  text-transform: uppercase; letter-spacing: .06em;
+  white-space: nowrap; cursor: pointer; user-select: none;
+  transition: color .2s;
+}
+th:hover { color: rgba(255,255,255,.6); }
+th.sorted { color: #FFD700; }
+th .sort-ico { margin-left: 4px; opacity: .5; font-size: 9px; }
+th.sorted .sort-ico { opacity: 1; }
+td {
+  padding: 11px 14px;
+  border-bottom: 1px solid rgba(255,255,255,.04);
+  font-size: 13px; vertical-align: middle; color: #d1d5db;
+}
+tr:last-child td { border-bottom: none; }
+tbody tr { transition: background .15s; }
+tbody tr:hover td { background: rgba(255,215,0,.03); }
+
+.col-nome strong { color: #fff; font-weight: 600; }
+.col-nome .sub { font-size: 11px; color: rgba(255,255,255,.3); display: block; margin-top: 1px; }
+
+/* Tags justificativa dark */
+.tag-just {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 10px; border-radius: 20px;
+  font-size: 11px; font-weight: 700; white-space: nowrap;
+}
+.tag-FI   { background: rgba(248,113,113,.12); color: #f87171; border: 1px solid rgba(248,113,113,.2); }
+.tag-FJ   { background: rgba(251,146,60,.12);  color: #fb923c; border: 1px solid rgba(251,146,60,.2); }
+.tag-AF   { background: rgba(251,113,133,.12); color: #fb7185; border: 1px solid rgba(251,113,133,.2); }
+.tag-BH   { background: rgba(74,222,128,.12);  color: #4ade80; border: 1px solid rgba(74,222,128,.2); }
+.tag-FE   { background: rgba(56,189,248,.12);  color: #38bdf8; border: 1px solid rgba(56,189,248,.2); }
+.tag-FR   { background: rgba(129,140,248,.12); color: #818cf8; border: 1px solid rgba(129,140,248,.2); }
+.tag-DE   { background: rgba(148,163,184,.1);  color: #94a3b8; border: 1px solid rgba(148,163,184,.15); }
+.tag-DSR  { background: rgba(148,163,184,.1);  color: #94a3b8; border: 1px solid rgba(148,163,184,.15); }
+.tag-OP   { background: rgba(251,191,36,.12);  color: #fbbf24; border: 1px solid rgba(251,191,36,.2); }
+.tag-HC   { background: rgba(167,139,250,.12); color: #a78bfa; border: 1px solid rgba(167,139,250,.2); }
+.tag-NS   { background: rgba(148,163,184,.1);  color: #94a3b8; border: 1px solid rgba(148,163,184,.15); }
+
+.col-dias {
+  font-size: 14px; font-weight: 700;
+  color: #FFD700; text-align: center;
+}
+.col-data { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+.btn-del {
+  background: none; border: none;
+  color: rgba(251,113,133,.5); cursor: pointer;
+  padding: 5px 8px; border-radius: 7px;
+  transition: all .2s; display: flex; align-items: center; justify-content: center;
+}
+.btn-del:hover { background: rgba(251,113,133,.1); color: #fb7185; }
+.btn-del svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+
+.empty-state {
+  text-align: center; padding: 52px 20px;
+}
+.empty-state .empty-ico { display: none; }
+.aus-es-wrap {
+  display: inline-flex; flex-direction: column; align-items: center; gap: 0;
+}
+.aus-es-icon {
+  width: 52px; height: 52px; border-radius: 14px; margin: 0 auto 14px;
+  background: rgba(99,102,241,.08); border: 1px solid rgba(99,102,241,.2);
+  display: flex; align-items: center; justify-content: center;
+  animation: ausEsPulse 3.5s ease-in-out infinite;
+}
+.aus-es-icon svg {
+  width: 22px; height: 22px; fill: none; stroke: rgba(129,140,248,.7);
+  stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round;
+}
+@keyframes ausEsPulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(99,102,241,0); }
+  50%      { box-shadow: 0 0 16px 3px rgba(99,102,241,.1); border-color: rgba(99,102,241,.36); }
+}
+.aus-es-title {
+  font-size: 14px; font-weight: 700; color: rgba(226,232,240,.8); margin-bottom: 6px;
+}
+.aus-es-sub {
+  font-size: 12px; color: rgba(148,163,184,.5); line-height: 1.6; max-width: 280px; margin: 0 auto;
+}
+
+/* ─── Loading Overlay ───────────────────────────────────────────── */
+.aus-loading {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.6); z-index: 900;
+  align-items: center; justify-content: center;
+  backdrop-filter: blur(4px);
+}
+.aus-loading.show { display: flex; }
+.aus-loading-box {
+  background: rgba(10,16,34,.97);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 16px; padding: 32px 44px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,.5);
+}
+.aus-spinner {
+  width: 38px; height: 38px;
+  border: 3px solid rgba(255,255,255,.08);
+  border-top-color: #FFD700;
+  border-radius: 50%;
+  animation: spin .8s linear infinite; margin: 0 auto 14px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.aus-loading-msg { font-size: 13px; color: rgba(255,255,255,.5); }
+
+/* ─── Toast ─────────────────────────────────────────────────────── */
+.aus-toast {
+  position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+  padding: 12px 20px; border-radius: 12px;
+  font-weight: 600; font-size: 13px; min-width: 240px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.4);
+  opacity: 0; transform: translateY(8px);
+  transition: all .3s; pointer-events: none;
+  display: flex; align-items: center; gap: 10px;
+}
+.aus-toast.show { opacity: 1; transform: translateY(0); }
+.aus-toast.success { background: rgba(74,222,128,.15); border: 1px solid rgba(74,222,128,.3); color: #4ade80; }
+.aus-toast.error   { background: rgba(251,113,133,.15); border: 1px solid rgba(251,113,133,.3); color: #fb7185; }
+.aus-toast.info    { background: rgba(56,189,248,.15);  border: 1px solid rgba(56,189,248,.3);  color: #38bdf8; }
+.aus-toast svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2.5; flex-shrink: 0; }
+
+/* ─── Confirm Modal ─────────────────────────────────────────────── */
+.aus-modal-bg {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.65); z-index: 800;
+  align-items: center; justify-content: center;
+  backdrop-filter: blur(4px);
+}
+.aus-modal-bg.show { display: flex; }
+.aus-modal {
+  background: rgba(10,16,34,.97);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 16px; padding: 28px 32px; max-width: 380px; width: 90%;
+  box-shadow: 0 20px 60px rgba(0,0,0,.6);
+}
+.aus-modal-ico {
+  width: 44px; height: 44px; border-radius: 12px;
+  background: rgba(251,113,133,.1);
+  border: 1px solid rgba(251,113,133,.2);
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 16px;
+}
+.aus-modal-ico svg { width: 22px; height: 22px; stroke: #fb7185; fill: none; stroke-width: 2; stroke-linecap: round; }
+.aus-modal h3 { margin: 0 0 8px; font-size: 16px; font-weight: 700; color: #fff; text-align: center; }
+.aus-modal p  { margin: 0 0 24px; font-size: 13px; color: rgba(255,255,255,.45); text-align: center; line-height: 1.6; }
+.aus-modal-actions { display: flex; gap: 10px; }
+.aus-modal-cancel {
+  flex: 1; padding: 10px; border-radius: 10px; border: none;
+  background: rgba(255,255,255,.07);
+  border: 1px solid rgba(255,255,255,.1);
+  color: rgba(255,255,255,.6); font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: all .2s;
+}
+.aus-modal-cancel:hover { background: rgba(255,255,255,.12); color: #fff; }
+.aus-modal-confirm {
+  flex: 1; padding: 10px; border-radius: 10px; border: none;
+  background: rgba(251,113,133,.15);
+  border: 1px solid rgba(251,113,133,.3);
+  color: #fb7185; font-size: 13px; font-weight: 700;
+  cursor: pointer; transition: all .2s;
+}
+.aus-modal-confirm:hover { background: rgba(251,113,133,.25); }
+
+/* ─── Responsive ────────────────────────────────────────────────── */
+@media (max-width: 720px) {
+  .aus-stats { grid-template-columns: repeat(2, 1fr); }
+  .form-row { flex-direction: column; gap: 0; }
+  .aus-filter-bar { flex-direction: column; align-items: stretch; }
+  .aus-filter-count { margin-left: 0; }
+}
+
+/* ═══ DESIGN SYSTEM STANDARDIZATION OVERRIDES ═══════════════════ */
+/* Standardize UI chrome: gray at rest, yellow on hover */
+/* Keep semantic data colors: green=present, red=absent/error */
+
+/* Card backgrounds - ensure consistent dark palette */
+.aus-card {
+  background: rgba(13, 13, 13, 0.9) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+.aus-card:hover {
+  border-color: rgba(255, 215, 0, 0.25) !important;
+}
+
+/* Filter buttons - gray at rest, yellow on hover */
+.aus-filter-btn {
+  background: rgba(255, 255, 255, 0.07) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: rgba(255, 255, 255, 0.55) !important;
+}
+.aus-filter-btn:hover {
+  background: #FFD700 !important;
+  color: #000000 !important;
+  border-color: #FFD700 !important;
+}
+
+/* Button ghost style - standardize */
+.aus-btn-ghost {
+  background: rgba(255, 255, 255, 0.07) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: rgba(255, 255, 255, 0.55) !important;
+}
+.aus-btn-ghost:hover {
+  background: #FFD700 !important;
+  color: #000000 !important;
+  border-color: #FFD700 !important;
+}
+
+/* Just chips - gray at rest, yellow when selected */
+.just-chip {
+  background: rgba(255, 255, 255, 0.07) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: rgba(255, 255, 255, 0.55) !important;
+}
+.just-chip:hover {
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+.just-chip.selected {
+  background: #FFD700 !important;
+  border-color: #FFD700 !important;
+  color: #000000 !important;
+}
+
+/* Modal cancel button */
+.aus-modal-cancel {
+  background: rgba(255, 255, 255, 0.07) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: rgba(255, 255, 255, 0.55) !important;
+}
+.aus-modal-cancel:hover {
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: #fff !important;
+}
+
+/* ─── MOBILE ──────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .aus-topbar { padding: 0 12px; height: 52px; }
+  .aus-topbar-actions { gap: 5px; }
+  .aus-btn-ghost { padding: 6px 9px !important; font-size: 11px; gap: 3px; }
+  .aus-btn-ghost svg { width: 12px; height: 12px; }
+  .aus-body { padding: 12px 12px 40px; }
+  .aus-stats { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .aus-stat { padding: 12px; }
+  .aus-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .aus-filter-select, .aus-filter-input { width: 100%; min-width: 0; }
+  .form-row { flex-direction: column; gap: 0; }
+  .aus-card { padding: 16px; }
+}
+@media (max-width: 480px) {
+  .aus-topbar-title { font-size: 0.82rem; }
+  .aus-topbar-sub { display: none; }
+  .aus-stats { grid-template-columns: 1fr 1fr; }
+  .aus-btn-ghost span:last-child { display: none; }
+  .aus-btn-ghost { padding: 6px 8px !important; }
+}
+
+  /* ── Botão Menu Principal ─────────────────────────────────── */
+  #btnMenuHome {
+    height: 42px !important;
+    font-size: 14px !important;
+    padding: 0 22px !important;
+    font-weight: 700 !important;
+    border-radius: 10px !important;
+  }
+  #btnMenuHome svg { width: 16px !important; height: 16px !important; }
+  </style>
+</head>
+<body>
+
+<!-- ─── TOPBAR ──────────────────────────────────────────────────── -->
+<div class="aus-topbar">
+  <div class="aus-tb-left">
+    <div class="aus-tb-icon">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#FFD700" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+        <line x1="16" y1="2" x2="16" y2="6"/>
+        <line x1="8" y1="2" x2="8" y2="6"/>
+        <line x1="3" y1="10" x2="21" y2="10"/>
+        <circle cx="8" cy="15" r="0.5" fill="#FFD700"/>
+        <circle cx="12" cy="15" r="0.5" fill="#FFD700"/>
+        <circle cx="16" cy="15" r="0.5" fill="#FFD700"/>
+      </svg>
+    </div>
+    <div class="aus-tb-brand">Ausências <span>Programadas</span></div>
+  </div>
+  <div class="aus-tb-right">
+    <span id="ausNomeUsuario" style="font-size:12px;color:rgba(255,255,255,.35);font-weight:500;"></span>
+    <div class="aus-clock" id="ausClock"></div>
+    <div class="dev-info-btn">ⓘ
+      <div class="dev-info-tooltip">Desenvolvido por Gabriel Vieira &amp; Lucas Leal · MercadoLibre 2026</div>
+    </div>
+    <button class="aus-btn-ghost" id="btnMenuHome" onclick="window.top.location.href='<?= ScriptApp.getService().getUrl() ?>'">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+      Menu
+    </button>
+    <button class="aus-btn-ghost" style="background:rgba(99,102,241,.1);color:rgba(129,140,248,.85);border:1px solid rgba(99,102,241,.22);"
+            onclick="window.open('<?= ScriptApp.getService().getUrl() ?>&page=glossario','_blank')" title="Termos e Justificativas">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+      Termos
+    </button>
+  </div>
+</div>
+
+<!-- ─── LOADING ─────────────────────────────────────────────────── -->
+<div class="aus-loading" id="ausLoading"></div>
+
+<!-- ─── TOAST ───────────────────────────────────────────────────── -->
+<div class="aus-toast" id="ausToast">
+  <svg id="ausToastIco" viewBox="0 0 24 24"></svg>
+  <span id="ausToastMsg"></span>
+</div>
+
+<!-- ─── MODAL CONFIRMAÇÃO ───────────────────────────────────────── -->
+<div class="aus-modal-bg" id="modalBg">
+  <div class="aus-modal">
+    <div class="aus-modal-ico">
+      <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+    </div>
+    <h3>Excluir Ausência</h3>
+    <p id="modalDesc">Confirma a exclusão desta ausência? Essa ação não pode ser desfeita.</p>
+    <div class="aus-modal-actions">
+      <button class="aus-modal-cancel" onclick="fecharModal()">Cancelar</button>
+      <button class="aus-modal-confirm" id="modalConfirmBtn">Excluir</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── CONTEÚDO ────────────────────────────────────────────────── -->
+<div class="aus-body">
+
+  <div class="aus-page-header">
+    <h1 class="aus-page-title">Ausências <span>Programadas</span></h1>
+    <p class="aus-page-sub">Cadastro e visualização de ausências antecipadas da equipe BA01</p>
+  </div>
+
+  <!-- TABS -->
+  <div class="aus-tabs">
+    <button class="aus-tab-btn active" onclick="trocarTab('cadastrar')" id="tab-btn-cadastrar">
+      <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+      Cadastrar
+    </button>
+    <button class="aus-tab-btn" onclick="trocarTab('visualizar')" id="tab-btn-visualizar">
+      <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      Visualizar
+    </button>
+  </div>
+
+  <!-- ── TAB CADASTRAR ────────────────────────────────────────── -->
+  <div class="aus-tab-panel active" id="tab-cadastrar">
+    <div class="aus-card">
+
+      <div class="form-section-title">Informações do Colaborador</div>
+
+      <div class="form-group">
+        <label>Colaborador <span class="req">*</span></label>
+        <div class="autocomplete-wrap">
+          <input type="text" id="inputColaborador"
+            placeholder="Digite o nome para buscar..."
+            autocomplete="off" oninput="filtrarColaboradores(this.value)" />
+          <div class="autocomplete-list" id="autocompleteList"></div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Gestor <span class="auto-badge">AUTO</span></label>
+          <input type="text" id="inputGestor" placeholder="Preenchido automaticamente" disabled />
+        </div>
+        <div class="form-group">
+          <label>Escala <span class="auto-badge">AUTO</span></label>
+          <input type="text" id="inputEscala" placeholder="Preenchido automaticamente" disabled />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>CAD Responsável</label>
+        <input type="text" id="inputCad" placeholder="Nome do CAD (opcional)" />
+      </div>
+
+      <div style="margin-bottom: 24px;">
+        <div class="form-section-title" style="margin-top: 20px;">Detalhes da Ausência</div>
+
+        <div class="form-group">
+          <label>Justificativa <span class="req">*</span></label>
+          <input type="hidden" id="inputJustificativa" value="">
+          <div class="just-chips" id="justChips">
+            <div class="just-chip" data-val="FJ - Atestado" onclick="selecionarJust(this)">
+              <svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+              FJ · Atestado
+            </div>
+            <div class="just-chip" data-val="FJ - Abono Fretado (atraso)" onclick="selecionarJust(this)">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              FJ · Abono Fretado (atraso)
+            </div>
+            <div class="just-chip" data-val="FJ - Abono Fretado (falta)" onclick="selecionarJust(this)">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              FJ · Abono Fretado (falta)
+            </div>
+            <div class="just-chip" data-val="FJ - Abono Gestor" onclick="selecionarJust(this)">
+              <svg viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+              FJ · Abono Gestor
+            </div>
+            <div class="just-chip" data-val="FJ - Abono Calamidade" onclick="selecionarJust(this)">
+              <svg viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+              FJ · Abono Calamidade
+            </div>
+            <div class="just-chip" data-val="FJ - Abono administrativo" onclick="selecionarJust(this)">
+              <svg viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+              FJ · Abono Administrativo
+            </div>
+            <div class="just-chip" data-val="FJ - Acompanhamento Filho" onclick="selecionarJust(this)">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M9 13a5 5 0 0 0-5 5v2h16v-2a5 5 0 0 0-5-5H9z"/></svg>
+              FJ · Acompanhamento Filho
+            </div>
+            <div class="just-chip" data-val="FJ - Declaração" onclick="selecionarJust(this)">
+              <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              FJ · Declaração
+            </div>
+            <div class="just-chip" data-val="FJ - Exame Periódico Externo" onclick="selecionarJust(this)">
+              <svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+              FJ · Exame Periódico Externo
+            </div>
+            <div class="just-chip" data-val="FJ - Falecimento 1º grau" onclick="selecionarJust(this)">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+              FJ · Falecimento 1º grau
+            </div>
+            <div class="just-chip" data-val="FJ - Falecimento 2º grau" onclick="selecionarJust(this)">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+              FJ · Falecimento 2º grau
+            </div>
+            <div class="just-chip" data-val="FJ - Folga Black" onclick="selecionarJust(this)">
+              <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              FJ · Folga Black
+            </div>
+            <div class="just-chip" data-val="FJ - Licença Casamento" onclick="selecionarJust(this)">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M9 13a5 5 0 0 0-5 5v2h16v-2a5 5 0 0 0-5-5H9z"/></svg>
+              FJ · Lic. Casamento
+            </div>
+            <div class="just-chip" data-val="FJ - Licença Doação de Sangue" onclick="selecionarJust(this)">
+              <svg viewBox="0 0 24 24"><path d="M12 3v1m0 16v1M4.22 4.22l.7.7m14.14 14.14l.7.7M1 12h1m20 0h1M4.22 19.78l.7-.7M18.36 5.64l.7-.7"/><circle cx="12" cy="12" r="4"/></svg>
+              FJ · Doação de Sangue
+            </div>
+            <div class="just-chip" data-val="FJ - Licença Eleitoral" onclick="selecionarJust(this)">
+              <svg viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+              FJ · Lic. Eleitoral
+            </div>
+            <div class="just-chip" data-val="FJ - Licença Mudança" onclick="selecionarJust(this)">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+              FJ · Lic. Mudança
+            </div>
+            <div class="just-chip" data-val="FJ - Licença Paternidade" onclick="selecionarJust(this)">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M9 13a5 5 0 0 0-5 5v2h16v-2a5 5 0 0 0-5-5H9z"/></svg>
+              FJ · Lic. Paternidade
+            </div>
+            <div class="just-chip" data-val="FJ - Extensão Licença Paternidade" onclick="selecionarJust(this)">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M9 13a5 5 0 0 0-5 5v2h16v-2a5 5 0 0 0-5-5H9z"/></svg>
+              FJ · Ext. Lic. Paternidade
+            </div>
+            <div class="just-chip" data-val="FJ - Licença Vestibular" onclick="selecionarJust(this)">
+              <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              FJ · Lic. Vestibular
+            </div>
+            <div class="just-chip" data-val="FJ - Serviço Militar" onclick="selecionarJust(this)">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+              FJ · Serviço Militar
+            </div>
+            <div class="just-chip" data-val="AF - Afastado INSS" onclick="selecionarJust(this)">
+              <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              AF · Afastado INSS
+            </div>
+            <div class="just-chip" data-val="AF - Licença Maternidade" onclick="selecionarJust(this)">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M9 13a5 5 0 0 0-5 5v2h16v-2a5 5 0 0 0-5-5H9z"/></svg>
+              AF · Lic. Maternidade
+            </div>
+            <div class="just-chip" data-val="AF - Extensão Licença Maternidade" onclick="selecionarJust(this)">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M9 13a5 5 0 0 0-5 5v2h16v-2a5 5 0 0 0-5-5H9z"/></svg>
+              AF · Ext. Lic. Maternidade
+            </div>
+            <div class="just-chip" data-val="BH - Banco de Horas não planejado" onclick="selecionarJust(this)">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              BH · Banco Horas (n.plan.)
+            </div>
+            <div class="just-chip" data-val="BH - Banco de Horas planejado" onclick="selecionarJust(this)">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              BH · Banco Horas (plan.)
+            </div>
+            <div class="just-chip" data-val="FE - Férias" onclick="selecionarJust(this)">
+              <svg viewBox="0 0 24 24"><path d="M12 3v1m0 16v1M4.22 4.22l.7.7m14.14 14.14l.7.7M1 12h1m20 0h1M4.22 19.78l.7-.7M18.36 5.64l.7-.7"/><circle cx="12" cy="12" r="4"/></svg>
+              FE · Férias
+            </div>
+            <div class="just-chip" data-val="FR - Feriado" onclick="selecionarJust(this)">
+              <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              FR · Feriado
+            </div>
+            <div class="just-chip" data-val="DE - Desligado" onclick="selecionarJust(this)">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+              DE · Desligado
+            </div>
+            <div class="just-chip" data-val="DSR - Escala" onclick="selecionarJust(this)">
+              <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              DSR · Escala
+            </div>
+            <div class="just-chip" data-val="AB - Abandono" onclick="selecionarJust(this)">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+              AB · Abandono
+            </div>
+            <div class="just-chip" data-val="AP - Admissão Postergada" onclick="selecionarJust(this)">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+              AP · Admissão Postergada
+            </div>
+            <div class="just-chip" data-val="SIE - Sinergia Externa" onclick="selecionarJust(this)">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+              SIE · Sinergia Externa
+            </div>
+            <div class="just-chip" data-val="CE - Curso Externo" onclick="selecionarJust(this)">
+              <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              CE · Curso Externo
+            </div>
+            <div class="just-chip" data-val="ON - Onboarding / Primeiro Dia" onclick="selecionarJust(this)">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M9 13a5 5 0 0 0-5 5v2h16v-2a5 5 0 0 0-5-5H9z"/></svg>
+              ON · Onboarding
+            </div>
+            <div class="just-chip" data-val="TR - Treinamentos Diversos" onclick="selecionarJust(this)">
+              <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              TR · Treinamentos
+            </div>
+            <div class="just-chip" data-val="HCD - HC Divergente" onclick="selecionarJust(this)">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+              HCD · HC Divergente
+            </div>
+            <div class="just-chip" data-val="HTF - HC Transferido para outro CAD" onclick="selecionarJust(this)">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+              HTF · HC Transferido
+            </div>
+            <div class="just-chip" data-val="Justificativa fora do padrão" onclick="selecionarJust(this)">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+              Fora do padrão
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Data Início <span class="req">*</span></label>
+            <input type="date" id="inputDataInicio" oninput="calcPreview()" />
+          </div>
+          <div class="form-group">
+            <label>Data Final <span class="req">*</span></label>
+            <input type="date" id="inputDataFim" oninput="calcPreview()" />
+          </div>
+        </div>
+
+        <div id="diasPreview" style="display:none;
+          background: rgba(255,215,0,.06); border: 1px solid rgba(255,215,0,.15);
+          border-radius: 10px; padding: 10px 14px; margin-bottom: 4px;
+          font-size: 13px; color: rgba(255,215,0,.8);
+          display: flex; align-items: center; gap: 8px;">
+          <svg style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;flex-shrink:0;" viewBox="0 0 24 24">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+          <span id="diasPreviewTxt"></span>
+        </div>
+      </div>
+
+      <button class="btn-salvar" id="btnSalvar" onclick="salvarAusencia()">
+        <svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Salvar Ausência
+      </button>
+
+    </div>
+  </div>
+
+  <!-- ── TAB VISUALIZAR ────────────────────────────────────────── -->
+  <div class="aus-tab-panel" id="tab-visualizar">
+
+    <!-- Stats -->
+    <div class="aus-stats">
+      <div class="aus-stat-card">
+        <div class="aus-stat-ico gold">
+          <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <div class="aus-stat-info">
+          <div class="aus-stat-val" id="statTotal">—</div>
+          <div class="aus-stat-lbl">Total de Ausências</div>
+        </div>
+      </div>
+      <div class="aus-stat-card">
+        <div class="aus-stat-ico blue">
+          <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        </div>
+        <div class="aus-stat-info">
+          <div class="aus-stat-val" id="statDias">—</div>
+          <div class="aus-stat-lbl">Total de Dias</div>
+        </div>
+      </div>
+      <div class="aus-stat-card">
+        <div class="aus-stat-ico green">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <div class="aus-stat-info">
+          <div class="aus-stat-val" id="statProx">—</div>
+          <div class="aus-stat-lbl">Próximas (7 dias)</div>
+        </div>
+      </div>
+      <div class="aus-stat-card">
+        <div class="aus-stat-ico orange">
+          <svg viewBox="0 0 24 24"><path d="M12 3v1m0 16v1M4.22 4.22l.7.7m14.14 14.14l.7.7M1 12h1m20 0h1M4.22 19.78l.7-.7M18.36 5.64l.7-.7"/><circle cx="12" cy="12" r="4"/></svg>
+        </div>
+        <div class="aus-stat-info">
+          <div class="aus-stat-val" id="statFerias">—</div>
+          <div class="aus-stat-lbl">Férias no Período</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="aus-filter-bar">
+      <select class="aus-filter-select" id="filtroMes" onchange="carregarAusencias()">
+        <option value="">Todos os meses</option>
+        <option value="1">Janeiro</option>
+        <option value="2">Fevereiro</option>
+        <option value="3">Março</option>
+        <option value="4">Abril</option>
+        <option value="5">Maio</option>
+        <option value="6">Junho</option>
+        <option value="7">Julho</option>
+        <option value="8">Agosto</option>
+        <option value="9">Setembro</option>
+        <option value="10">Outubro</option>
+        <option value="11">Novembro</option>
+        <option value="12">Dezembro</option>
+      </select>
+      <select class="aus-filter-select" id="filtroAno" onchange="carregarAusencias()">
+        <option value="2025">2025</option>
+        <option value="2026" selected>2026</option>
+        <option value="2027">2027</option>
+      </select>
+      <select class="aus-filter-select" id="filtroJust" onchange="filtrarTabela()">
+        <option value="">Todas justificativas</option>
+        <optgroup label="── Falta Justificada (FJ)">
+        <option value="FJ - Atestado">FJ · Atestado</option>
+        <option value="FJ - Abono Fretado (atraso)">FJ · Abono Fretado (atraso)</option>
+        <option value="FJ - Abono Fretado (falta)">FJ · Abono Fretado (falta)</option>
+        <option value="FJ - Abono Gestor">FJ · Abono Gestor</option>
+        <option value="FJ - Abono Calamidade">FJ · Abono Calamidade</option>
+        <option value="FJ - Abono administrativo">FJ · Abono Administrativo</option>
+        <option value="FJ - Acompanhamento Filho">FJ · Acompanhamento Filho</option>
+        <option value="FJ - Declaração">FJ · Declaração</option>
+        <option value="FJ - Exame Periódico Externo">FJ · Exame Periódico Externo</option>
+        <option value="FJ - Falecimento 1º grau">FJ · Falecimento 1º grau</option>
+        <option value="FJ - Falecimento 2º grau">FJ · Falecimento 2º grau</option>
+        <option value="FJ - Folga Black">FJ · Folga Black</option>
+        <option value="FJ - Licença Casamento">FJ · Lic. Casamento</option>
+        <option value="FJ - Licença Doação de Sangue">FJ · Doação de Sangue</option>
+        <option value="FJ - Licença Eleitoral">FJ · Lic. Eleitoral</option>
+        <option value="FJ - Licença Mudança">FJ · Lic. Mudança</option>
+        <option value="FJ - Licença Paternidade">FJ · Lic. Paternidade</option>
+        <option value="FJ - Extensão Licença Paternidade">FJ · Ext. Lic. Paternidade</option>
+        <option value="FJ - Licença Vestibular">FJ · Lic. Vestibular</option>
+        <option value="FJ - Serviço Militar">FJ · Serviço Militar</option>
+        </optgroup>
+        <optgroup label="── Afastamento (AF)">
+        <option value="AF - Afastado INSS">AF · Afastado INSS</option>
+        <option value="AF - Licença Maternidade">AF · Lic. Maternidade</option>
+        <option value="AF - Extensão Licença Maternidade">AF · Ext. Lic. Maternidade</option>
+        </optgroup>
+        <optgroup label="── Banco de Horas (BH)">
+        <option value="BH - Banco de Horas não planejado">BH · Banco Horas (n.plan.)</option>
+        <option value="BH - Banco de Horas planejado">BH · Banco Horas (plan.)</option>
+        </optgroup>
+        <optgroup label="── Férias / Feriado">
+        <option value="FE - Férias">FE · Férias</option>
+        <option value="FR - Feriado">FR · Feriado</option>
+        </optgroup>
+        <optgroup label="── Desligado / Escala">
+        <option value="DE - Desligado">DE · Desligado</option>
+        <option value="DE - Aposentadoria por Invalidez">DE · Aposentadoria por Invalidez</option>
+        <option value="DSR - Escala">DSR · Escala</option>
+        </optgroup>
+        <optgroup label="── Falta Injustificada (FI/AB)">
+        <option value="FI - Falta Injustificada">FI · Falta Injustificada</option>
+        <option value="FI - Suspensão (Dias)">FI · Suspensão (Dias)</option>
+        <option value="AB - Abandono">AB · Abandono</option>
+        </optgroup>
+        <optgroup label="── Operacionais">
+        <option value="AP - Admissão Postergada">AP · Admissão Postergada</option>
+        <option value="SIE - Sinergia Externa">SIE · Sinergia Externa</option>
+        <option value="CE - Curso Externo">CE · Curso Externo</option>
+        <option value="ON - Onboarding / Primeiro Dia">ON · Onboarding</option>
+        <option value="TR - Treinamentos Diversos">TR · Treinamentos</option>
+        </optgroup>
+        <optgroup label="── HC Especiais">
+        <option value="HCD - HC Divergente">HCD · HC Divergente</option>
+        <option value="HTF - HC Transferido para outro CAD">HTF · HC Transferido</option>
+        </optgroup>
+        <optgroup label="── Outros">
+        <option value="VAZIO - Justificativa não encontrada">Justificativa não encontrada</option>
+        <option value="Justificativa fora do padrão">Fora do padrão</option>
+        </optgroup>
+      </select>
+      <input class="aus-filter-input" type="text" id="filtroBusca"
+        placeholder="🔍  Buscar por nome ou gestor..."
+        oninput="filtrarTabela(); this.classList.toggle('has-value', this.value.length > 0)" />
+      <button class="aus-filter-btn" onclick="carregarAusencias()">
+        <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        Atualizar
+      </button>
+      <div class="aus-filter-count">
+        <strong id="countVisible">0</strong> registros
+      </div>
+    </div>
+
+    <!-- Tabela -->
+    <div class="aus-table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th onclick="sortBy('colaborador')">Colaborador <span class="sort-ico" id="sort-colaborador">↕</span></th>
+            <th onclick="sortBy('gestor')">Gestor <span class="sort-ico" id="sort-gestor">↕</span></th>
+            <th onclick="sortBy('escala')">Escala <span class="sort-ico" id="sort-escala">↕</span></th>
+            <th onclick="sortBy('justificativa')">Justificativa <span class="sort-ico" id="sort-justificativa">↕</span></th>
+            <th onclick="sortBy('data_inicio')">Início <span class="sort-ico" id="sort-data_inicio">↕</span></th>
+            <th onclick="sortBy('data_fim')">Fim <span class="sort-ico" id="sort-data_fim">↕</span></th>
+            <th onclick="sortBy('dias')" style="text-align:center;">Dias <span class="sort-ico" id="sort-dias">↕</span></th>
+            <th>CAD</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="tabelaAusencias">
+          <tr><td colspan="9" class="empty-state"><div class="aus-es-wrap"><div class="aus-es-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="aus-es-title">Carregando...</div></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ── Formatação com separador de milhar (pt-BR) ──────────────────────
+const fmt = n => (n == null || n === '' ? '—' : Number(n).toLocaleString('pt-BR'));
+
+// ── Estado ─────────────────────────────────────────────────────────
+let todosColaboradores     = [];
+let todasAusencias         = [];
+let ausenciasFiltradas     = [];
+let colaboradorSelecionado = null;
+let sortCol = 'data_inicio', sortAsc = false;
+let chaveParaExcluir = null;
+let toastTimer;
+
+// ── Init ────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  iniciarRelogio();
+
+  const agora = new Date();
+  document.getElementById('filtroMes').value = String(agora.getMonth() + 1);
+  document.getElementById('filtroAno').value = String(agora.getFullYear());
+
+  carregarColaboradores();
+  carregarAusencias();
+
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.autocomplete-wrap')) fecharAutocomplete();
+  });
+
+  // nome do usuário (se disponível via GAS)
+  try {
+    google.script.run
+      .withSuccessHandler(email => {
+        if (email) document.getElementById('ausNomeUsuario').textContent =
+          email.split('@')[0].replace('.', ' ');
+      })
+      .getUsuarioEmail();
+  } catch(e) {}
+});
+
+// ── Relógio ─────────────────────────────────────────────────────────
+function iniciarRelogio() {
+  function tick() {
+    const el = document.getElementById('ausClock');
+    if (!el) return;
+    const now = new Date();
+    const p = n => String(n).padStart(2, '0');
+    el.textContent = p(now.getHours()) + ':' + p(now.getMinutes()) + ':' + p(now.getSeconds());
+  }
+  tick(); setInterval(tick, 1000);
+}
+
+// ── Tabs ────────────────────────────────────────────────────────────
+function trocarTab(nome) {
+  ['cadastrar','visualizar'].forEach(t => {
+    document.getElementById('tab-btn-' + t).classList.toggle('active', t === nome);
+    document.getElementById('tab-' + t).classList.toggle('active', t === nome);
+  });
+  if (nome === 'visualizar') carregarAusencias();
+}
+
+// ── Chips de Justificativa ──────────────────────────────────────────
+function selecionarJust(chip) {
+  document.querySelectorAll('.just-chip').forEach(c => c.classList.remove('selected'));
+  chip.classList.add('selected');
+  document.getElementById('inputJustificativa').value = chip.dataset.val;
+}
+
+// ── Colaboradores ───────────────────────────────────────────────────
+function carregarColaboradores() {
+  google.script.run
+    .withSuccessHandler(lista => { todosColaboradores = lista || []; })
+    .withFailureHandler(err => console.warn('Erro colaboradores:', err))
+    .getColaboradoresAusencia();
+}
+
+function filtrarColaboradores(termo) {
+  colaboradorSelecionado = null;
+  document.getElementById('inputGestor').value = '';
+  document.getElementById('inputEscala').value = '';
+
+  const list = document.getElementById('autocompleteList');
+  if (!termo || termo.length < 2) { list.classList.remove('show'); return; }
+
+  const termoLow = termo.toLowerCase();
+  const filtrados = todosColaboradores.filter(c =>
+    (c.colaborador || '').toLowerCase().includes(termoLow)
+  ).slice(0, 12);
+
+  if (!filtrados.length) { list.classList.remove('show'); return; }
+
+  list.innerHTML = filtrados.map(c => `
+    <div class="autocomplete-item"
+      onclick="selecionarColaborador(${JSON.stringify(c).replace(/"/g, '&quot;')})">
+      <span>${c.colaborador}</span>
+      <span class="item-setor">${c.setor || c.turno || ''}</span>
+    </div>
+  `).join('');
+  list.classList.add('show');
+}
+
+function selecionarColaborador(c) {
+  colaboradorSelecionado = c;
+  document.getElementById('inputColaborador').value = c.colaborador;
+  document.getElementById('inputGestor').value      = c.gestor || '';
+  document.getElementById('inputEscala').value      = c.turno  || '';
+  fecharAutocomplete();
+}
+
+function fecharAutocomplete() {
+  document.getElementById('autocompleteList').classList.remove('show');
+}
+
+// ── Preview de dias ─────────────────────────────────────────────────
+function calcPreview() {
+  const ini = document.getElementById('inputDataInicio').value;
+  const fim = document.getElementById('inputDataFim').value;
+  const el  = document.getElementById('diasPreview');
+  const txt = document.getElementById('diasPreviewTxt');
+  if (ini && fim && fim >= ini) {
+    const dias = calcularDias(ini, fim);
+    txt.textContent = `Período de ${dias} dia${dias > 1 ? 's' : ''} (${formatarData(ini)} a ${formatarData(fim)})`;
+    el.style.display = 'flex';
+  } else {
+    el.style.display = 'none';
+  }
+}
+
+// ── Salvar ──────────────────────────────────────────────────────────
+function salvarAusencia() {
+  if (!colaboradorSelecionado) {
+    mostrarToast('Selecione um colaborador válido.', 'error'); return;
+  }
+  const justificativa = document.getElementById('inputJustificativa').value;
+  const dataInicio    = document.getElementById('inputDataInicio').value;
+  const dataFim       = document.getElementById('inputDataFim').value;
+
+  if (!justificativa) {
+    mostrarToast('Selecione a justificativa.', 'error'); return;
+  }
+  if (!dataInicio || !dataFim) {
+    mostrarToast('Preencha as datas de início e fim.', 'error'); return;
+  }
+  if (dataFim < dataInicio) {
+    mostrarToast('A data final não pode ser anterior ao início.', 'error'); return;
+  }
+
+  const dados = {
+    idgroot:       colaboradorSelecionado.id_groot,
+    colaborador:   colaboradorSelecionado.colaborador,
+    gestor:        colaboradorSelecionado.gestor  || '',
+    escala:        colaboradorSelecionado.turno   || '',
+    justificativa: justificativa,
+    dataInicio:    dataInicio,
+    dataFim:       dataFim,
+    cad:           document.getElementById('inputCad').value.trim()
+  };
+
+  mostrarLoading('Salvando ausência...');
+  document.getElementById('btnSalvar').disabled = true;
+
+  google.script.run
+    .withSuccessHandler(res => {
+      esconderLoading();
+      document.getElementById('btnSalvar').disabled = false;
+      if (res && res.success) {
+        mostrarToast('Ausência salva com sucesso!', 'success');
+        limparFormulario();
+        carregarAusencias();
+      } else {
+        mostrarToast('Erro: ' + (res && res.message || 'Falha ao salvar.'), 'error');
+      }
+    })
+    .withFailureHandler(err => {
+      esconderLoading();
+      document.getElementById('btnSalvar').disabled = false;
+      mostrarToast('Erro: ' + err.message, 'error');
+    })
+    .salvarAusencia(dados);
+}
+
+function limparFormulario() {
+  colaboradorSelecionado = null;
+  ['inputColaborador','inputGestor','inputEscala','inputCad','inputDataInicio','inputDataFim']
+    .forEach(id => document.getElementById(id).value = '');
+  document.getElementById('inputJustificativa').value = '';
+  document.querySelectorAll('.just-chip').forEach(c => c.classList.remove('selected'));
+  document.getElementById('diasPreview').style.display = 'none';
+}
+
+// ── Carregar / Filtrar ──────────────────────────────────────────────
+function carregarAusencias() {
+  const mes = document.getElementById('filtroMes').value || null;
+  const ano = document.getElementById('filtroAno').value || null;
+
+  mostrarLoading('Carregando ausências...');
+  google.script.run
+    .withSuccessHandler(lista => {
+      esconderLoading();
+      todasAusencias = (lista || []).map(a => ({
+        ...a,
+        _dias: calcularDias(a.data_inicio, a.data_fim)
+      }));
+      filtrarTabela();
+      atualizarStats();
+    })
+    .withFailureHandler(err => {
+      esconderLoading();
+      mostrarToast('Erro ao carregar: ' + err.message, 'error');
+      document.getElementById('tabelaAusencias').innerHTML =
+        '<tr><td colspan="9" class="empty-state"><div class="aus-es-wrap"><div class="aus-es-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><div class="aus-es-title">Erro ao carregar dados</div><div class="aus-es-sub">Tente atualizar a página ou verificar a conexão.</div></div></td></tr>';
+    })
+    .getAusencias(mes ? parseInt(mes) : null, ano ? parseInt(ano) : null);
+}
+
+function filtrarTabela() {
+  const busca = document.getElementById('filtroBusca').value.toLowerCase().trim();
+  const just  = document.getElementById('filtroJust').value;
+
+  ausenciasFiltradas = todasAusencias.filter(a => {
+    const matchBusca = !busca || (a.colaborador || '').toLowerCase().includes(busca)
+      || (a.gestor || '').toLowerCase().includes(busca);
+    const matchJust = !just || (a.justificativa || '').toUpperCase() === just;
+    return matchBusca && matchJust;
+  });
+
+  aplicarSort();
+  renderizarTabela(ausenciasFiltradas);
+  document.getElementById('countVisible').textContent = fmt(ausenciasFiltradas.length);
+}
+
+// ── Sort ────────────────────────────────────────────────────────────
+function sortBy(col) {
+  if (sortCol === col) {
+    sortAsc = !sortAsc;
+  } else {
+    sortCol = col; sortAsc = true;
+  }
+  document.querySelectorAll('th.sorted').forEach(t => t.classList.remove('sorted'));
+  const th = document.querySelector(`[onclick="sortBy('${col}')"]`);
+  if (th) th.classList.add('sorted');
+  const ico = document.getElementById('sort-' + col);
+  if (ico) ico.textContent = sortAsc ? '↑' : '↓';
+  aplicarSort();
+  renderizarTabela(ausenciasFiltradas);
+}
+
+function aplicarSort() {
+  ausenciasFiltradas.sort((a, b) => {
+    let va = a[sortCol] || '';
+    let vb = b[sortCol] || '';
+    if (sortCol === 'dias') { va = a._dias || 0; vb = b._dias || 0; return sortAsc ? va - vb : vb - va; }
+    if (va < vb) return sortAsc ? -1 : 1;
+    if (va > vb) return sortAsc ? 1 : -1;
+    return 0;
+  });
+}
+
+// ── Stats ────────────────────────────────────────────────────────────
+function atualizarStats() {
+  const hoje  = new Date(); hoje.setHours(0,0,0,0);
+  const prox7 = new Date(hoje); prox7.setDate(prox7.getDate() + 7);
+
+  let totalDias = 0, proximas = 0, ferias = 0;
+  todasAusencias.forEach(a => {
+    totalDias += Number(a._dias) || 0;
+    const ini = new Date(a.data_inicio + 'T00:00:00');
+    if (ini >= hoje && ini <= prox7) proximas++;
+    if ((a.justificativa || '').toUpperCase().includes('FERIA')) ferias++;
+  });
+
+  document.getElementById('statTotal').textContent  = fmt(todasAusencias.length);
+  document.getElementById('statDias').textContent   = fmt(totalDias);
+  document.getElementById('statProx').textContent   = fmt(proximas);
+  document.getElementById('statFerias').textContent = fmt(ferias);
+}
+
+// ── Render Tabela ────────────────────────────────────────────────────
+function renderizarTabela(lista) {
+  const tbody = document.getElementById('tabelaAusencias');
+  document.getElementById('countVisible').textContent = lista.length;
+
+  if (!lista || !lista.length) {
+    tbody.innerHTML = '<tr><td colspan="9" class="empty-state"><div class="aus-es-wrap"><div class="aus-es-icon"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div><div class="aus-es-title">Nenhuma ausência encontrada</div><div class="aus-es-sub">Nenhum registro corresponde aos filtros selecionados.</div></div></td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = lista.map(a => {
+    const dias     = a._dias || '—';
+    const tagClass = tagCor(a.justificativa || '');
+    const labelJ   = labelJustificativa(a.justificativa || '');
+    const chave    = a.chave || '';
+    return `
+      <tr>
+        <td class="col-nome">
+          <strong>${a.colaborador || '—'}</strong>
+          ${a.escala ? `<span class="sub">${a.escala}</span>` : ''}
+        </td>
+        <td style="color:rgba(255,255,255,.5);font-size:12px;">${a.gestor || '—'}</td>
+        <td style="color:rgba(255,255,255,.4);font-size:12px;">${a.escala || '—'}</td>
+        <td><span class="tag-just ${tagClass}">${labelJ}</span></td>
+        <td class="col-data">${formatarData(a.data_inicio)}</td>
+        <td class="col-data">${formatarData(a.data_fim)}</td>
+        <td class="col-dias">${fmt(dias)}</td>
+        <td style="color:rgba(255,255,255,.35);font-size:11px;">${a.cad || a.responsavel || '—'}</td>
+        <td>
+          <button class="btn-del" title="Excluir" onclick="abrirModal(${chave}, '${(a.colaborador||'').replace(/'/g,"\\'")}')">
+            <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+// ── Modal Exclusão ───────────────────────────────────────────────────
+function abrirModal(chave, nome) {
+  chaveParaExcluir = chave;
+  document.getElementById('modalDesc').textContent =
+    `Confirma a exclusão da ausência de ${nome}? Essa ação não pode ser desfeita.`;
+  document.getElementById('modalBg').classList.add('show');
+  document.getElementById('modalConfirmBtn').onclick = executarExclusao;
+}
+
+function fecharModal() {
+  document.getElementById('modalBg').classList.remove('show');
+  chaveParaExcluir = null;
+}
+
+function executarExclusao() {
+  if (!chaveParaExcluir) return;
+  fecharModal();
+  mostrarLoading('Excluindo...');
+  google.script.run
+    .withSuccessHandler(res => {
+      esconderLoading();
+      if (res && res.success) {
+        mostrarToast('Ausência excluída com sucesso.', 'success');
+        carregarAusencias();
+      } else {
+        mostrarToast('Erro ao excluir: ' + (res && res.message || ''), 'error');
+      }
+    })
+    .withFailureHandler(err => {
+      esconderLoading();
+      mostrarToast('Erro: ' + err.message, 'error');
+    })
+    .excluirAusencia(chaveParaExcluir);
+}
+
+// ── Helpers ──────────────────────────────────────────────────────────
+function calcularDias(ini, fim) {
+  if (!ini || !fim) return 0;
+  const d1 = new Date(ini + 'T00:00:00');
+  const d2 = new Date(fim + 'T00:00:00');
+  const diff = Math.round((d2 - d1) / (1000 * 60 * 60 * 24)) + 1;
+  return diff > 0 ? diff : 0;
+}
+
+function formatarData(str) {
+  if (!str) return '—';
+  const parts = str.split('-');
+  if (parts.length !== 3) return str;
+  return `${parts[2]}/${parts[1]}/${parts[0]}`;
+}
+
+function tagCor(just) {
+  const j = (just || '').trim().toUpperCase();
+  // Prefixo do novo padrão: "FJ - Atestado" → código FJ
+  const match = j.match(/^([A-Z]+)\s*[-–]/);
+  if (match) {
+    const code = match[1];
+    if (['FI','AB'].includes(code))                 return 'tag-FI';
+    if (code === 'FJ')                              return 'tag-FJ';
+    if (code === 'AF')                              return 'tag-AF';
+    if (code === 'BH')                              return 'tag-BH';
+    if (['FE','FR'].includes(code))                 return code === 'FR' ? 'tag-FR' : 'tag-FE';
+    if (['DE','DSR'].includes(code))                return 'tag-DE';
+    if (['AP','SIE','CE','ON','TR','PCO','HE'].includes(code)) return 'tag-OP';
+    if (['HCD','HTF'].includes(code))               return 'tag-HC';
+  }
+  return 'tag-NS';
+}
+
+function labelJustificativa(just) {
+  return just || '—';
+}
+
+function mostrarLoading(msg) {
+  ChaLoader.start('ausLoading', msg || 'Carregando...');
+  document.getElementById('ausLoading').classList.add('show');
+}
+function esconderLoading() {
+  ChaLoader.complete();
+  document.getElementById('ausLoading').classList.remove('show');
+}
+
+function mostrarToast(msg, tipo) {
+  const t   = document.getElementById('ausToast');
+  const ico = document.getElementById('ausToastIco');
+  const txt = document.getElementById('ausToastMsg');
+  const icones = {
+    success: '<polyline points="20 6 9 17 4 12"/>',
+    error:   '<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>',
+    info:    '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><circle cx="12" cy="16" r="1"/>'
+  };
+  ico.innerHTML = icones[tipo] || icones.info;
+  txt.textContent = msg;
+  t.className = 'aus-toast ' + (tipo || 'info') + ' show';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3800);
+}
+
+// Fechar modal ao clicar fora
+document.getElementById('modalBg').addEventListener('click', function(e) {
+  if (e.target === this) fecharModal();
+});
+</script>
+<div class="dev-footer">© 2026 Checkpoint BA01 · Gabriel Vieira &amp; Lucas Leal · MercadoLibre</div>
+</body>
+</html>

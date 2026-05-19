@@ -1,0 +1,2387 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Histórico — Checkpoint BA01</title>
+  <?!= include('style') ?>
+  <style>
+/* ─── Reset & Base ─────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  margin: 0; padding: 0;
+  background: #0f172a;
+  color: #e2e8f0;
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  min-height: 100vh;
+}
+
+/* ─── Topbar ────────────────────────────────────────────────────── */
+.his-topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 24px; height: 56px;
+  background: rgba(10,16,34,.98);
+  border-bottom: 1px solid rgba(255,255,255,.05);
+  position: sticky; top: 0; z-index: 200;
+  backdrop-filter: blur(12px);
+}
+.his-topbar::after {
+  content:''; position:absolute; bottom:0; left:0; right:0; height:2px;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,215,0,.7) 20%, rgba(99,102,241,.5) 50%, rgba(56,189,248,.5) 75%, transparent 100%);
+  background-size: 300% 100%;
+  animation: hisFlow 7s ease-in-out infinite;
+}
+@keyframes hisFlow { 0%,100%{background-position:0%} 50%{background-position:100%} }
+
+.his-tb-left  { display:flex; align-items:center; gap:12px; }
+.his-tb-right { display:flex; align-items:center; gap:10px; }
+
+.his-tb-icon {
+  width:32px; height:32px;
+  background:rgba(255,215,0,.12); border:1px solid rgba(255,215,0,.25);
+  border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:15px;
+}
+.his-tb-brand { font-size:16px; font-weight:700; color:#fff; letter-spacing:-.3px; }
+.his-tb-brand span { color:#FFD700; }
+
+.his-sep { width:1px; height:20px; background:rgba(255,255,255,.08); flex-shrink:0; }
+
+.his-pill {
+  display:flex; align-items:center; gap:5px;
+  padding:3px 10px; border-radius:20px;
+  background:rgba(16,185,129,.07); border:1px solid rgba(16,185,129,.18);
+  font-size:11px; font-weight:700; color:rgba(16,185,129,.8); letter-spacing:.05em;
+}
+.his-pill::before {
+  content:''; width:6px; height:6px; border-radius:50%;
+  background:#10b981; animation:pulseGreen 2s infinite;
+}
+@keyframes pulseGreen { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+.his-clock {
+  font-size:12px; font-weight:600; color:rgba(255,255,255,.35);
+  font-variant-numeric:tabular-nums; letter-spacing:.5px;
+}
+
+.his-btn {
+  display:flex; align-items:center; gap:6px;
+  padding:0 14px; height:32px; border-radius:8px;
+  font-size:12px; font-weight:600; cursor:pointer; border:none; transition:all .2s;
+}
+.his-btn svg { width:13px; height:13px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; }
+.his-btn-ghost { background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); color:#e2e8f0; }
+.his-btn-ghost:hover { background:rgba(255,255,255,.1); color:#fff; }
+.his-btn-gold { background:linear-gradient(135deg,#FFD700,#f59e0b); color:#111; font-weight:700; }
+.his-btn-gold:hover { filter:brightness(1.08); transform:translateY(-1px); }
+.his-btn-blue {
+  background: rgba(255,215,0,.07);
+  border: 1px solid rgba(255,215,0,.22);
+  color: rgba(255,215,0,.7);
+  transition: background .18s, border-color .18s, color .18s, box-shadow .18s, transform .18s;
+}
+.his-btn-blue:hover {
+  background: rgba(255,215,0,.14);
+  border-color: rgba(255,215,0,.55);
+  color: #FFD700;
+  box-shadow: 0 0 14px rgba(255,215,0,.18);
+  transform: translateY(-1px);
+}
+
+/* ─── Mapa de Presença ──────────────────────────────────────────── */
+.mapa-overlay {
+  display:none; position:fixed; inset:0; z-index:600;
+  background:rgba(0,0,0,.88); backdrop-filter:blur(10px);
+  align-items:flex-start; justify-content:center;
+}
+.mapa-overlay.show { display:flex; }
+.mapa-modal {
+  width:100%; height:100vh;
+  background:#0f172a;
+  display:flex; flex-direction:column; overflow:hidden;
+}
+
+/* Header do modal */
+.mapa-header {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 24px; height:58px; flex-shrink:0;
+  background:rgba(10,16,34,.98);
+  border-bottom:1px solid rgba(255,255,255,.05);
+  position:relative;
+}
+.mapa-header::after {
+  content:''; position:absolute; bottom:0; left:0; right:0; height:2px;
+  background:linear-gradient(90deg,transparent 0%,rgba(56,189,248,.8) 25%,rgba(255,215,0,.6) 50%,rgba(99,102,241,.6) 75%,transparent 100%);
+  background-size:300% 100%; animation:mapaFlow 5s ease-in-out infinite;
+}
+@keyframes mapaFlow { 0%,100%{background-position:0%} 50%{background-position:100%} }
+
+.mapa-hdr-left { display:flex; align-items:center; gap:14px; }
+.mapa-hdr-icon {
+  width:36px; height:36px; border-radius:10px;
+  background:linear-gradient(135deg,#FFD700,#f59e0b);
+  border:none; box-shadow:0 0 16px rgba(255,215,0,.25);
+  display:flex; align-items:center; justify-content:center; font-size:16px;
+}
+.mapa-hdr-title { font-size:16px; font-weight:700; color:#fff; }
+.mapa-hdr-title span { color:#FFD700; }
+.mapa-hdr-sub { font-size:12px; color:rgba(255,255,255,.3); font-weight:500; }
+
+.mapa-stats-row { display:flex; gap:10px; }
+.mapa-stat-chip {
+  display:flex; align-items:center; gap:6px;
+  padding:5px 12px; border-radius:20px;
+  background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08);
+  font-size:12px; font-weight:600;
+}
+.mapa-stat-chip .dot { width:7px; height:7px; border-radius:50%; }
+
+/* Barra de filtros do mapa */
+.mapa-filterbar {
+  display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+  padding:12px 24px; flex-shrink:0;
+  background:rgba(255,255,255,.018);
+  border-bottom:1px solid rgba(255,255,255,.05);
+}
+.mapa-filterbar label { font-size:11px; font-weight:700; color:rgba(255,255,255,.3); text-transform:uppercase; letter-spacing:.05em; }
+.mapa-filter-group { display:flex; flex-direction:column; gap:4px; }
+.mapa-sel {
+  padding:7px 12px; background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.1); border-radius:9px;
+  color:#e2e8f0; font-size:12px; font-family:inherit; outline:none; transition:all .2s;
+  min-width:160px;
+}
+.mapa-sel option { background:#0f172a; }
+.mapa-sel:focus { border-color:rgba(255,215,0,.4); background:rgba(255,215,0,.04); }
+.mapa-search {
+  display:flex; align-items:center; gap:7px;
+  background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1);
+  border-radius:9px; padding:7px 12px; transition:all .2s; flex:1; min-width:180px; max-width:280px;
+}
+.mapa-search:focus-within { border-color:rgba(255,215,0,.35); background:rgba(255,215,0,.04); }
+.mapa-search svg { width:12px; height:12px; flex-shrink:0; fill:none; stroke:rgba(255,255,255,.25); stroke-width:2.2; stroke-linecap:round; }
+.mapa-search input { flex:1; background:none; border:none; outline:none; color:#e2e8f0; font-size:12px; font-family:inherit; }
+.mapa-search input::placeholder { color:rgba(255,255,255,.18); }
+
+/* Legenda */
+.mapa-legend {
+  display:flex; gap:14px; align-items:center; flex-wrap:wrap;
+  padding:8px 24px; flex-shrink:0;
+  background:rgba(255,255,255,.01);
+  border-bottom:1px solid rgba(255,255,255,.04);
+}
+.mapa-legend-title { font-size:10px; font-weight:700; color:rgba(255,255,255,.25); text-transform:uppercase; letter-spacing:.06em; }
+.leg-item { display:flex; align-items:center; gap:5px; font-size:11px; color:rgba(255,255,255,.4); font-weight:600; }
+.leg-dot { width:11px; height:11px; border-radius:3px; flex-shrink:0; }
+.leg-P  { background:#4ade80; }
+.leg-F  { background:#f87171; }
+.leg-FO { background:#818cf8; }
+.leg-FE { background:#38bdf8; }
+.leg-A  { background:#fb7185; }
+.leg-AF { background:#fbbf24; }
+.leg-ND { background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.08); }
+
+/* Grid container */
+.mapa-grid-container {
+  flex:1; overflow:auto; position:relative;
+}
+
+/* Tabela heatmap */
+.mapa-table {
+  border-collapse:collapse; min-width:100%;
+  font-size:11px;
+}
+
+/* Sticky col header (nomes) */
+.mapa-col-colab {
+  position:sticky; left:0; z-index:12;
+  background:#0f172a;
+  min-width:200px; max-width:200px; width:200px;
+  padding:0 12px; height:40px;
+  border-right:1px solid rgba(255,255,255,.06);
+}
+
+/* Cabeçalho dias */
+.mapa-thead th {
+  background:#0f172a; position:sticky; top:0; z-index:10;
+  padding:0; height:44px; border-bottom:1px solid rgba(255,255,255,.06);
+  white-space:nowrap;
+}
+.mapa-thead th.mapa-col-colab { z-index:20; padding:0 12px; }
+
+.mapa-day-hdr {
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:1px; width:30px; height:44px;
+}
+.mapa-day-num { font-size:11px; font-weight:700; color:rgba(255,255,255,.6); }
+.mapa-day-dow { font-size:8px; font-weight:700; color:rgba(255,255,255,.2); text-transform:uppercase; }
+.mapa-day-hdr.fim-semana .mapa-day-num { color:rgba(148,163,184,.4); }
+.mapa-day-hdr.hoje-col .mapa-day-num {
+  color:#FFD700; background:rgba(255,215,0,.12); border-radius:4px;
+  padding:1px 5px; border:1px solid rgba(255,215,0,.2);
+}
+
+/* Linhas de setor (group header) */
+tr.mapa-group-row td {
+  background:rgba(255,255,255,.03);
+  padding:6px 12px; font-size:10px; font-weight:800;
+  color:rgba(255,255,255,.35); text-transform:uppercase;
+  letter-spacing:.1em; border-top:1px solid rgba(255,255,255,.06);
+  position:sticky; left:0;
+}
+
+/* Linhas de colaborador */
+tr.mapa-colab-row { transition:background .1s; }
+tr.mapa-colab-row:hover td { background:rgba(255,255,255,.025); }
+tr.mapa-colab-row:hover .mapa-col-colab { background:rgba(10,16,34,.97); }
+
+.mapa-colab-info { display:flex; flex-direction:column; gap:1px; }
+.mapa-colab-nome { font-size:11px; font-weight:600; color:#e2e8f0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px; }
+.mapa-colab-sub  { font-size:9px; color:rgba(255,255,255,.25); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px; }
+
+/* Células do heatmap */
+td.mapa-cell {
+  padding:4px 3px; text-align:center; vertical-align:middle;
+  border-bottom:1px solid rgba(255,255,255,.025);
+}
+.mapa-dot {
+  width:22px; height:22px; border-radius:5px; margin:0 auto;
+  display:flex; align-items:center; justify-content:center;
+  font-size:9px; font-weight:800; cursor:pointer;
+  transition:transform .12s, box-shadow .12s;
+  position:relative;
+}
+.mapa-dot:hover { transform:scale(1.3); z-index:5; box-shadow:0 0 8px rgba(0,0,0,.5); }
+.md-P  { background:rgba(74,222,128,.25);  color:#4ade80;  border:1px solid rgba(74,222,128,.3); }
+.md-F  { background:rgba(248,113,113,.25); color:#f87171; border:1px solid rgba(248,113,113,.3); }
+.md-FO { background:rgba(129,140,248,.2);  color:#818cf8; border:1px solid rgba(129,140,248,.25); }
+.md-FE { background:rgba(56,189,248,.2);   color:#38bdf8; border:1px solid rgba(56,189,248,.25); }
+.md-A  { background:rgba(251,113,133,.2);  color:#fb7185; border:1px solid rgba(251,113,133,.25); }
+.md-AF { background:rgba(245,158,11,.18);  color:#fbbf24; border:1px solid rgba(245,158,11,.2); }
+.md-ND { background:rgba(255,255,255,.04); color:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.06); }
+
+/* Tooltip */
+.mapa-tooltip {
+  position:fixed; z-index:9999; pointer-events:none;
+  background:rgba(10,16,34,.97); border:1px solid rgba(255,255,255,.12);
+  border-radius:10px; padding:10px 14px; min-width:180px;
+  box-shadow:0 12px 32px rgba(0,0,0,.6);
+  opacity:0; transform:translateY(4px); transition:all .15s;
+}
+.mapa-tooltip.show { opacity:1; transform:translateY(0); }
+.mapa-tt-nome { font-size:12px; font-weight:700; color:#fff; margin-bottom:4px; }
+.mapa-tt-row  { display:flex; justify-content:space-between; gap:16px; font-size:11px; color:rgba(255,255,255,.4); margin-top:2px; }
+.mapa-tt-row strong { color:#e2e8f0; }
+
+/* Btn fechar e exportar */
+/* Navegação de mês */
+.mapa-nav-row {
+  display:flex; align-items:center; justify-content:center; gap:6px;
+}
+.mapa-nav-btn {
+  width:34px; height:34px; border-radius:9px; cursor:pointer;
+  background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1);
+  color:rgba(255,255,255,.5); display:flex; align-items:center; justify-content:center;
+  font-size:13px; transition:all .2s; flex-shrink:0;
+}
+.mapa-nav-btn:hover { background:rgba(255,215,0,.12); border-color:rgba(255,215,0,.3); color:#FFD700; }
+.mapa-nav-btn svg { width:14px; height:14px; fill:none; stroke:currentColor; stroke-width:2.5; stroke-linecap:round; }
+.mapa-nav-mes {
+  display:flex; flex-direction:column; align-items:center;
+  padding:4px 20px; min-width:160px;
+  background:rgba(255,215,0,.06); border:1px solid rgba(255,215,0,.18);
+  border-radius:11px; cursor:default;
+}
+.mapa-nav-mes-nome { font-size:18px; font-weight:800; color:#fff; letter-spacing:-.3px; line-height:1.1; }
+.mapa-nav-mes-ano  { font-size:13px; font-weight:600; color:rgba(255,215,0,.6); letter-spacing:.5px; }
+
+.mapa-close-btn {
+  width:32px; height:32px; border-radius:8px;
+  background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1);
+  color:rgba(255,255,255,.5); cursor:pointer; display:flex; align-items:center; justify-content:center;
+  font-size:16px; transition:all .2s; flex-shrink:0;
+}
+.mapa-close-btn:hover { background:rgba(248,113,113,.15); border-color:rgba(248,113,113,.3); color:#f87171; }
+
+/* Aumentar visibilidade geral do grid */
+.mapa-colab-nome { font-size:12px; font-weight:700; }
+.mapa-colab-sub  { font-size:10px; }
+.mapa-day-num    { font-size:12px; font-weight:800; }
+.mapa-day-dow    { font-size:9px; font-weight:700; }
+.mapa-col-colab  { min-width:220px; max-width:220px; width:220px; }
+.mapa-dot        { width:24px; height:24px; border-radius:6px; font-size:10px; font-weight:900; }
+
+.mapa-btn-export {
+  display:flex; align-items:center; gap:6px;
+  padding:7px 14px; border-radius:9px;
+  background:rgba(255,215,0,.08); border:1px solid rgba(255,215,0,.2);
+  color:#FFD700; font-size:12px; font-weight:700; cursor:pointer; transition:all .2s;
+}
+.mapa-btn-export:hover { background:rgba(255,215,0,.14); }
+.mapa-btn-export svg { width:12px; height:12px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; }
+.mapa-btn-sheets {
+  background:rgba(52,168,83,.1); border-color:rgba(52,168,83,.3); color:#34a853;
+}
+.mapa-btn-sheets:hover { background:rgba(52,168,83,.18); }
+.mapa-btn-sheets.loading { opacity:.6; pointer-events:none; }
+
+/* Empty state */
+.mapa-empty {
+  display:flex; flex-direction:column; align-items:center;
+  padding:60px 20px; text-align:center;
+  position:relative; overflow:hidden;
+}
+.mapa-empty::before {
+  content:''; position:absolute; inset:0;
+  background-image:radial-gradient(circle, rgba(99,102,241,.04) 1px, transparent 1px);
+  background-size:28px 28px; pointer-events:none;
+}
+.mapa-empty::after {
+  content:''; position:absolute; top:50%; left:50%;
+  transform:translate(-50%,-60%); width:320px; height:200px;
+  background:radial-gradient(ellipse at center, rgba(99,102,241,.06) 0%, transparent 70%);
+  pointer-events:none;
+}
+.mapa-empty .ico {
+  position:relative; z-index:1;
+  width:60px; height:60px; border-radius:16px; margin-bottom:16px;
+  background:rgba(99,102,241,.08); border:1px solid rgba(99,102,241,.22);
+  display:flex; align-items:center; justify-content:center;
+  animation:mapEsPulse 3.5s ease-in-out infinite;
+  font-size:24px;
+}
+@keyframes mapEsPulse {
+  0%,100% { box-shadow:0 0 0 0 rgba(99,102,241,0); }
+  50%      { box-shadow:0 0 18px 4px rgba(99,102,241,.1); border-color:rgba(99,102,241,.38); }
+}
+.mapa-empty-title {
+  position:relative; z-index:1;
+  font-size:14px; font-weight:700; color:rgba(226,232,240,.8); margin-bottom:7px;
+}
+.mapa-empty-sub {
+  position:relative; z-index:1;
+  font-size:12px; color:rgba(148,163,184,.5); line-height:1.6; max-width:260px;
+}
+
+/* ─── Filter Bar ────────────────────────────────────────────────── */
+.his-filter-bar-outer {
+  background:rgba(10,16,34,.98);
+  border-bottom:1px solid rgba(255,255,255,.04);
+  width:100%;
+}
+.his-filter-bar {
+  max-width:1200px; margin:0 auto;
+  padding:12px 40px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+  box-sizing:border-box;
+}
+.his-select {
+  padding:8px 12px; background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.1); border-radius:9px;
+  color:#e2e8f0; font-size:13px; font-family:inherit; outline:none; transition:all .2s;
+}
+.his-select option { background:#0f172a; }
+.his-select:focus { border-color:rgba(255,215,0,.4); background:rgba(255,215,0,.04); }
+.his-search-box {
+  flex:1; min-width:220px; max-width:380px;
+  display:flex; align-items:center; gap:8px;
+  background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1);
+  border-radius:9px; padding:8px 12px; transition:all .2s;
+}
+.his-search-box:focus-within { border-color:rgba(255,215,0,.35); background:rgba(255,215,0,.04); }
+.his-search-box svg { width:13px; height:13px; flex-shrink:0; fill:none; stroke:rgba(255,255,255,.25); stroke-width:2.2; stroke-linecap:round; }
+.his-search-box:focus-within svg { stroke:rgba(255,215,0,.6); }
+.his-search-box input { flex:1; background:none; border:none; outline:none; color:#e2e8f0; font-size:13px; font-family:inherit; }
+.his-search-box input::placeholder { color:rgba(255,255,255,.2); }
+
+.his-filter-count { margin-left:auto; font-size:12px; color:rgba(255,255,255,.3); white-space:nowrap; }
+.his-filter-count strong { color:rgba(255,215,0,.7); font-weight:700; }
+
+/* Status pills filter */
+.his-status-pills { display:flex; gap:4px; flex-wrap:wrap; }
+.his-status-pill {
+  padding:5px 12px; border-radius:20px; border:1px solid transparent;
+  font-size:11px; font-weight:700; cursor:pointer; transition:all .18s;
+  background:rgba(255,255,255,.05); color:rgba(255,255,255,.4);
+}
+.his-status-pill:hover { color:rgba(255,255,255,.7); background:rgba(255,255,255,.08); }
+.his-status-pill.active[data-s="TODOS"]    { background:rgba(255,215,0,.12); border-color:rgba(255,215,0,.3); color:#FFD700; }
+.his-status-pill.active[data-s="PRESENTE"] { background:rgba(74,222,128,.1); border-color:rgba(74,222,128,.3); color:#4ade80; }
+.his-status-pill.active[data-s="FALTA"]    { background:rgba(248,113,113,.1); border-color:rgba(248,113,113,.3); color:#f87171; }
+.his-status-pill.active[data-s="FOLGA"]    { background:rgba(129,140,248,.1); border-color:rgba(129,140,248,.3); color:#818cf8; }
+.his-status-pill.active[data-s="FERIAS"]   { background:rgba(56,189,248,.1); border-color:rgba(56,189,248,.3); color:#38bdf8; }
+.his-status-pill.active[data-s="ATESTADO"] { background:rgba(251,113,133,.1); border-color:rgba(251,113,133,.3); color:#fb7185; }
+.his-status-pill.active[data-s="OUTROS"]   { background:rgba(148,163,184,.1); border-color:rgba(148,163,184,.2); color:#94a3b8; }
+
+/* ─── Main Layout ───────────────────────────────────────────────── */
+.his-body {
+  display:flex; gap:24px;
+  padding:28px 40px 60px;
+  max-width:1200px; margin:0 auto;
+  align-items:flex-start; box-sizing:border-box;
+}
+
+/* ─── Calendário ────────────────────────────────────────────────── */
+.his-cal-wrap {
+  flex:0 0 460px;
+  background:rgba(10,16,34,.97); border:1px solid rgba(255,255,255,.07);
+  border-radius:16px; padding:24px 22px;
+  position:sticky; top:74px;
+}
+.his-cal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
+.his-cal-titulo { font-size:16px; font-weight:700; color:#fff; }
+.his-cal-nav { display:flex; gap:5px; }
+.his-cal-nav button {
+  background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.1);
+  color:rgba(255,255,255,.6); padding:6px 12px; border-radius:8px;
+  cursor:pointer; font-weight:600; font-size:11px; transition:all .2s;
+}
+.his-cal-nav button:hover { background:rgba(255,215,0,.12); color:#FFD700; border-color:rgba(255,215,0,.25); }
+.his-cal-today {
+  background:rgba(255,215,0,.1); border:1px solid rgba(255,215,0,.2);
+  color:#FFD700; padding:6px 12px; border-radius:8px; cursor:pointer;
+  font-weight:700; font-size:11px; transition:all .2s;
+}
+.his-cal-today:hover { background:rgba(255,215,0,.18); }
+
+.his-cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:5px; }
+.his-cal-dow { text-align:center; font-size:10px; font-weight:700; color:rgba(255,255,255,.25); padding:6px 4px; text-transform:uppercase; letter-spacing:.4px; }
+.his-cal-day {
+  text-align:center; padding:8px 4px; border-radius:9px; cursor:pointer;
+  min-height:54px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+  background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.05);
+  color:rgba(255,255,255,.6); font-size:13px; font-weight:600; transition:all .18s;
+}
+.his-cal-day:hover { background:rgba(255,255,255,.07); border-color:rgba(255,255,255,.12); color:#fff; }
+.his-cal-day.hoje { background:rgba(255,215,0,.1); border-color:rgba(255,215,0,.3); color:#FFD700; }
+.his-cal-day.selecionado { background:rgba(255,215,0,.18); border-color:#FFD700; color:#FFD700; box-shadow:0 0 14px rgba(255,215,0,.2); }
+.his-cal-day.tem-dados .his-day-badge { display:block; }
+.his-cal-day.vazio { background:transparent; cursor:default; border:none; }
+.his-cal-day.vazio:hover { background:transparent; }
+.his-day-num { font-size:13px; font-weight:700; line-height:1; }
+.his-day-badge {
+  display:none; font-size:8px; padding:1px 5px; border-radius:6px;
+  background:rgba(255,215,0,.15); color:#FFD700; font-weight:700;
+}
+.his-cal-day.selecionado .his-day-badge { background:rgba(255,215,0,.3); }
+
+/* ─── Info Panel (direita) ──────────────────────────────────────── */
+.his-info-panel {
+  flex:1; min-width:0;
+  display:flex; flex-direction:column; gap:12px;
+  position:sticky; top:74px;
+}
+.his-info-empty {
+  padding:52px 24px; text-align:center;
+  background:rgba(10,16,34,.97); border:1px solid rgba(255,255,255,.06);
+  border-radius:16px; display:flex; flex-direction:column; align-items:center;
+  position:relative; overflow:hidden;
+}
+.his-info-empty::before {
+  content:''; position:absolute; inset:0;
+  background-image:radial-gradient(circle, rgba(99,102,241,.04) 1px, transparent 1px);
+  background-size:28px 28px; pointer-events:none;
+}
+.his-info-empty-icon {
+  position:relative; z-index:1;
+  width:56px; height:56px; border-radius:15px; margin-bottom:14px;
+  background:rgba(99,102,241,.08); border:1px solid rgba(99,102,241,.2);
+  display:flex; align-items:center; justify-content:center;
+  animation:hisInfoEsPulse 3.5s ease-in-out infinite;
+}
+.his-info-empty-icon svg {
+  width:24px; height:24px; fill:none; stroke:rgba(129,140,248,.65);
+  stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round;
+}
+@keyframes hisInfoEsPulse {
+  0%,100% { box-shadow:0 0 0 0 rgba(99,102,241,0); }
+  50%      { box-shadow:0 0 16px 3px rgba(99,102,241,.1); border-color:rgba(99,102,241,.35); }
+}
+.his-info-empty-title {
+  position:relative; z-index:1;
+  font-size:14px; font-weight:700; color:rgba(226,232,240,.75);
+}
+.his-info-empty-sub {
+  position:relative; z-index:1;
+  font-size:12px; color:rgba(148,163,184,.45); margin-top:6px; line-height:1.6;
+}
+
+/* Data selecionada header */
+.his-day-header {
+  display:none; padding:12px 16px;
+  background:rgba(255,215,0,.06); border:1px solid rgba(255,215,0,.15); border-radius:12px;
+  font-size:13px; font-weight:700; color:#FFD700; letter-spacing:.02em; text-align:center;
+}
+
+/* KPI stats — 4 cards em 2×2 */
+.his-cal-stats { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.his-cal-stat {
+  padding:20px 16px; border-radius:14px; text-align:center;
+  border:1px solid transparent; transition:border-color .2s, transform .15s;
+}
+.his-cal-stat:hover { transform:translateY(-1px); }
+.his-cal-stat.total { background:rgba(255,255,255,.04); border-color:rgba(255,255,255,.08); }
+.his-cal-stat.pres  { background:rgba(74,222,128,.07);  border-color:rgba(74,222,128,.14); }
+.his-cal-stat.falt  { background:rgba(248,113,113,.07); border-color:rgba(248,113,113,.14); }
+.his-cal-stat.pend  { background:rgba(245,158,11,.07);  border-color:rgba(245,158,11,.14); }
+.his-cal-stat-val { font-size:32px; font-weight:800; line-height:1; font-variant-numeric:tabular-nums; letter-spacing:-.02em; }
+.his-cal-stat.total .his-cal-stat-val { color:#f1f5f9; }
+.his-cal-stat.pres  .his-cal-stat-val { color:#4ade80; }
+.his-cal-stat.falt  .his-cal-stat-val { color:#f87171; }
+.his-cal-stat.pend  .his-cal-stat-val { color:#fbbf24; }
+.his-cal-stat-lbl { font-size:10px; font-weight:700; color:rgba(255,255,255,.3); margin-top:6px; text-transform:uppercase; letter-spacing:.06em; }
+
+/* Absenteísmo */
+.his-abs-wrap {
+  padding:16px 18px;
+  background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.07); border-radius:14px;
+}
+.his-abs-title { font-size:11px; font-weight:700; color:rgba(255,255,255,.35); text-transform:uppercase; letter-spacing:.06em; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; }
+.his-abs-pct { font-size:22px; font-weight:800; }
+.his-abs-bar-wrap { height:7px; background:rgba(255,255,255,.07); border-radius:6px; overflow:hidden; margin:6px 0 10px; }
+.his-abs-bar-fill { height:100%; border-radius:6px; transition:width .8s cubic-bezier(.4,0,.2,1); }
+.his-abs-bar-fill.ok   { background:linear-gradient(90deg,#4ade80,#22d3ee); }
+.his-abs-bar-fill.warn { background:linear-gradient(90deg,#fbbf24,#f59e0b); }
+.his-abs-bar-fill.bad  { background:linear-gradient(90deg,#f87171,#ef4444); }
+
+/* ─── Horas Disponíveis ──────────────────────────────────────────── */
+.his-horas-wrap {
+  padding:16px 18px;
+  background:rgba(99,102,241,.06); border:1px solid rgba(99,102,241,.15); border-radius:14px;
+}
+.his-horas-title {
+  font-size:11px; font-weight:700; color:rgba(255,255,255,.35);
+  text-transform:uppercase; letter-spacing:.06em;
+  margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;
+}
+.his-horas-total { font-size:20px; font-weight:800; color:#818cf8; }
+.his-horas-grid {
+  display:grid; grid-template-columns:repeat(auto-fill, minmax(140px,1fr)); gap:10px;
+}
+.his-horas-turno {
+  background:rgba(99,102,241,.08); border:1px solid rgba(99,102,241,.18);
+  border-radius:10px; padding:14px 10px; text-align:center;
+  transition:border-color .2s, background .2s;
+}
+.his-horas-turno:hover { background:rgba(99,102,241,.14); border-color:rgba(99,102,241,.3); }
+.his-horas-turno-nome { font-size:11px; font-weight:700; color:rgba(255,255,255,.5); text-transform:uppercase; letter-spacing:.08em; margin-bottom:5px; }
+.his-horas-turno-hc   { font-size:12px; color:rgba(255,255,255,.3); margin-bottom:5px; }
+.his-horas-turno-val  { font-size:20px; font-weight:800; color:#c4b5fd; }
+
+/* ─── Turno Pendentes Cards ──────────────────────────────────────── */
+.his-tpc-wrap {
+  padding: 16px 18px;
+  background: rgba(15,23,42,.85); border: 1px solid rgba(255,215,0,.12);
+  border-radius: 14px;
+}
+.his-tpc-section-title {
+  font-size: 11px; font-weight: 700; color: rgba(255,255,255,.35);
+  text-transform: uppercase; letter-spacing: .06em; margin-bottom: 12px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.his-tpc-pend-badge {
+  font-size: 14px; font-weight: 800; color: #f59e0b; line-height: 1;
+}
+.his-tpc-pend-badge.done { color: #10b981; }
+.his-tpc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+  gap: 9px;
+}
+.his-tpc-card {
+  background: rgba(22,34,65,.95);
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 12px; padding: 13px 12px 11px;
+  position: relative; overflow: hidden;
+  transition: transform .18s, border-color .18s;
+}
+.his-tpc-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, var(--tc,#FFD700), transparent);
+}
+.his-tpc-card.all-done { border-color: rgba(16,185,129,.22); }
+.his-tpc-card.all-done::before { background: linear-gradient(90deg, #10b981, transparent); }
+.his-tpc-top {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  margin-bottom: 8px;
+}
+.his-tpc-badge {
+  font-size: 1.45rem; font-weight: 900;
+  color: var(--tc,#FFD700); letter-spacing: -.03em; line-height: 1;
+}
+.his-tpc-hc-info {
+  text-align: right; font-size: 9px; font-weight: 700;
+  color: rgba(148,163,184,.4); text-transform: uppercase; letter-spacing: .04em;
+}
+.his-tpc-hc-info strong {
+  display: block; font-size: 15px; font-weight: 800;
+  color: rgba(226,232,240,.6); letter-spacing: -.02em; line-height: 1.1;
+}
+.his-tpc-gest-row {
+  display: flex; align-items: center; gap: 3px; flex-wrap: wrap; margin-bottom: 7px;
+}
+.his-tpc-av {
+  width: 23px; height: 23px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 8px; font-weight: 800; flex-shrink: 0;
+  background: rgba(var(--tc-rgb,255,215,0),.12);
+  color: var(--tc,#FFD700);
+  border: 1px solid rgba(var(--tc-rgb,255,215,0),.22);
+}
+.his-tpc-av-more {
+  background: rgba(255,255,255,.06) !important;
+  border-color: rgba(255,255,255,.1) !important;
+  color: rgba(148,163,184,.55) !important;
+  font-size: 7px !important;
+}
+.his-tpc-bar-wrap {
+  height: 3px; background: rgba(255,255,255,.07); border-radius: 3px;
+  overflow: hidden; margin-bottom: 7px;
+}
+.his-tpc-bar {
+  height: 100%; border-radius: 3px;
+  background: linear-gradient(90deg, var(--tc,#FFD700), rgba(var(--tc-rgb,255,215,0),.4));
+  transition: width .7s cubic-bezier(.4,0,.2,1);
+}
+.his-tpc-pend-line {
+  font-size: 10px; font-weight: 700;
+  display: flex; align-items: center; gap: 4px; color: #f59e0b;
+}
+.his-tpc-pend-dot {
+  width: 5px; height: 5px; border-radius: 50%; background: #f59e0b;
+  flex-shrink: 0; box-shadow: 0 0 5px rgba(245,158,11,.6);
+  animation: htcDotPulse 2s ease-in-out infinite;
+}
+@keyframes htcDotPulse {
+  0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(1.5)}
+}
+.his-tpc-pend-line.done { color: #10b981; }
+.his-tpc-pend-line.done .his-tpc-pend-dot {
+  background: #10b981; box-shadow: 0 0 5px rgba(16,185,129,.55); animation: none;
+}
+
+/* ─── Painel de Registros ───────────────────────────────────────── */
+.his-records-panel {
+  flex:1; min-width:0;
+  background:rgba(10,16,34,.97); border:1px solid rgba(255,255,255,.07);
+  border-radius:14px; overflow:hidden;
+}
+.his-panel-header {
+  padding:16px 20px; border-bottom:1px solid rgba(255,255,255,.06);
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+}
+.his-panel-titulo { font-size:15px; font-weight:700; color:#fff; }
+.his-panel-date {
+  font-size:13px; font-weight:700; color:#FFD700;
+  background:rgba(255,215,0,.1); border:1px solid rgba(255,215,0,.2);
+  padding:4px 12px; border-radius:7px;
+}
+
+/* ─── Table ─────────────────────────────────────────────────────── */
+.his-table-wrap { overflow-x:auto; }
+table.his-table { width:100%; border-collapse:collapse; }
+table.his-table thead tr { background:rgba(255,255,255,.025); }
+table.his-table th {
+  padding:10px 14px; text-align:left;
+  font-size:11px; font-weight:700; color:rgba(255,255,255,.35);
+  border-bottom:1px solid rgba(255,255,255,.06);
+  text-transform:uppercase; letter-spacing:.06em; white-space:nowrap;
+  cursor:pointer; user-select:none; transition:color .2s;
+}
+table.his-table th:hover { color:rgba(255,215,0,.7); }
+table.his-table th.sorted { color:#FFD700; }
+table.his-table td {
+  padding:10px 14px; border-bottom:1px solid rgba(255,255,255,.04);
+  font-size:13px; vertical-align:middle; color:#d1d5db;
+}
+table.his-table tr:last-child td { border-bottom:none; }
+tbody.his-tbody tr { transition:background .15s; }
+tbody.his-tbody tr:hover td { background:rgba(255,215,0,.03); }
+.col-colab strong { color:#fff; font-weight:600; }
+.col-colab span { font-size:11px; color:rgba(255,255,255,.3); display:block; margin-top:1px; }
+
+/* Status tags */
+.his-tag {
+  display:inline-flex; align-items:center; gap:4px;
+  padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700; white-space:nowrap;
+  border:1px solid transparent;
+}
+.tag-PRESENTE  { background:rgba(74,222,128,.1);  color:#4ade80; border-color:rgba(74,222,128,.2); }
+.tag-FALTA     { background:rgba(248,113,113,.1); color:#f87171; border-color:rgba(248,113,113,.2); }
+.tag-FOLGA     { background:rgba(129,140,248,.1); color:#818cf8; border-color:rgba(129,140,248,.2); }
+.tag-FERIAS    { background:rgba(56,189,248,.1);  color:#38bdf8; border-color:rgba(56,189,248,.2); }
+.tag-ATESTADO  { background:rgba(251,113,133,.1); color:#fb7185; border-color:rgba(251,113,133,.2); }
+.tag-PENDENTE  { background:rgba(245,158,11,.08); color:#fbbf24; border-color:rgba(245,158,11,.15); }
+.tag-OUTROS    { background:rgba(148,163,184,.08);color:#94a3b8; border-color:rgba(148,163,184,.15); }
+
+/* Status select inline */
+.his-status-sel {
+  background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1);
+  border-radius:7px; color:#e2e8f0; font-size:12px; font-family:inherit;
+  padding:4px 8px; outline:none; cursor:pointer; transition:all .2s;
+  max-width:140px;
+}
+.his-status-sel:focus { border-color:rgba(255,215,0,.4); background:rgba(255,215,0,.04); }
+.his-status-sel option { background:#0f172a; }
+
+.btn-save-status {
+  background:rgba(74,222,128,.12); border:1px solid rgba(74,222,128,.25);
+  color:#4ade80; border-radius:7px; padding:4px 10px; font-size:11px;
+  font-weight:700; cursor:pointer; transition:all .2s; display:none;
+}
+.btn-save-status.visible { display:inline-flex; align-items:center; gap:4px; }
+.btn-save-status:hover { background:rgba(74,222,128,.22); }
+.btn-save-status svg { width:11px; height:11px; stroke:currentColor; fill:none; stroke-width:2.5; stroke-linecap:round; }
+
+
+/* ─── Empty / Loading ───────────────────────────────────────────── */
+.his-empty {
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  padding:0 32px; min-height:280px;
+  position:relative; overflow:hidden;
+}
+.his-empty::before {
+  content:''; position:absolute; inset:0;
+  background-image:radial-gradient(circle, rgba(99,102,241,.04) 1px, transparent 1px);
+  background-size:28px 28px; pointer-events:none;
+}
+.his-empty::after {
+  content:''; position:absolute; top:50%; left:50%;
+  transform:translate(-50%,-60%);
+  width:320px; height:200px;
+  background:radial-gradient(ellipse at center, rgba(99,102,241,.06) 0%, transparent 70%);
+  pointer-events:none;
+}
+.his-empty .ico { display:none; }
+
+.his-es-icon {
+  position:relative; z-index:1;
+  width:62px; height:62px;
+  background:rgba(99,102,241,.08); border:1px solid rgba(99,102,241,.22);
+  border-radius:16px; display:flex; align-items:center; justify-content:center;
+  margin-bottom:18px;
+  animation:hisEsPulse 3.5s ease-in-out infinite;
+}
+.his-es-icon svg {
+  width:26px; height:26px; fill:none;
+  stroke:rgba(129,140,248,.7); stroke-width:1.6;
+  stroke-linecap:round; stroke-linejoin:round;
+}
+@keyframes hisEsPulse {
+  0%,100% { box-shadow:0 0 0 0 rgba(99,102,241,0); }
+  50%      { box-shadow:0 0 18px 4px rgba(99,102,241,.1); border-color:rgba(99,102,241,.38); }
+}
+.his-es-title {
+  position:relative; z-index:1;
+  font-size:14px; font-weight:800;
+  color:rgba(226,232,240,.85);
+  margin-bottom:7px;
+}
+.his-es-sub {
+  position:relative; z-index:1;
+  font-size:12px; color:rgba(148,163,184,.5);
+  line-height:1.6; text-align:center; max-width:260px;
+  margin-bottom:18px;
+}
+.his-es-action {
+  position:relative; z-index:1;
+  display:inline-flex; align-items:center; gap:6px;
+  padding:7px 16px; border-radius:8px; cursor:pointer;
+  font-size:11px; font-weight:600;
+  background:rgba(99,102,241,.1); border:1px solid rgba(99,102,241,.28);
+  color:#c7d2fe; transition:background .18s, border-color .18s;
+}
+.his-es-action:hover { background:rgba(99,102,241,.16); border-color:rgba(99,102,241,.42); }
+
+/* ─── Skeleton Sweep Shimmer (LinkedIn / Notion style) ──────────── */
+/*
+ * Técnica: uma onda de luz desliza da esquerda para direita sobre
+ * barras que espelham o layout real da tabela.
+ * Usado por LinkedIn, Notion, Linear, Vercel, Stripe, GitHub.
+ */
+.skl-wrap {
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Barra base — todas as barras usam isso */
+.skl-bar, .skl-th {
+  border-radius: 6px;
+  position: relative;
+  overflow: hidden;
+  background: rgba(255,255,255,.055);
+}
+
+/* O sweep: pseudo-elemento com gradiente que desliza */
+.skl-bar::after, .skl-th::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent       0%,
+    transparent      30%,
+    rgba(255,255,255,.09) 50%,
+    transparent      70%,
+    transparent     100%
+  );
+  background-size: 300% 100%;
+  animation: sklSweep 1.6s ease-in-out infinite;
+}
+
+/* Stagger por linha para a onda percorrer a tabela de cima a baixo */
+.skl-row:nth-child(1) .skl-bar::after, .skl-th::after        { animation-delay: 0s;    }
+.skl-row:nth-child(2) .skl-bar::after                        { animation-delay: .08s;  }
+.skl-row:nth-child(3) .skl-bar::after                        { animation-delay: .16s;  }
+.skl-row:nth-child(4) .skl-bar::after                        { animation-delay: .24s;  }
+.skl-row:nth-child(5) .skl-bar::after                        { animation-delay: .32s;  }
+.skl-row:nth-child(6) .skl-bar::after                        { animation-delay: .40s;  }
+.skl-row:nth-child(7) .skl-bar::after                        { animation-delay: .48s;  }
+
+@keyframes sklSweep {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -100% 0; }
+}
+
+/* Cabeçalho */
+.skl-thead {
+  display: grid;
+  grid-template-columns: 2fr 1.2fr 1fr 0.7fr 0.9fr 1.1fr;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  padding: 0 16px;
+  height: 40px;
+  align-items: center;
+  gap: 12px;
+}
+.skl-th { height: 9px; }
+.skl-th:nth-child(1) { width: 55%; }
+.skl-th:nth-child(2) { width: 60%; }
+.skl-th:nth-child(3) { width: 50%; }
+.skl-th:nth-child(4) { width: 45%; }
+.skl-th:nth-child(5) { width: 52%; }
+.skl-th:nth-child(6) { width: 65%; }
+
+/* Linha */
+.skl-row {
+  display: grid;
+  grid-template-columns: 2fr 1.2fr 1fr 0.7fr 0.9fr 1.1fr;
+  padding: 0 16px;
+  height: 56px;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid rgba(255,255,255,.035);
+}
+.skl-row:last-child { border-bottom: none; }
+
+/* Células */
+.skl-cell { display: flex; flex-direction: column; gap: 7px; }
+.skl-bar.primary   { height: 11px; width: 74%; }
+.skl-bar.secondary { height: 8px;  width: 50%; background: rgba(255,255,255,.035); }
+.skl-bar.short     { height: 9px;  width: 60%; }
+.skl-bar.xs        { height: 9px;  width: 44%; }
+.skl-bar.pill      { height: 24px; width: 72px; border-radius: 8px; }
+.skl-bar.action    { height: 30px; width: 92%;  border-radius: 8px; background: rgba(255,255,255,.035); }
+/* Spinner para loading */
+.his-es-spinner {
+  position:relative; z-index:1;
+  width:32px; height:32px; margin-bottom:18px;
+  border:2px solid rgba(255,215,0,.1);
+  border-top-color:rgba(255,215,0,.55);
+  border-radius:50%;
+  animation:hisEsSpin 0.9s linear infinite;
+}
+@keyframes hisEsSpin { to { transform:rotate(360deg); } }
+
+/* ─── Toast ─────────────────────────────────────────────────────── */
+.his-toast {
+  position:fixed; bottom:24px; right:24px; z-index:9999;
+  padding:11px 18px; border-radius:11px; font-weight:600; font-size:13px;
+  display:flex; align-items:center; gap:9px;
+  box-shadow:0 8px 24px rgba(0,0,0,.45); min-width:220px;
+  opacity:0; transform:translateY(8px); transition:all .3s; pointer-events:none;
+}
+.his-toast.show { opacity:1; transform:translateY(0); }
+.his-toast.success { background:rgba(74,222,128,.15); border:1px solid rgba(74,222,128,.3); color:#4ade80; }
+.his-toast.error   { background:rgba(251,113,133,.15); border:1px solid rgba(251,113,133,.3); color:#fb7185; }
+.his-toast.info    { background:rgba(56,189,248,.15);  border:1px solid rgba(56,189,248,.3);  color:#38bdf8; }
+.his-toast svg { width:15px; height:15px; stroke:currentColor; fill:none; stroke-width:2.5; flex-shrink:0; }
+
+/* ─── Loading overlay ───────────────────────────────────────────── */
+.his-overlay {
+  display:none; position:fixed; inset:0;
+  background:rgba(0,0,0,.6); z-index:900;
+  align-items:center; justify-content:center; backdrop-filter:blur(4px);
+}
+.his-overlay.show { display:flex; }
+.his-loading-box {
+  background:rgba(22,34,65,.99); border:1px solid rgba(255,255,255,.1);
+  border-radius:16px; padding:30px 44px; text-align:center;
+  box-shadow:0 20px 60px rgba(0,0,0,.5);
+}
+.his-spinner {
+  width:36px; height:36px; border:3px solid rgba(255,255,255,.07);
+  border-top-color:#FFD700; border-radius:50%;
+  animation:hisSpin .8s linear infinite; margin:0 auto 12px;
+}
+@keyframes hisSpin { to{transform:rotate(360deg)} }
+.his-loading-msg { font-size:13px; color:rgba(255,255,255,.4); }
+
+@media(max-width:900px) {
+  .his-body { flex-direction:column; padding:16px 20px 40px; gap:16px; }
+  .his-cal-wrap { flex:none; width:100%; position:static; }
+  .his-info-panel { position:static; }
+  .his-filter-bar { padding:12px 20px; }
+}
+@media(max-width:768px) {
+  .his-topbar { padding:0 12px; height:52px; }
+  .his-topbar-actions { gap:5px; }
+  .his-btn { padding:6px 9px; font-size:11px; gap:3px; }
+  .his-btn svg { width:12px; height:12px; }
+  .his-filter-bar { padding:10px 12px; flex-wrap:wrap; gap:6px; }
+  .his-filter-bar select, .his-filter-bar input { flex:1 1 calc(50% - 6px); min-width:0; font-size:12px; }
+  .his-table-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  .his-table { min-width:580px; }
+}
+@media(max-width:480px) {
+  .his-body { padding:12px 10px 32px; }
+  .his-filter-bar { padding:10px 10px; }
+  .his-filter-bar select, .his-filter-bar input { flex:1 1 100%; }
+  .his-cal-day { min-height:42px; font-size:11px; }
+  .his-cal-stat-val { font-size:24px; }
+  .his-horas-grid { grid-template-columns:repeat(2,1fr); }
+  .his-btn-ghost span:last-child { display:none; }
+  .his-btn { padding:6px 8px; }
+}
+
+/* ═══ DESIGN SYSTEM STANDARDIZATION OVERRIDES ═══════════════════ */
+/* Standardize UI chrome: gray at rest, yellow on hover */
+/* Keep semantic data colors: green=present, red=absent, blue=weekend, etc */
+
+/* Button ghost style - standardize */
+.his-btn-ghost {
+  background: rgba(255, 255, 255, 0.07) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: rgba(255, 255, 255, 0.55) !important;
+}
+.his-btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: #fff !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Blue button (currently blue) - make it conform to yellow system */
+.his-btn-blue {
+  background: rgba(255, 255, 255, 0.07) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: rgba(255, 255, 255, 0.55) !important;
+}
+.his-btn-blue:hover {
+  background: #FFD700 !important;
+  color: #000000 !important;
+  border-color: #FFD700 !important;
+}
+
+/* Map navigation buttons - gray at rest, yellow on hover */
+.mapa-nav-btn {
+  background: rgba(255, 255, 255, 0.07) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: rgba(255, 255, 255, 0.55) !important;
+}
+.mapa-nav-btn:hover {
+  background: #FFD700 !important;
+  color: #000000 !important;
+  border-color: #FFD700 !important;
+}
+
+/* Close button - gray at rest, red on hover (error action) */
+.mapa-close-btn {
+  background: rgba(255, 255, 255, 0.07) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: rgba(255, 255, 255, 0.55) !important;
+}
+.mapa-close-btn:hover {
+  background: rgba(248, 113, 113, 0.15) !important;
+  border-color: rgba(248, 113, 113, 0.3) !important;
+  color: #f87171 !important;
+}
+
+/* Filter selects - gray at rest, yellow on focus */
+.mapa-sel {
+  background: rgba(255, 255, 255, 0.07) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: #e2e8f0 !important;
+}
+.mapa-sel:focus {
+  border-color: rgba(255, 215, 0, 0.4) !important;
+  background: rgba(255, 215, 0, 0.06) !important;
+}
+
+/* Search box - gray at rest, yellow on focus */
+.mapa-search {
+  background: rgba(255, 255, 255, 0.07) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+.mapa-search:focus-within {
+  border-color: rgba(255, 215, 0, 0.35) !important;
+  background: rgba(255, 215, 0, 0.06) !important;
+}
+.mapa-search svg {
+  stroke: rgba(255, 255, 255, 0.25) !important;
+}
+.mapa-search:focus-within svg {
+  stroke: rgba(255, 215, 0, 0.6) !important;
+}
+
+  /* ── Botão Menu Principal ─────────────────────────────────── */
+  #btnMenuHome {
+    height: 42px !important;
+    font-size: 14px !important;
+    padding: 0 22px !important;
+    font-weight: 700 !important;
+    border-radius: 10px !important;
+  }
+  #btnMenuHome svg { width: 16px !important; height: 16px !important; }
+  </style>
+</head>
+<body>
+
+<!-- ─── LOADING ─────────────────────────────────────────────────── -->
+<div class="his-overlay" id="hisOverlay"></div>
+
+<!-- ─── TOAST ───────────────────────────────────────────────────── -->
+<div class="his-toast" id="hisToast">
+  <svg id="hisToastIco" viewBox="0 0 24 24"></svg>
+  <span id="hisToastMsg"></span>
+</div>
+
+<!-- ─── TOPBAR ──────────────────────────────────────────────────── -->
+<div class="his-topbar">
+  <div class="his-tb-left">
+    <div class="his-tb-icon">📋</div>
+    <div class="his-tb-brand">Histórico <span>de Presença</span></div>
+    <div class="his-sep"></div>
+    <div class="his-pill">Sistema ativo</div>
+    <!-- Indicador carregamento mês (Fase 2) -->
+    <div id="hisIndMes" style="display:none;align-items:center;gap:6px;padding:4px 10px;border-radius:20px;
+         background:rgba(255,215,0,.08);border:1px solid rgba(255,215,0,.2);font-size:11px;font-weight:600;color:#FFD700;">
+      <div style="width:10px;height:10px;border:2px solid rgba(255,215,0,.25);border-top-color:#FFD700;
+           border-radius:50%;animation:hisSpin .7s linear infinite;flex-shrink:0;"></div>
+      <span id="hisIndMesTxt">⟳ carregando mês…</span>
+    </div>
+  </div>
+  <div class="his-tb-right">
+    <span id="hisNomeUser" style="font-size:12px;color:rgba(255,255,255,.3);font-weight:500;"></span>
+    <div class="his-clock" id="hisClock"></div>
+    <div class="his-sep"></div>
+    <button class="his-btn his-btn-blue" onclick="abrirMapaPresenca()">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Heatmap de Presença
+    </button>
+    <button class="his-btn his-btn-ghost" id="btnMenuHome" onclick="navegar('')">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+      Menu
+    </button>
+    <button class="his-btn his-btn-ghost" style="background:rgba(99,102,241,.1);color:rgba(129,140,248,.85);border:1px solid rgba(99,102,241,.22);"
+            onclick="window.open('<?= ScriptApp.getService().getUrl() ?>?page=glossario','_blank')" title="Termos e Justificativas">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+      Termos
+    </button>
+  </div>
+</div>
+
+<!-- ─── FILTER BAR ──────────────────────────────────────────────── -->
+<div class="his-filter-bar-outer">
+<div class="his-filter-bar">
+  <select class="his-select" id="filMes">
+    <option value="1">Janeiro</option><option value="2">Fevereiro</option>
+    <option value="3">Março</option><option value="4">Abril</option>
+    <option value="5">Maio</option><option value="6">Junho</option>
+    <option value="7">Julho</option><option value="8">Agosto</option>
+    <option value="9">Setembro</option><option value="10">Outubro</option>
+    <option value="11">Novembro</option><option value="12">Dezembro</option>
+  </select>
+  <select class="his-select" id="filAno">
+    <option value="2025">2025</option>
+    <option value="2026" selected>2026</option>
+    <option value="2027">2027</option>
+  </select>
+
+  <button class="his-btn his-btn-ghost" onclick="carregarMes()">
+    <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+    Recarregar
+  </button>
+</div>
+</div>
+
+<!-- ─── BODY ─────────────────────────────────────────────────────── -->
+<div class="his-body">
+
+  <!-- Calendário -->
+  <div class="his-cal-wrap">
+    <div class="his-cal-header">
+      <span class="his-cal-titulo" id="calTitulo">—</span>
+      <div class="his-cal-nav">
+        <button onclick="navMes(-1)">← Ant</button>
+        <button class="his-cal-today" onclick="irHoje()">Hoje</button>
+        <button onclick="navMes(1)">Próx →</button>
+      </div>
+    </div>
+    <div class="his-cal-grid" id="calGrid">
+      <div class="his-cal-dow">Dom</div><div class="his-cal-dow">Seg</div>
+      <div class="his-cal-dow">Ter</div><div class="his-cal-dow">Qua</div>
+      <div class="his-cal-dow">Qui</div><div class="his-cal-dow">Sex</div>
+      <div class="his-cal-dow">Sáb</div>
+    </div>
+  </div>
+
+  <!-- Info Panel (direita) -->
+  <div class="his-info-panel">
+
+    <!-- Placeholder: nenhum dia selecionado -->
+    <div class="his-info-empty" id="infoPanelEmpty">
+      <div class="his-info-empty-icon">
+        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      </div>
+      <div class="his-info-empty-title">Selecione um dia no calendário</div>
+      <div class="his-info-empty-sub">Clique em qualquer data com registros para ver presença, absenteísmo e horas disponíveis</div>
+    </div>
+
+    <!-- Data selecionada -->
+    <div class="his-day-header" id="dayHeader">—</div>
+
+    <!-- KPIs do dia selecionado -->
+    <div class="his-cal-stats" id="calStats" style="display:none;">
+      <div class="his-cal-stat total"><div class="his-cal-stat-val" id="statTot">—</div><div class="his-cal-stat-lbl">Total Escalado</div></div>
+      <div class="his-cal-stat pres"><div class="his-cal-stat-val" id="statPres">—</div><div class="his-cal-stat-lbl">Presentes</div></div>
+      <div class="his-cal-stat falt"><div class="his-cal-stat-val" id="statFalt">—</div><div class="his-cal-stat-lbl">Faltas</div></div>
+      <div class="his-cal-stat pend"><div class="his-cal-stat-val" id="statPct">—</div><div class="his-cal-stat-lbl">% Abs.</div></div>
+    </div>
+
+    <!-- Absenteísmo -->
+    <div class="his-abs-wrap" id="absWrap" style="display:none;">
+      <div class="his-abs-title">
+        <span>Absenteísmo</span>
+        <span class="his-abs-pct" id="absPct">—</span>
+      </div>
+      <div class="his-abs-bar-wrap"><div class="his-abs-bar-fill" id="absBar" style="width:0%"></div></div>
+      <div id="absDetail" style="font-size:12px;color:rgba(255,255,255,.4);text-align:center;">—</div>
+    </div>
+
+    <!-- Horas Disponíveis -->
+    <div class="his-horas-wrap" id="horasWrap" style="display:none;">
+      <div class="his-horas-title">
+        <span>Horas Disponíveis</span>
+        <span class="his-horas-total" id="horasTotal">—</span>
+      </div>
+      <div class="his-horas-grid" id="horasGrid"></div>
+    </div>
+
+    <!-- ─── Turno Pendentes Cards ─────────────────────────────────── -->
+    <div class="his-tpc-wrap" id="turnoPendWrap" style="display:none;">
+      <div class="his-tpc-section-title">
+        <span>Pendentes por Turno</span>
+        <span class="his-tpc-pend-badge" id="tpcPendBadge">—</span>
+      </div>
+      <div class="his-tpc-grid" id="tpcGrid"></div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- ─── MAPA DE PRESENÇA MODAL ────────────────────────────────────── -->
+<div class="mapa-overlay" id="mapaOverlay">
+  <div class="mapa-modal">
+
+    <!-- Header -->
+    <div class="mapa-header">
+      <!-- Esquerda: ícone + título + stats -->
+      <div class="mapa-hdr-left">
+        <div class="mapa-hdr-icon">⊞</div>
+        <div>
+          <div class="mapa-hdr-title">Heatmap de <span>Presença</span></div>
+          <div class="mapa-hdr-sub" id="mapaSubtitle">—</div>
+        </div>
+        <div class="mapa-stats-row" id="mapaStatsRow" style="margin-left:16px;"></div>
+      </div>
+
+      <!-- Centro: Navegação de mês -->
+      <div class="mapa-nav-row">
+        <button class="mapa-nav-btn" onclick="navegarMapaMes(-1)" title="Mês anterior">
+          <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <div class="mapa-nav-mes">
+          <span class="mapa-nav-mes-nome" id="mapaNavMesNome">—</span>
+          <span class="mapa-nav-mes-ano"  id="mapaNavMesAno">—</span>
+        </div>
+        <button class="mapa-nav-btn" onclick="navegarMapaMes(1)" title="Próximo mês">
+          <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
+
+      <!-- Direita: export + fechar -->
+      <div style="display:flex;align-items:center;gap:8px;">
+        <button class="mapa-btn-export" onclick="exportarMapaCSV()" title="Baixar arquivo CSV">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          CSV
+        </button>
+        <button class="mapa-btn-export mapa-btn-sheets" onclick="exportarMapaSheets()" title="Abrir no Google Planilhas">
+          <svg viewBox="0 0 24 24" style="color:#34a853"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="9" x2="9" y2="21"/><line x1="15" y1="9" x2="15" y2="21"/></svg>
+          Google Planilhas
+        </button>
+        <button class="mapa-close-btn" onclick="fecharMapaPresenca()" title="Fechar">✕</button>
+      </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="mapa-filterbar">
+      <div class="mapa-filter-group">
+        <label>Setor</label>
+        <select class="mapa-sel" id="mapaSetor" onchange="renderMapa()">
+          <option value="">Todos os setores</option>
+        </select>
+      </div>
+      <div class="mapa-filter-group">
+        <label>Turno</label>
+        <select class="mapa-sel" id="mapaTurno" onchange="renderMapa()">
+          <option value="">Todos os turnos</option>
+        </select>
+      </div>
+      <div class="mapa-filter-group">
+        <label>Gestor</label>
+        <select class="mapa-sel" id="mapaGestor" onchange="renderMapa()">
+          <option value="">Todos os gestores</option>
+        </select>
+      </div>
+      <div class="mapa-filter-group" style="flex:1;">
+        <label>Buscar colaborador</label>
+        <div class="mapa-search">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="mapaBusca" placeholder="Nome do colaborador..." autocomplete="off" oninput="renderMapa()"/>
+        </div>
+      </div>
+    </div>
+
+    <!-- Legenda -->
+    <div class="mapa-legend">
+      <span class="mapa-legend-title">Legenda</span>
+      <div class="leg-item"><div class="leg-dot leg-P"></div>Presente</div>
+      <div class="leg-item"><div class="leg-dot leg-F"></div>Falta</div>
+      <div class="leg-item"><div class="leg-dot leg-FO"></div>Folga</div>
+      <div class="leg-item"><div class="leg-dot leg-FE"></div>Férias</div>
+      <div class="leg-item"><div class="leg-dot leg-A"></div>Atestado</div>
+      <div class="leg-item"><div class="leg-dot leg-AF"></div>Afastamento</div>
+      <div class="leg-item"><div class="leg-dot leg-ND"></div>Sem registro</div>
+    </div>
+
+    <!-- Grid -->
+    <div class="mapa-grid-container" id="mapaGridContainer">
+      <div class="mapa-empty">
+        <div class="ico"><svg viewBox="0 0 24 24" style="width:24px;height:24px;fill:none;stroke:rgba(129,140,248,.7);stroke-width:1.6;stroke-linecap:round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div>
+        <div class="mapa-empty-title">Carregando mapa...</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Tooltip -->
+<div class="mapa-tooltip" id="mapaTooltip">
+  <div class="mapa-tt-nome" id="ttNome">—</div>
+  <div class="mapa-tt-row"><span>Data</span><strong id="ttData">—</strong></div>
+  <div class="mapa-tt-row"><span>Status</span><strong id="ttStatus">—</strong></div>
+  <div class="mapa-tt-row"><span>Turno</span><strong id="ttTurno">—</strong></div>
+  <div class="mapa-tt-row"><span>Gestor</span><strong id="ttGestor">—</strong></div>
+</div>
+
+<script>
+const SCRIPT_URL = '<?= scriptUrl ?>';
+
+// ── Formatação com separador de milhar (pt-BR) ────────────────────────
+const fmt = n => (n == null || n === '' ? '—' : Number(n).toLocaleString('pt-BR'));
+const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
+               'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+// ── Cargos excluídos (mesma lista do chamada.html) ───────────────────
+const CARGOS_GESTOR_EXCLUIDOS_HIS = new Set([
+  'SUPERVISOR','GERENTE','GERENTE SENIOR','GERENTE SR','GERENTE - IT',
+  'ANALISTA','ANALISTA SENIOR','ANALISTA SR','ANALISTA SEMI SENIOR',
+  'ANALISTA SSR','ANALISTA JR','ANALISTA SEMI SENIOR - IT',
+  'COORDINATOR','COORDINATOR - SHIPPING','ASSISTENTE','ASSISTANT',
+  'ANALIST','SPECIALIST','DIRECTOR','SR TEAM LEADER - SHIPPING'
+]);
+function cargoGestorExcluidoHis(cargo) {
+  if (!cargo) return false;
+  return CARGOS_GESTOR_EXCLUIDOS_HIS.has(cargo.toUpperCase().trim());
+}
+
+// ── Estado ──────────────────────────────────────────────────────────
+let todosRegistros  = [];   // todos do mês (getFlowData)
+let registrosDia    = [];   // filtrados pelo dia selecionado
+let diasComDados    = {};   // { 'YYYY-MM-DD': count }
+let dataSelecionada = null;
+let statusFiltro    = 'TODOS';
+let mesCal, anoCal;
+let sortCol = 'colaborador', sortAsc = true;
+let toastTimer;
+
+// ── Init ─────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  iniciarRelogio();
+  const agora = new Date();
+  mesCal = agora.getMonth() + 1;
+  anoCal = agora.getFullYear();
+  document.getElementById('filMes').value = String(mesCal);
+  document.getElementById('filAno').value = String(anoCal);
+  document.getElementById('filMes').addEventListener('change', () => {
+    mesCal = parseInt(document.getElementById('filMes').value);
+    anoCal = parseInt(document.getElementById('filAno').value);
+    carregarMes();
+  });
+  document.getElementById('filAno').addEventListener('change', () => {
+    mesCal = parseInt(document.getElementById('filMes').value);
+    anoCal = parseInt(document.getElementById('filAno').value);
+    carregarMes();
+  });
+  // nome do usuário
+  try {
+    google.script.run
+      .withSuccessHandler(e => {
+        if (e) document.getElementById('hisNomeUser').textContent = e.split('@')[0].replace('.', ' ');
+      }).getUsuarioEmail();
+  } catch(e) {}
+
+  carregarMes();
+
+  // ── Auto-abrir heatmap se vier com hash #openHeatmap=1 ──
+  try {
+    google.script.url.getLocation(loc => {
+      const hash = (loc && loc.hash) ? loc.hash : '';
+      if (hash.includes('openHeatmap=1')) {
+        setTimeout(() => abrirMapaPresenca(), 1400);
+      }
+    });
+  } catch(e) {
+    // Fallback: tenta via window.location.hash direto
+    if (window.location.hash && window.location.hash.includes('openHeatmap=1')) {
+      setTimeout(() => abrirMapaPresenca(), 1400);
+    }
+  }
+});
+
+function navegar(pg) {
+  window.top.location.href = SCRIPT_URL + (pg ? '?page=' + pg : '');
+}
+
+// ── Relógio ──────────────────────────────────────────────────────────
+function iniciarRelogio() {
+  function tick() {
+    const el = document.getElementById('hisClock');
+    if (!el) return;
+    const now = new Date(), p = n => String(n).padStart(2,'0');
+    el.textContent = p(now.getHours()) + ':' + p(now.getMinutes()) + ':' + p(now.getSeconds());
+  }
+  tick(); setInterval(tick, 1000);
+}
+
+// ── Skeleton helper — imita linhas da tabela real ────────────────────
+function sklTable(n) {
+  const rows = Array.from({length: n}, () => `
+    <div class="skl-row">
+      <div class="skl-cell"><div class="skl-bar primary"></div><div class="skl-bar secondary"></div></div>
+      <div class="skl-cell"><div class="skl-bar short"></div></div>
+      <div class="skl-cell"><div class="skl-bar xs"></div></div>
+      <div class="skl-cell"><div class="skl-bar xs"></div></div>
+      <div class="skl-cell"><div class="skl-bar pill"></div></div>
+      <div class="skl-cell"><div class="skl-bar action"></div></div>
+    </div>`).join('');
+  return `<div class="skl-wrap">
+    <div class="skl-thead">
+      <div class="skl-th"></div><div class="skl-th"></div><div class="skl-th"></div>
+      <div class="skl-th"></div><div class="skl-th"></div><div class="skl-th"></div>
+    </div>
+    ${rows}
+  </div>`;
+}
+
+// ── Indicador de carregamento do mês (Fase 2) ────────────────────────
+let _hisMesCarregando = false;
+let _hisMapaCallbackPendente = false; // heatmap aguarda Fase 2?
+
+function _hisIndMes(show, erro) {
+  const el = document.getElementById('hisIndMes');
+  const tx = document.getElementById('hisIndMesTxt');
+  if (!el) return;
+  el.style.display = show ? 'flex' : 'none';
+  if (erro) {
+    el.style.borderColor = 'rgba(248,113,113,.3)';
+    el.style.background  = 'rgba(248,113,113,.07)';
+    el.style.color       = '#f87171';
+    if (tx) tx.textContent = '✕ erro ao carregar mês';
+  } else if (show) {
+    el.style.borderColor = 'rgba(255,215,0,.2)';
+    el.style.background  = 'rgba(255,215,0,.08)';
+    el.style.color       = '#FFD700';
+    if (tx) tx.textContent = '⟳ carregando mês…';
+  }
+}
+
+// ── Carregar Mês — 2 fases ───────────────────────────────────────────
+// Fase 1: busca só o dia de hoje (rápido, ~3-5s) — mostra resultados imediatos
+// Fase 2: busca o mês completo em background (lento, ~1-3min) — popula todosRegistros
+function carregarMes() {
+  dataSelecionada = null;
+  todosRegistros  = [];
+  diasComDados    = {};
+  _hisMesCarregando = false;
+  _hisMapaCallbackPendente = false;
+  document.getElementById('calStats').style.display    = 'none';
+  document.getElementById('absWrap').style.display     = 'none';
+  document.getElementById('horasWrap').style.display   = 'none';
+  document.getElementById('turnoPendWrap').style.display = 'none';
+  document.getElementById('dayHeader').style.display   = 'none';
+  document.getElementById('infoPanelEmpty').style.display = 'block';
+  _hisIndMes(false);
+
+  const hoje = new Date();
+  const hd   = hoje.toISOString().split('T')[0];
+  const ehMesAtual = hoje.getMonth()+1 === mesCal && hoje.getFullYear() === anoCal;
+
+  // Skeleton imediato
+  renderCalendario();
+
+  // ── Fase 1: apenas hoje (skip para meses passados) ────────────────
+  if (ehMesAtual) {
+    google.script.run
+      .withSuccessHandler(function(dataDia) {
+        const regsDia = dataDia || [];
+        // Guarda hoje em todosRegistros para selecionarDia() funcionar imediatamente
+        // (Phase 2 vai substituir com o mês completo)
+        todosRegistros = regsDia;
+        regsDia.forEach(r => {
+          const d = (r.data_abs || '').split('T')[0];
+          if (d) diasComDados[d] = (diasComDados[d] || 0) + 1;
+        });
+        renderCalendario();
+
+        if (diasComDados[hd]) {
+          selecionarDia(hd);
+        }
+
+        // Fase 2 em background
+        _iniciarFase2();
+      })
+      .withFailureHandler(function(err) {
+        // Fase 1 falhou — tenta Fase 2 direto
+        _iniciarFase2();
+      })
+      .getFlowDataDia(hd);
+  } else {
+    // Mês diferente do atual — vai direto para Fase 2
+    _iniciarFase2();
+  }
+}
+
+function _iniciarFase2() {
+  _hisMesCarregando = true;
+  _hisIndMes(true);
+  const mesFase2 = mesCal, anoFase2 = anoCal;
+
+  google.script.run
+    .withSuccessHandler(function(lista) {
+      // Ignora se o usuário já navegou para outro mês
+      if (mesFase2 !== mesCal || anoFase2 !== anoCal) return;
+
+      _hisMesCarregando = false;
+      _hisIndMes(false);
+
+      const brutos = lista || [];
+      // Fase 2 traz o mês completo — substitui todosRegistros
+      // Se já tínhamos hoje (Fase 1), a Fase 2 inclui hoje também, então podemos substituir direto
+      todosRegistros = brutos;
+      diasComDados = {};
+      todosRegistros.forEach(r => {
+        const d = (r.data_abs || '').split('T')[0];
+        if (d) diasComDados[d] = (diasComDados[d] || 0) + 1;
+      });
+      renderCalendario();
+
+      // Re-render dia selecionado com dados completos (se tiver um selecionado)
+      if (dataSelecionada) {
+        selecionarDia(dataSelecionada);
+      }
+
+      // Se o heatmap estava aguardando Fase 2, renderiza agora
+      if (_hisMapaCallbackPendente) {
+        _hisMapaCallbackPendente = false;
+        mapaRegistros = [...todosRegistros];
+        popularFiltrosMapa();
+        renderMapa();
+      }
+    })
+    .withFailureHandler(function(err) {
+      if (mesFase2 !== mesCal || anoFase2 !== anoCal) return;
+      _hisMesCarregando = false;
+      _hisIndMes(false, true);
+      mostrarToast('Erro ao carregar mês: ' + (err.message || ''), 'error');
+
+      // Se heatmap está esperando, mostra erro lá também
+      if (_hisMapaCallbackPendente) {
+        _hisMapaCallbackPendente = false;
+        const c = document.getElementById('mapaGridContainer');
+        if (c) c.innerHTML = `<div class="mapa-empty"><div class="ico"><svg viewBox="0 0 24 24" style="width:24px;height:24px;fill:none;stroke:rgba(129,140,248,.7);stroke-width:1.6;stroke-linecap:round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><div class="mapa-empty-title">Erro ao carregar dados</div><div class="mapa-empty-sub">${err.message}</div></div>`;
+      }
+    })
+    .getFlowData(mesFase2, anoFase2);
+}
+
+// ── Calendário ───────────────────────────────────────────────────────
+function renderCalendario() {
+  const grid  = document.getElementById('calGrid');
+  const titulo = document.getElementById('calTitulo');
+  titulo.textContent = meses[mesCal - 1] + ' ' + anoCal;
+
+  // Atualizar selects
+  document.getElementById('filMes').value = String(mesCal);
+  document.getElementById('filAno').value = String(anoCal);
+
+  // Remover dias antigos (mantém cabeçalho 7 dow)
+  while (grid.children.length > 7) grid.removeChild(grid.lastChild);
+
+  const primeiro = new Date(anoCal, mesCal - 1, 1);
+  const ultimo   = new Date(anoCal, mesCal, 0).getDate();
+  const offset   = primeiro.getDay();
+  const hoje     = new Date().toISOString().split('T')[0];
+
+  for (let i = 0; i < offset; i++) {
+    const v = document.createElement('div');
+    v.className = 'his-cal-day vazio';
+    grid.appendChild(v);
+  }
+
+  for (let d = 1; d <= ultimo; d++) {
+    const pad  = String(d).padStart(2,'0');
+    const padM = String(mesCal).padStart(2,'0');
+    const ds   = `${anoCal}-${padM}-${pad}`;
+    const cnt  = diasComDados[ds] || 0;
+
+    const cel = document.createElement('div');
+    cel.className = 'his-cal-day' + (ds === hoje ? ' hoje' : '') + (cnt > 0 ? ' tem-dados' : '');
+    if (dataSelecionada === ds) cel.classList.add('selecionado');
+    cel.innerHTML = `<span class="his-day-num">${d}</span>${cnt > 0 ? `<span class="his-day-badge">${cnt}</span>` : ''}`;
+    if (cnt > 0) cel.onclick = () => selecionarDia(ds);
+    else cel.style.opacity = '.35';
+    grid.appendChild(cel);
+  }
+}
+
+function navMes(dir) {
+  mesCal += dir;
+  if (mesCal > 12) { mesCal = 1; anoCal++; }
+  if (mesCal < 1)  { mesCal = 12; anoCal--; }
+  carregarMes();
+}
+
+function irHoje() {
+  const agora = new Date();
+  mesCal = agora.getMonth() + 1;
+  anoCal = agora.getFullYear();
+  carregarMes();
+}
+
+// ── Selecionar Dia ───────────────────────────────────────────────────
+function selecionarDia(ds) {
+  dataSelecionada = ds;
+
+  // Atualizar visual do calendário
+  document.querySelectorAll('.his-cal-day.selecionado').forEach(el => el.classList.remove('selecionado'));
+  const dia = parseInt(ds.split('-')[2]);
+  const offset = new Date(anoCal, mesCal-1, 1).getDay();
+  const idx = offset + dia - 1 + 7; // +7 pelos cabeçalhos DOW
+  const grid = document.getElementById('calGrid');
+  if (grid.children[idx]) grid.children[idx].classList.add('selecionado');
+
+  // Filtrar registros do dia
+  registrosDia = todosRegistros.filter(r => {
+    const d = (r.data_abs || r.data || '').split('T')[0];
+    return d === ds;
+  });
+
+  // Atualizar stats do calendário
+  atualizarCalStats(registrosDia);
+}
+
+function atualizarCalStats(regs) {
+  const p    = regs.filter(r => isPresente(r.status_presenca)).length;
+  const f    = regs.filter(r => isFalta(r.status_presenca)).length;
+  const base = p + f;
+  const pct  = base > 0 ? ((f / base) * 100).toFixed(1) : '0.0';
+  const pNum = parseFloat(pct);
+
+  document.getElementById('infoPanelEmpty').style.display = 'none';
+  if (dataSelecionada) {
+    const [y,m,d] = dataSelecionada.split('-');
+    const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    const hdr = document.getElementById('dayHeader');
+    hdr.textContent = `${d} de ${meses[parseInt(m)-1]} de ${y}`;
+    hdr.style.display = 'block';
+  }
+  document.getElementById('statTot').textContent  = fmt(regs.length);
+  document.getElementById('statPres').textContent = fmt(p);
+  document.getElementById('statFalt').textContent = fmt(f);
+  document.getElementById('statPct').textContent  = pct + '%';
+  document.getElementById('calStats').style.display = 'grid';
+
+  // Barra absenteísmo
+  const cor      = pNum <= 3 ? '#4ade80' : pNum <= 6 ? '#fbbf24' : '#f87171';
+  const barClass = pNum <= 3 ? 'ok' : pNum <= 6 ? 'warn' : 'bad';
+  document.getElementById('absPct').textContent = pct + '%';
+  document.getElementById('absPct').style.color = cor;
+  const bar = document.getElementById('absBar');
+  bar.className = 'his-abs-bar-fill ' + barClass;
+  setTimeout(() => { bar.style.width = Math.min(pNum * 3, 100) + '%'; }, 50);
+  document.getElementById('absDetail').textContent = `${fmt(p)} presentes · ${fmt(f)} faltas · ${fmt(regs.length)} total`;
+  document.getElementById('absWrap').style.display = 'block';
+
+  // ── Horas Disponíveis ───────────────────────────────────────────
+  const HORAS_TURNO = { T1: 7.76, T2: 7.54, T3: 6.9, T4: 9.7, ADM: 9.7 };
+  const HC_HORA_PADRAO = 7.44;
+  const totalHC    = regs.length;
+  const totalHoras = (totalHC * HC_HORA_PADRAO).toFixed(1);
+
+  // Agrupa HC por turno
+  const porTurno = {};
+  regs.forEach(r => {
+    const t = (r.turno || 'Sem Turno').trim().toUpperCase();
+    porTurno[t] = (porTurno[t] || 0) + 1;
+  });
+
+  // Render
+  document.getElementById('horasTotal').textContent = totalHoras + 'h';
+  const grid = document.getElementById('horasGrid');
+  const ordemTurnos = ['T1','T2','T3','T4','ADM'];
+  // Inclui turnos com target definido que tenham HC > 0, na ordem certa
+  const turnosPresentes = ordemTurnos.filter(t => porTurno[t]);
+  // Se tiver turnos desconhecidos, adiciona no fim
+  Object.keys(porTurno).forEach(t => { if (!ordemTurnos.includes(t) && porTurno[t]) turnosPresentes.push(t); });
+
+  grid.innerHTML = turnosPresentes.map(t => {
+    const hcT    = porTurno[t] || 0;
+    const target = HORAS_TURNO[t] || HC_HORA_PADRAO;
+    const horas  = (hcT * target).toFixed(1);
+    return `
+      <div class="his-horas-turno">
+        <div class="his-horas-turno-nome">${t}</div>
+        <div class="his-horas-turno-hc">${hcT} HC</div>
+        <div class="his-horas-turno-val">${horas}h</div>
+      </div>`;
+  }).join('');
+
+  document.getElementById('horasWrap').style.display = turnosPresentes.length > 0 ? 'block' : 'none';
+
+  // Turno pendentes cards
+  renderTurnoCardsHis(regs);
+}
+
+// ── Turno Pendentes Cards ─────────────────────────────────────────────
+const HIS_TPC_PAL = {
+  ADM: { color:'#FFD700',  rgb:'255,215,0'   },
+  T1:  { color:'#818cf8',  rgb:'129,140,248' },
+  T2:  { color:'#38bdf8',  rgb:'56,189,248'  },
+  T3:  { color:'#34d399',  rgb:'52,211,153'  },
+  T4:  { color:'#fbbf24',  rgb:'251,191,36'  },
+};
+const HIS_TPC_ORDER = ['ADM','T1','T2','T3','T4'];
+
+function renderTurnoCardsHis(regs) {
+  const wrap  = document.getElementById('turnoPendWrap');
+  const grid  = document.getElementById('tpcGrid');
+  const badge = document.getElementById('tpcPendBadge');
+  if (!wrap || !grid) return;
+
+  if (!regs || !regs.length) { wrap.style.display = 'none'; return; }
+
+  // Filtra registros válidos (mesma exclusão de cargos gerenciais do chamada)
+  const validos = regs.filter(r => !cargoGestorExcluidoHis(r.cargo_gestor));
+  if (!validos.length) { wrap.style.display = 'none'; return; }
+
+  // Agrupa por turno
+  const porT = {};
+  validos.forEach(r => {
+    const t = (r.turno || 'Sem Turno').trim().toUpperCase();
+    if (!porT[t]) porT[t] = [];
+    porT[t].push(r);
+  });
+
+  // Ordem consistente
+  const turnos = [
+    ...HIS_TPC_ORDER.filter(t => porT[t]),
+    ...Object.keys(porT).filter(t => !HIS_TPC_ORDER.includes(t))
+  ];
+
+  // Total de pendentes
+  const totalPend = validos.filter(r => !r.status_presenca || r.status_presenca === '' || r.status_presenca === null).length;
+
+  if (badge) {
+    badge.textContent = totalPend > 0 ? totalPend + ' pendentes' : '✓ Tudo OK';
+    badge.className   = 'his-tpc-pend-badge' + (totalPend === 0 ? ' done' : '');
+  }
+
+  grid.innerHTML = turnos.map(turno => {
+    const rows   = porT[turno];
+    const hcT    = rows.length;
+    const pend   = rows.filter(r => !r.status_presenca || r.status_presenca === '' || r.status_presenca === null).length;
+    const done   = hcT - pend;
+    const pct    = hcT > 0 ? Math.round((done / hcT) * 100) : 100;
+    const isDone = pend === 0;
+    const pal    = HIS_TPC_PAL[turno] || { color:'#94a3b8', rgb:'148,163,184' };
+
+    // Avatares dos gestores (dos colaboradores ainda pendentes)
+    const gestMap = new Map();
+    rows.filter(r => !r.status_presenca || r.status_presenca === '' || r.status_presenca === null)
+        .forEach(r => { if (r.gestor) gestMap.set(r.gestor, true); });
+    const gestList = [...gestMap.keys()];
+    const avHtml = gestList.slice(0,5).map(nome => {
+      const parts = nome.trim().split(/\s+/).filter(w => w.length > 1);
+      const ini   = parts.length >= 2 ? (parts[0][0] + parts[parts.length-1][0]).toUpperCase() : nome.slice(0,2).toUpperCase();
+      return `<span class="his-tpc-av" title="${nome}" style="--tc:${pal.color};--tc-rgb:${pal.rgb}">${ini}</span>`;
+    }).join('') + (gestList.length > 5 ? `<span class="his-tpc-av his-tpc-av-more">+${gestList.length-5}</span>` : '');
+
+    const pendLine = isDone
+      ? `<div class="his-tpc-pend-line done"><span class="his-tpc-pend-dot"></span>Tudo registrado ✓</div>`
+      : `<div class="his-tpc-pend-line"><span class="his-tpc-pend-dot"></span>${pend} pendente${pend !== 1 ? 's' : ''}</div>`;
+
+    return `
+      <div class="his-tpc-card${isDone ? ' all-done' : ''}" style="--tc:${pal.color};--tc-rgb:${pal.rgb}">
+        <div class="his-tpc-top">
+          <span class="his-tpc-badge">${turno}</span>
+          <div class="his-tpc-hc-info"><strong>${hcT}</strong>HC</div>
+        </div>
+        <div class="his-tpc-gest-row">${avHtml}</div>
+        <div class="his-tpc-bar-wrap"><div class="his-tpc-bar" style="width:${pct}%"></div></div>
+        ${pendLine}
+      </div>`;
+  }).join('');
+
+  wrap.style.display = 'block';
+}
+
+// ── Filtros & Render ─────────────────────────────────────────────────
+function filtrarStatus(btn) {
+  document.querySelectorAll('.his-status-pill').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  statusFiltro = btn.dataset.s;
+  aplicarFiltros();
+}
+
+function aplicarFiltros() {
+  if (!dataSelecionada) return;
+  if (!document.getElementById('recordsContent')) return;
+  const busca = (document.getElementById('hisSearch') ? document.getElementById('hisSearch').value : '').toLowerCase().trim();
+
+  let lista = registrosDia.filter(r => {
+    // Mesma lógica do chamada.html — exclui registros cujo gestor tem cargo gerencial
+    if (cargoGestorExcluidoHis(r.cargo_gestor)) return false;
+    // Status filter
+    if (statusFiltro !== 'TODOS') {
+      const s = (r.status_presenca || '').toUpperCase();
+      if (statusFiltro === 'PRESENTE' && !isPresente(r.status_presenca)) return false;
+      if (statusFiltro === 'FALTA'    && !isFalta(r.status_presenca))    return false;
+      if (statusFiltro === 'FOLGA'    && !s.includes('FOLGA'))            return false;
+      if (statusFiltro === 'FERIAS'   && !s.includes('FERIA'))            return false;
+      if (statusFiltro === 'ATESTADO' && !s.includes('ATESTADO'))         return false;
+      if (statusFiltro === 'OUTROS') {
+        const matched = isPresente(r.status_presenca) || isFalta(r.status_presenca) ||
+          s.includes('FOLGA') || s.includes('FERIA') || s.includes('ATESTADO');
+        if (matched) return false;
+      }
+    }
+    // Busca
+    if (busca) {
+      const colab  = (r.colaborador || '').toLowerCase();
+      const gestor = (r.gestor      || '').toLowerCase();
+      const setor  = (r.setor       || '').toLowerCase();
+      if (!colab.includes(busca) && !gestor.includes(busca) && !setor.includes(busca)) return false;
+    }
+    return true;
+  });
+
+  // Sort
+  lista = ordenar(lista);
+
+  const hisCountEl = document.getElementById('hisCount');
+  if (hisCountEl) hisCountEl.innerHTML = `<strong>${fmt(lista.length)}</strong> registro${lista.length !== 1 ? 's' : ''}`;
+
+  renderTabela(lista);
+}
+
+function ordenar(lista) {
+  return [...lista].sort((a, b) => {
+    let va = a[sortCol] || '', vb = b[sortCol] || '';
+    if (va < vb) return sortAsc ? -1 : 1;
+    if (va > vb) return sortAsc ? 1 : -1;
+    return 0;
+  });
+}
+
+function sortBy(col) {
+  if (sortCol === col) sortAsc = !sortAsc;
+  else { sortCol = col; sortAsc = true; }
+  document.querySelectorAll('table.his-table th.sorted').forEach(t => t.classList.remove('sorted'));
+  const th = document.querySelector(`[onclick="sortBy('${col}')"]`);
+  if (th) th.classList.add('sorted');
+  aplicarFiltros();
+}
+
+// ── Render Tabela ────────────────────────────────────────────────────
+function renderTabela(lista) {
+  const content = document.getElementById('recordsContent');
+  if (!content) return;
+
+  if (!lista || !lista.length) {
+    content.innerHTML = `
+      <div class="his-empty">
+        <div class="his-es-icon">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </div>
+        <div class="his-es-title">Nenhum registro</div>
+        <div class="his-es-sub">Não foram encontrados registros para os filtros selecionados.</div>
+      </div>`;
+    return;
+  }
+
+  content.innerHTML = `
+    <div class="his-table-wrap">
+      <table class="his-table">
+        <thead><tr>
+          <th onclick="sortBy('colaborador')" class="${sortCol==='colaborador'?'sorted':''}">Colaborador <span style="opacity:.4;font-size:9px;">↕</span></th>
+          <th onclick="sortBy('gestor')"      class="${sortCol==='gestor'?'sorted':''}">Gestor <span style="opacity:.4;font-size:9px;">↕</span></th>
+          <th onclick="sortBy('setor')"       class="${sortCol==='setor'?'sorted':''}">Setor <span style="opacity:.4;font-size:9px;">↕</span></th>
+          <th onclick="sortBy('turno')"       class="${sortCol==='turno'?'sorted':''}">Turno <span style="opacity:.4;font-size:9px;">↕</span></th>
+          <th onclick="sortBy('status_presenca')" class="${sortCol==='status_presenca'?'sorted':''}">Status <span style="opacity:.4;font-size:9px;">↕</span></th>
+          <th style="min-width:160px;">Alterar Status</th>
+        </tr></thead>
+        <tbody class="his-tbody" id="hisTbody">
+          ${lista.map(r => `
+            <tr data-idgroot="${r.idgroot || ''}" data-data="${dataSelecionada}">
+              <td class="col-colab">
+                <strong>${r.colaborador || '—'}</strong>
+                <span>${r.area || ''}</span>
+              </td>
+              <td style="color:rgba(255,255,255,.45);font-size:12px;">${r.gestor || '—'}</td>
+              <td style="color:rgba(255,255,255,.4);font-size:12px;">${r.setor || '—'}</td>
+              <td style="color:rgba(255,255,255,.35);font-size:12px;">${r.turno || '—'}</td>
+              <td><span class="his-tag ${tagClass(r.status_presenca)}">${labelStatus(r.status_presenca)}</span></td>
+              <td>
+                <div style="display:flex;align-items:center;gap:6px;">
+                  <select class="his-status-sel" onchange="prepararSalvar(this)">
+                    <option value="">— Selecionar —</option>
+                    <option value="PRESENTE">✓ Presente</option>
+                    <option value="FALTA">✕ Falta</option>
+                    <option value="FOLGA">◎ Folga</option>
+                    <option value="FERIAS">☀ Férias</option>
+                    <option value="ATESTADO">⚕ Atestado</option>
+                    <option value="AFASTAMENTO">📋 Afastamento</option>
+                    <option value="LIC MEDICA">🏥 Lic. Médica</option>
+                    <option value="LIC MATERNIDADE">Lic. Maternidade</option>
+                    <option value="LIC PATERNIDADE">Lic. Paternidade</option>
+                  </select>
+                  <button class="btn-save-status" onclick="salvarStatus(this)">
+                    <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                    Salvar
+                  </button>
+                </div>
+              </td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+// ── Status helpers ───────────────────────────────────────────────────
+function isPresente(s) {
+  if (!s) return false;
+  const u = s.toUpperCase().trim();
+  return u.startsWith('P') || u.includes('PRESENTE') || u.startsWith('HE');
+}
+function isFalta(s) {
+  if (!s) return false;
+  const u = s.toUpperCase();
+  return u.includes('FALTA') || u.includes('FALTOU');
+}
+function tagClass(s) {
+  if (!s || s === '') return 'tag-PENDENTE';
+  const u = s.toUpperCase();
+  if (isPresente(s))         return 'tag-PRESENTE';
+  if (isFalta(s))            return 'tag-FALTA';
+  if (u.includes('FOLGA'))   return 'tag-FOLGA';
+  if (u.includes('FERIA'))   return 'tag-FERIAS';
+  if (u.includes('ATESTADO') || u.includes('LIC')) return 'tag-ATESTADO';
+  return 'tag-OUTROS';
+}
+function labelStatus(s) {
+  if (!s || s === '') return '⋯ Pendente';
+  const map = {
+    'PRESENTE':'✓ Presente','FALTA':'✕ Falta','FOLGA':'◎ Folga',
+    'FERIAS':'☀ Férias','ATESTADO':'⚕ Atestado','AFASTAMENTO':'📋 Afastamento',
+    'LIC MEDICA':'🏥 Lic. Médica','LIC MATERNIDADE':'Lic. Mat.','LIC PATERNIDADE':'Lic. Pat.'
+  };
+  return map[s.toUpperCase()] || s;
+}
+
+// ── Edição de status ─────────────────────────────────────────────────
+function prepararSalvar(sel) {
+  const btn = sel.nextElementSibling;
+  btn.classList.toggle('visible', sel.value !== '');
+}
+
+function salvarStatus(btn) {
+  const tr     = btn.closest('tr');
+  const sel    = tr.querySelector('.his-status-sel');
+  const idgroot = tr.dataset.idgroot;
+  const data    = tr.dataset.data;
+  const novoStatus = sel.value;
+  if (!novoStatus) return;
+
+  btn.disabled = true;
+  btn.textContent = '...';
+
+  google.script.run
+    .withSuccessHandler(res => {
+      btn.disabled = false;
+      btn.innerHTML = '<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Salvar';
+      if (res && res.success) {
+        mostrarToast('Status atualizado!', 'success');
+        // Atualizar localmente
+        const reg = todosRegistros.find(r => String(r.idgroot) === String(idgroot) && (r.data_abs||'').split('T')[0] === data);
+        if (reg) reg.status_presenca = novoStatus;
+        registrosDia = todosRegistros.filter(r => (r.data_abs||'').split('T')[0] === data);
+        atualizarCalStats(registrosDia);
+        aplicarFiltros();
+      } else {
+        mostrarToast('Erro: ' + (res && res.message || 'falha'), 'error');
+      }
+    })
+    .withFailureHandler(err => {
+      btn.disabled = false;
+      btn.innerHTML = '<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Salvar';
+      mostrarToast('Erro: ' + err.message, 'error');
+    })
+    .atualizarStatusHistorico(idgroot, data, novoStatus);
+}
+
+// ── Mapa de Presença ──────────────────────────────────────────────────
+// Estado próprio do mapa (independente do calendário do histórico)
+let mapaMes, mapaAno, mapaRegistros = [];
+
+function abrirMapaPresenca() {
+  // Inicializa com o mês atual do histórico (ou mês corrente)
+  mapaMes = mesCal || (new Date().getMonth() + 1);
+  mapaAno = anoCal || new Date().getFullYear();
+  mapaRegistros = todosRegistros.length ? [...todosRegistros] : [];
+  document.getElementById('mapaOverlay').classList.add('show');
+  document.body.style.overflow = 'hidden';
+  atualizarNavMapa();
+
+  if (mapaRegistros.length > 0) {
+    // Dados já disponíveis — renderiza direto
+    popularFiltrosMapa();
+    renderMapa();
+  } else if (_hisMesCarregando) {
+    // Fase 2 está rodando em background — aguarda sem disparar nova query
+    _hisMapaCallbackPendente = true;
+    const container = document.getElementById('mapaGridContainer');
+    container.innerHTML = `
+      <div class="mapa-empty">
+        <div class="ico"><svg viewBox="0 0 24 24" style="width:24px;height:24px;fill:none;stroke:rgba(129,140,248,.7);stroke-width:1.6;stroke-linecap:round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+        <div class="mapa-empty-title">Carregando dados do mês…</div>
+        <div class="mapa-empty-sub">O heatmap aparecerá automaticamente quando concluir.</div>
+      </div>`;
+    document.getElementById('mapaStatsRow').innerHTML = '';
+  } else {
+    // Sem dados e Fase 2 não está rodando — carrega independente para o mapa
+    carregarDadosMapa();
+  }
+}
+
+function fecharMapaPresenca() {
+  document.getElementById('mapaOverlay').classList.remove('show');
+  document.body.style.overflow = '';
+}
+
+function atualizarNavMapa() {
+  document.getElementById('mapaNavMesNome').textContent = meses[mapaMes - 1];
+  document.getElementById('mapaNavMesAno').textContent  = mapaAno;
+}
+
+function navegarMapaMes(dir) {
+  _hisMapaCallbackPendente = false; // cancela qualquer callback pendente do mês anterior
+  mapaMes += dir;
+  if (mapaMes > 12) { mapaMes = 1; mapaAno++; }
+  if (mapaMes < 1)  { mapaMes = 12; mapaAno--; }
+  atualizarNavMapa();
+
+  // Se o mês navegado é o mesmo do calendário principal e Fase 2 está rodando, aguarda
+  if (mapaMes === mesCal && mapaAno === anoCal && _hisMesCarregando) {
+    _hisMapaCallbackPendente = true;
+    const container = document.getElementById('mapaGridContainer');
+    container.innerHTML = `
+      <div class="mapa-empty">
+        <div class="ico"><svg viewBox="0 0 24 24" style="width:24px;height:24px;fill:none;stroke:rgba(129,140,248,.7);stroke-width:1.6;stroke-linecap:round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+        <div class="mapa-empty-title">Carregando dados do mês…</div>
+        <div class="mapa-empty-sub">O heatmap aparecerá automaticamente quando concluir.</div>
+      </div>`;
+    document.getElementById('mapaStatsRow').innerHTML = '';
+    return;
+  }
+
+  // Se já temos dados do mesmo mês no calendário principal, usa direto
+  if (mapaMes === mesCal && mapaAno === anoCal && todosRegistros.length > 0) {
+    mapaRegistros = [...todosRegistros];
+    popularFiltrosMapa();
+    renderMapa();
+    return;
+  }
+
+  carregarDadosMapa();
+}
+
+function carregarDadosMapa() {
+  const container = document.getElementById('mapaGridContainer');
+  container.innerHTML = `
+    <div class="mapa-empty">
+      <div class="ico"><svg viewBox="0 0 24 24" style="width:24px;height:24px;fill:none;stroke:rgba(129,140,248,.7);stroke-width:1.6;stroke-linecap:round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+      <div class="mapa-empty-title">Carregando ${meses[mapaMes-1]} ${mapaAno}...</div>
+    </div>`;
+  document.getElementById('mapaStatsRow').innerHTML = '';
+
+  google.script.run
+    .withSuccessHandler(lista => {
+      mapaRegistros = lista || [];
+      popularFiltrosMapa();
+      renderMapa();
+    })
+    .withFailureHandler(err => {
+      container.innerHTML = `<div class="mapa-empty"><div class="ico"><svg viewBox="0 0 24 24" style="width:24px;height:24px;fill:none;stroke:rgba(129,140,248,.7);stroke-width:1.6;stroke-linecap:round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><div class="mapa-empty-title">Erro ao carregar</div><div class="mapa-empty-sub">${err.message}</div></div>`;
+    })
+    .getFlowData(mapaMes, mapaAno);
+}
+
+// Fecha com Esc
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') fecharMapaPresenca();
+});
+
+function popularFiltrosMapa() {
+  const setores  = [...new Set(mapaRegistros.map(r => r.setor  || '').filter(Boolean))].sort();
+  const turnos   = [...new Set(mapaRegistros.map(r => r.turno  || '').filter(Boolean))].sort();
+  const gestores = [...new Set(mapaRegistros.map(r => r.gestor || '').filter(Boolean))].sort();
+
+  const buildOpts = (sel, items) => {
+    const cur = document.getElementById(sel).value;
+    const el  = document.getElementById(sel);
+    while (el.options.length > 1) el.remove(1);
+    items.forEach(v => {
+      const o = document.createElement('option');
+      o.value = v; o.textContent = v;
+      el.appendChild(o);
+    });
+    if (cur) el.value = cur;
+  };
+  buildOpts('mapaSetor',  setores);
+  buildOpts('mapaTurno',  turnos);
+  buildOpts('mapaGestor', gestores);
+}
+
+function renderMapa() {
+  const setorFil  = document.getElementById('mapaSetor').value;
+  const turnoFil  = document.getElementById('mapaTurno').value;
+  const gestorFil = document.getElementById('mapaGestor').value;
+  const busca     = (document.getElementById('mapaBusca').value || '').toLowerCase().trim();
+
+  // Dias do mês (usa estado próprio do mapa)
+  const totalDias = new Date(mapaAno, mapaMes, 0).getDate();
+  const padM = String(mapaMes).padStart(2,'0');
+  const hoje  = new Date().toISOString().split('T')[0];
+  const dows  = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+
+  const days = [];
+  for (let d = 1; d <= totalDias; d++) {
+    const ds = `${mapaAno}-${padM}-${String(d).padStart(2,'0')}`;
+    const dow = new Date(mapaAno, mapaMes-1, d).getDay();
+    days.push({ ds, num: d, dow });
+  }
+
+  // Filtrar registros
+  let regs = mapaRegistros;
+  if (setorFil)  regs = regs.filter(r => r.setor  === setorFil);
+  if (turnoFil)  regs = regs.filter(r => r.turno  === turnoFil);
+  if (gestorFil) regs = regs.filter(r => r.gestor === gestorFil);
+  if (busca)     regs = regs.filter(r => (r.colaborador||'').toLowerCase().includes(busca));
+
+  // Índice: idgroot → { info, dias: { ds: status } }
+  const idx = {};
+  regs.forEach(r => {
+    const k = r.idgroot || r.colaborador;
+    if (!idx[k]) idx[k] = { nome: r.colaborador||'—', gestor: r.gestor||'—', setor: r.setor||'—', turno: r.turno||'—', dias: {} };
+    const d = (r.data_abs||'').split('T')[0];
+    if (d) idx[k].dias[d] = r.status_presenca;
+  });
+
+  const colabs = Object.values(idx).sort((a,b) => {
+    if (a.setor !== b.setor) return a.setor < b.setor ? -1 : 1;
+    if (a.turno !== b.turno) return a.turno < b.turno ? -1 : 1;
+    return a.nome < b.nome ? -1 : 1;
+  });
+
+  if (colabs.length === 0) {
+    document.getElementById('mapaGridContainer').innerHTML =
+      `<div class="mapa-empty"><div class="ico"><svg viewBox="0 0 24 24" style="width:24px;height:24px;fill:none;stroke:rgba(129,140,248,.7);stroke-width:1.6;stroke-linecap:round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div><div class="mapa-empty-title">Nenhum colaborador encontrado</div><div class="mapa-empty-sub">Tente ajustar os filtros selecionados.</div></div>`;
+    atualizarStatsMapa(0, 0, 0, 0);
+    return;
+  }
+
+  // Calcular stats globais (por dia, não cumulativo)
+  // Conta dias úteis (seg-sex) com pelo menos 1 registro
+  const diasComRegistro = new Set();
+  let totP=0, totF=0, totO=0;
+  colabs.forEach(c => {
+    days.forEach(({ds, dow}) => {
+      const s = c.dias[ds];
+      if (!s) return;
+      diasComRegistro.add(ds);
+      if (isPresente(s)) totP++;
+      else if (isFalta(s)) totF++;
+      else totO++;
+    });
+  });
+  atualizarStatsMapa(colabs.length, totP, totF, totO, diasComRegistro.size);
+  document.getElementById('mapaSubtitle').textContent =
+    `${meses[mapaMes-1]} ${mapaAno} · ${colabs.length.toLocaleString('pt-BR')} colaboradores`;
+
+  // Build HTML da tabela
+  let html = `<table class="mapa-table"><thead class="mapa-thead"><tr>
+    <th class="mapa-col-colab" style="text-align:left;">
+      <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,.25);text-transform:uppercase;letter-spacing:.06em;">Colaborador</div>
+    </th>`;
+
+  days.forEach(({ds, num, dow}) => {
+    const isWeekend = dow === 0 || dow === 6;
+    const isHoje    = ds === hoje;
+    const cls = isHoje ? 'hoje-col' : isWeekend ? 'fim-semana' : '';
+    html += `<th><div class="mapa-day-hdr ${cls}">
+      <span class="mapa-day-num">${num}</span>
+      <span class="mapa-day-dow">${dows[dow]}</span>
+    </div></th>`;
+  });
+  html += '</tr></thead><tbody>';
+
+  // Agrupar por setor
+  let lastSetor = null;
+  colabs.forEach(c => {
+    if (c.setor !== lastSetor) {
+      lastSetor = c.setor;
+      if (c.setor && c.setor !== '—') {
+        html += `<tr class="mapa-group-row"><td colspan="${days.length + 1}">${c.setor}</td></tr>`;
+      }
+    }
+
+    html += `<tr class="mapa-colab-row">
+      <td class="mapa-col-colab">
+        <div class="mapa-colab-info">
+          <div class="mapa-colab-nome">${c.nome}</div>
+          <div class="mapa-colab-sub">${c.turno} · ${c.gestor}</div>
+        </div>
+      </td>`;
+
+    days.forEach(({ds}) => {
+      const s   = c.dias[ds] || '';
+      const cls = mapaStatusClass(s);
+      const lbl = mapaStatusLabel(s);
+      const dataFmt = ds.split('-').reverse().join('/');
+      html += `<td class="mapa-cell">
+        <div class="mapa-dot ${cls}"
+             onmouseenter="showTooltip(event,'${c.nome.replace(/'/g,"\\'")}','${dataFmt}','${(s||'Sem registro').replace(/'/g,"\\'")}','${c.turno}','${c.gestor.replace(/'/g,"\\'")}')"
+             onmouseleave="hideTooltip()">${lbl}</div>
+      </td>`;
+    });
+
+    html += '</tr>';
+  });
+
+  html += '</tbody></table>';
+  document.getElementById('mapaGridContainer').innerHTML = html;
+}
+
+function mapaStatusClass(s) {
+  if (!s) return 'md-ND';
+  const u = s.toUpperCase();
+  if (isPresente(s))         return 'md-P';
+  if (isFalta(s))            return 'md-F';
+  if (u.includes('FOLGA'))   return 'md-FO';
+  if (u.includes('FERIA'))   return 'md-FE';
+  if (u.includes('ATESTADO') || u.includes('LIC')) return 'md-A';
+  if (u.includes('AFASTAMENTO')) return 'md-AF';
+  return 'md-ND';
+}
+
+function mapaStatusLabel(s) {
+  if (!s) return '';
+  const u = s.toUpperCase();
+  if (isPresente(s))         return 'P';
+  if (isFalta(s))            return 'F';
+  if (u.includes('FOLGA'))   return 'Fo';
+  if (u.includes('FERIA'))   return 'Fe';
+  if (u.includes('ATESTADO'))return 'At';
+  if (u.includes('LIC'))     return 'L';
+  if (u.includes('AFASTAMENTO')) return 'Af';
+  return '?';
+}
+
+function atualizarStatsMapa(total, pres, falt, outros, numDias) {
+  const absRate = (pres + falt) > 0 ? ((falt / (pres + falt)) * 100).toFixed(1) : '0.0';
+  const absCor  = parseFloat(absRate) <= 3 ? '#4ade80' : parseFloat(absRate) <= 6 ? '#fbbf24' : '#f87171';
+  const mediaDia = numDias > 0 ? Math.round((pres + falt) / numDias) : 0;
+  document.getElementById('mapaStatsRow').innerHTML = `
+    <div class="mapa-stat-chip"><div class="dot" style="background:#94a3b8;"></div>${total.toLocaleString('pt-BR')} colaboradores</div>
+    <div class="mapa-stat-chip"><div class="dot" style="background:#818cf8;"></div>~${mediaDia.toLocaleString('pt-BR')}/dia</div>
+    <div class="mapa-stat-chip"><div class="dot" style="background:${absCor};"></div>${absRate}% abs. média</div>
+  `;
+}
+
+// Tooltip
+function showTooltip(e, nome, data, status, turno, gestor) {
+  const t = document.getElementById('mapaTooltip');
+  document.getElementById('ttNome').textContent   = nome;
+  document.getElementById('ttData').textContent   = data;
+  document.getElementById('ttStatus').textContent = status || 'Sem registro';
+  document.getElementById('ttTurno').textContent  = turno;
+  document.getElementById('ttGestor').textContent = gestor;
+  const x = Math.min(e.clientX + 14, window.innerWidth - 210);
+  const y = Math.min(e.clientY + 14, window.innerHeight - 130);
+  t.style.left = x + 'px';
+  t.style.top  = y + 'px';
+  t.classList.add('show');
+}
+function hideTooltip() { document.getElementById('mapaTooltip').classList.remove('show'); }
+
+// Exportar CSV
+function exportarMapaCSV() {
+  const totalDias = new Date(mapaAno, mapaMes, 0).getDate();
+  const padM = String(mapaMes).padStart(2,'0');
+  const days = [];
+  for (let d = 1; d <= totalDias; d++) {
+    days.push(`${mapaAno}-${padM}-${String(d).padStart(2,'0')}`);
+  }
+
+  const idx = {};
+  mapaRegistros.forEach(r => {
+    const k = r.idgroot || r.colaborador;
+    if (!idx[k]) idx[k] = { nome:r.colaborador||'', setor:r.setor||'', turno:r.turno||'', gestor:r.gestor||'', dias:{} };
+    const d = (r.data_abs||'').split('T')[0];
+    if (d) idx[k].dias[d] = r.status_presenca;
+  });
+
+  const header = ['Colaborador','Setor','Turno','Gestor', ...days.map(d => d.split('-')[2] + '/' + padM)];
+  const rows = Object.values(idx).sort((a,b)=>a.nome<b.nome?-1:1).map(c => {
+    return [c.nome, c.setor, c.turno, c.gestor, ...days.map(d => c.dias[d] || '')];
+  });
+
+  const csv = [header, ...rows].map(r => r.map(v => `"${v}"`).join(',')).join('\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = `mapa_presenca_${padM}_${mapaAno}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  mostrarToast('CSV exportado com sucesso!', 'success');
+}
+
+// ── Exportar para Google Planilhas ────────────────────────────────────────
+function exportarMapaSheets() {
+  const totalDias = new Date(mapaAno, mapaMes, 0).getDate();
+  const padM  = String(mapaMes).padStart(2,'0');
+  const days  = [];
+  for (let d = 1; d <= totalDias; d++) {
+    days.push(`${mapaAno}-${padM}-${String(d).padStart(2,'0')}`);
+  }
+
+  // Monta índice por colaborador (mesmo que exportarMapaCSV)
+  const idx = {};
+  mapaRegistros.forEach(r => {
+    const k = r.idgroot || r.colaborador;
+    if (!idx[k]) idx[k] = { nome:r.colaborador||'', setor:r.setor||'', turno:r.turno||'', gestor:r.gestor||'', dias:{} };
+    const d = (r.data_abs||'').split('T')[0];
+    if (d) idx[k].dias[d] = r.status_presenca;
+  });
+
+  // Cabeçalhos: colunas fixas + um dia por coluna
+  const headers = ['Colaborador','Setor','Turno','Gestor',
+                   ...days.map(d => d.split('-')[2] + '/' + padM)];
+
+  // Linhas: garante que cada célula seja string (Sheets exige)
+  const rows = Object.values(idx)
+    .sort((a,b) => a.nome < b.nome ? -1 : 1)
+    .map(c => [
+      c.nome, c.setor, c.turno, c.gestor,
+      ...days.map(d => String(c.dias[d] || ''))
+    ]);
+
+  if (!rows.length) { mostrarToast('Nenhum dado para exportar', 'error'); return; }
+
+  // Feedback visual no botão
+  const btn = document.querySelector('.mapa-btn-sheets');
+  if (btn) { btn.classList.add('loading'); btn.textContent = 'Criando planilha…'; }
+  mostrarToast('Criando planilha no Google Drive…', 'info');
+
+  const titulo = `Mapa de Presença ${padM}/${mapaAno}`;
+  google.script.run
+    .withSuccessHandler(res => {
+      if (btn) { btn.classList.remove('loading'); btn.innerHTML = '<svg viewBox="0 0 24 24" style="width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="9" x2="9" y2="21"/><line x1="15" y1="9" x2="15" y2="21"/></svg> Google Planilhas'; }
+      if (res && res.success) {
+        mostrarToast('Planilha criada! Abrindo…', 'success');
+        window.open(res.url, '_blank');
+      } else {
+        mostrarToast('Erro: ' + (res && res.message ? res.message : 'falha desconhecida'), 'error');
+      }
+    })
+    .withFailureHandler(err => {
+      if (btn) { btn.classList.remove('loading'); btn.innerHTML = 'Google Planilhas'; }
+      mostrarToast('Erro ao criar planilha: ' + (err.message || err), 'error');
+    })
+    .exportarParaGoogleSheets({
+      title:  titulo,
+      sheet:  `${padM}-${mapaAno}`,
+      headers: headers,
+      rows:    rows,
+      freeze:  4   // congela as 4 primeiras colunas (Colaborador, Setor, Turno, Gestor)
+    });
+}
+
+// ── Helpers ──────────────────────────────────────────────────────────
+function mostrarLoading(msg) {
+  ChaLoader.start('hisOverlay', msg || 'Carregando...');
+  document.getElementById('hisOverlay').classList.add('show');
+}
+function esconderLoading() {
+  ChaLoader.complete();
+  document.getElementById('hisOverlay').classList.remove('show');
+}
+
+function mostrarToast(msg, tipo) {
+  const t   = document.getElementById('hisToast');
+  const ico = document.getElementById('hisToastIco');
+  const txt = document.getElementById('hisToastMsg');
+  const icones = {
+    success: '<polyline points="20 6 9 17 4 12"/>',
+    error:   '<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>',
+    info:    '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><circle cx="12" cy="16" r="1"/>'
+  };
+  ico.innerHTML = icones[tipo] || icones.info;
+  txt.textContent = msg;
+  t.className = 'his-toast ' + (tipo || 'info') + ' show';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3800);
+}
+</script>
+</body>
+</html>

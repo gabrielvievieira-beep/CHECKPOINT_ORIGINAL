@@ -1,0 +1,1744 @@
+<!DOCTYPE html>
+<html lang="pt-BR" style="width: 100%; height: 100%; margin: 0; padding: 0;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Available Time - Sistema de Absenteísmo</title>
+    <?!= include('style'); ?>
+    <style>
+        body { width: 100% !important; max-width: 100% !important; margin: 0 !important; padding: 0 !important; background: #6f6f6f; }
+        .hero { background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%); }
+        .main-content { width: 100% !important; max-width: 100% !important; padding: 20px 0 40px; }
+        .container { max-width: 90%; padding: 0 20px; margin: 0 auto; width: 90%; }
+        
+        /* Header da página */
+        .page-header {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .page-title { font-size: 28px; font-weight: 700; margin: 0; }
+        .page-subtitle { font-size: 14px; opacity: 0.8; margin-top: 4px; }
+        .data-badge {
+            font-size: 22px;
+            font-weight: 700;
+            color: #fff;
+            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+            padding: 10px 20px;
+            border-radius: 10px;
+        }
+        
+        /* Cards de resumo */
+        .resumo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .resumo-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            text-align: center;
+        }
+        .resumo-card.destaque {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+        }
+        .resumo-valor { font-size: 32px; font-weight: 800; }
+        .resumo-label { font-size: 13px; opacity: 0.8; margin-top: 4px; }
+        
+        /* Filtros */
+        .filtros-container {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 24px;
+        }
+        .filtros-grid {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+        .filtro-group { flex: 1; min-width: 150px; }
+        .filtro-label { font-size: 12px; font-weight: 600; color: #666; margin-bottom: 6px; display: block; }
+        .filtro-select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+        }
+        .filtro-select:focus { border-color: #f59e0b; outline: none; }
+        .filtro-select-inline {
+            width: 100%;
+            padding: 4px 8px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 11px;
+            background: white;
+            cursor: pointer;
+        }
+        .filtro-select-inline:focus { border-color: #d97706; outline: none; }
+        .btn-filtrar {
+            background: linear-gradient(135deg, #1a1a1a 0%, #333 100%);
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-filtrar:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        
+        /* Tabela */
+        .tabela-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            overflow: visible;
+            width: 100%;
+        }
+        .tabela-header {
+            background: #1a1a1a;
+            color: white;
+            padding: 16px 20px;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .tabela-count { font-size: 13px; opacity: 0.8; }
+        
+        .tabela-scroll { 
+            max-height: 600px; 
+            overflow-y: auto; 
+            overflow-x: auto;
+            width: 100%;
+        }
+        
+        table { 
+            width: 100%; 
+            min-width: 1000px;
+            border-collapse: collapse; 
+        }
+        th {
+            background: #f8f9fa;
+            padding: 14px 16px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 600;
+            color: #666;
+            text-transform: uppercase;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.2s;
+        }
+        th:hover {
+            background: #e9ecef;
+        }
+        td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #eee;
+            font-size: 14px;
+        }
+        tr:hover { background: #fef3c7; }
+        
+        .colaborador-nome { font-weight: 600; color: #1a1a1a; }
+        .badge-turno {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .badge-t1 { background: #dbeafe; color: #1e40af; }
+        .badge-t2 { background: #dcfce7; color: #166534; }
+        .badge-t3 { background: #fef3c7; color: #92400e; }
+        
+        .tempo-perdido {
+            font-weight: 700;
+            color: #dc2626;
+        }
+        .tempo-moderado { color: #f59e0b; }
+        .tempo-alto { color: #dc2626; }
+        
+        .aproveitamento {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .aproveitamento-bom { background: #dcfce7; color: #166534; }
+        .aproveitamento-medio { background: #fef3c7; color: #92400e; }
+        .aproveitamento-ruim { background: #fee2e2; color: #991b1b; }
+        
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+        .empty-state-icon { font-size: 48px; margin-bottom: 16px; }
+        .empty-state-text { font-size: 16px; }
+        
+        /* Botão Justificar */
+        .btn-justificar {
+            background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+            color: white;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-justificar:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(217,119,6,0.4); }
+        
+        /* Campos inline de justificação */
+        .justificativa-inline {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .justificativa-checkbox {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+        .justificativa-input-minutos {
+            width: 70px;
+            padding: 6px 8px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 12px;
+        }
+        .justificativa-select {
+            width: 180px;
+            padding: 6px 8px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 12px;
+        }
+        .justificativa-textarea {
+            width: 200px;
+            padding: 6px 8px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 11px;
+            resize: vertical;
+            min-height: 32px;
+            max-height: 80px;
+        }
+        .justificativa-input-minutos:focus,
+        .justificativa-select:focus,
+        .justificativa-textarea:focus {
+            border-color: #d97706;
+            outline: none;
+        }
+        
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            border-bottom: 1px solid #eee;
+        }
+        .modal-header h3 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 700;
+            color: #1a1a1a;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 28px;
+            color: #666;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+        .modal-close:hover {
+            background: #f5f5f5;
+            color: #1a1a1a;
+        }
+        .modal-body {
+            padding: 24px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #666;
+            margin-bottom: 6px;
+        }
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            box-sizing: border-box;
+        }
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            border-color: #f59e0b;
+            outline: none;
+        }
+        .form-input[readonly] {
+            background: #f5f5f5;
+            cursor: not-allowed;
+        }
+        .form-textarea {
+            resize: vertical;
+        }
+        .modal-footer {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            padding: 20px 24px;
+            border-top: 1px solid #eee;
+        }
+        .btn-cancelar {
+            background: #f5f5f5;
+            color: #666;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-cancelar:hover { background: #e5e5e5; }
+        .btn-salvar {
+            background: linear-gradient(135deg, #1a1a1a 0%, #333 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-width: 100px;
+            position: relative;
+        }
+        .btn-salvar:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        .btn-salvar:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+        .btn-salvar .spinner {
+            display: none;
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+        .btn-salvar.saving .spinner {
+            display: inline-block;
+        }
+        
+        /* Sistema de Abas */
+        .tabs-container {
+            background: white;
+            border-radius: 12px;
+            padding: 0;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+        .tabs-header {
+            display: flex;
+            border-bottom: 2px solid #eee;
+            background: #f8f9fa;
+        }
+        .tab-button {
+            flex: 1;
+            padding: 16px 24px;
+            background: transparent;
+            border: none;
+            font-size: 15px;
+            font-weight: 600;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+            position: relative;
+        }
+        .tab-button:hover {
+            background: #f0f0f0;
+            color: #1a1a1a;
+        }
+        .tab-button.active {
+            color: #1a1a1a;
+            border-bottom-color: #1a1a1a;
+            background: white;
+        }
+        .tab-content {
+            display: none;
+            padding: 20px;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .historico-date-selector {
+            display: flex;
+            gap: 12px;
+            align-items: end;
+            margin-bottom: 20px;
+        }
+        .historico-date-selector .filtro-group {
+            flex: 1;
+        }
+
+        /* ─── MOBILE ──────────────────────────────────────────────── */
+        @media (max-width: 768px) {
+            .page-header { flex-direction: column; align-items: flex-start; gap: 10px; padding: 12px 14px; }
+            .page-header h1 { font-size: 1.1rem; }
+            .header-actions { width: 100%; justify-content: flex-start; flex-wrap: wrap; gap: 6px; }
+            .header-actions button, .header-actions select { font-size: 12px; padding: 7px 10px; }
+            .resumo-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+            .filtros-grid { flex-direction: column; align-items: stretch; gap: 8px; }
+            .filtros-grid select, .filtros-grid input { width: 100%; }
+            .historico-date-selector { flex-direction: column; gap: 8px; }
+            .historico-date-selector .filtro-group { width: 100%; }
+            .table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            .sidebar-panel { width: 280px !important; }
+        }
+        @media (max-width: 480px) {
+            .resumo-grid { grid-template-columns: 1fr 1fr; }
+            .btn-filtrar { width: 100%; justify-content: center; }
+            .page-header h1 { font-size: 1rem; }
+        }
+
+    </style>
+</head>
+<body>
+    <div class="video-background"></div>
+    <div class="video-overlay"></div>
+    <div class="site-identifier">ID/EA BA01</div>
+    <header class="header" style="width: 100%;">
+        <div class="container">
+            <div id="menuContainer"></div>
+            <div id="loading" class="header-loading" style="display: none;">
+                <div class="loading-spinner"></div>
+                <span class="loading-text">Carregando...</span>
+            </div>
+            <svg xmlns="http://www.w3.org/2000/svg" width="150" height="60" fill="none" viewBox="0 0 300 120" class="header-logo" style="position: absolute; left: 50%; transform: translateX(-50%); height: 40px; width: auto; z-index: 1;"><path fill="#1a1a1a" d="M259.143 41.465q-2.2-2.81-6.7-2.81t-6.7 2.77a10.1 10.1 0 0 0-2.18 6.57c-.063 2.382.72 4.71 2.21 6.57q2.2 2.72 6.7 2.72t6.7-2.72a10.08 10.08 0 0 0 2.21-6.57 10.1 10.1 0 0 0-2.24-6.53m-3.64 10.58a4.04 4.04 0 0 1-3.08 1.42 4.05 4.05 0 0 1-3.08-1.42 6.6 6.6 0 0 1-1.07-4.05 6.53 6.53 0 0 1 1.07-4 4.072 4.072 0 0 1 6.16 0 6.6 6.6 0 0 1 1.07 4 6.66 6.66 0 0 1-1.07 4.05m-33.94-12.13a11.25 11.25 0 0 0-5.12-1.13c-3 0-5 .77-6.26 2.31a6.7 6.7 0 0 0-1.29 3.77h4.42a3.3 3.3 0 0 1 .65-1.61 2.92 2.92 0 0 1 2.32-.8c.765-.04 1.529.1 2.23.41a1.54 1.54 0 0 1 .75 1.49 1.37 1.37 0 0 1-1 1.3 7.5 7.5 0 0 1-1.83.4l-1.57.19c-1.391.12-2.748.5-4 1.12a5 5 0 0 0-2.51 4.68 4.84 4.84 0 0 0 1.56 3.84 6.26 6.26 0 0 0 4 1.36c10 .44 9.87-5.27 10-6.45v-6.57c-.15-2.11-.89-3.57-2.35-4.31m-2.31 10a3.65 3.65 0 0 1-1.32 3.16 4.76 4.76 0 0 1-2.76.87 2.48 2.48 0 0 1-1.6-.52 2 2 0 0 1-.66-1.69 2.09 2.09 0 0 1 1.08-1.94 6.7 6.7 0 0 1 2.1-.63l1-.19a8 8 0 0 0 1.23-.32q.469-.172.89-.44zm-20.49-7.26a3 3 0 0 1 2.52 1.06c.37.522.607 1.126.69 1.76h4.93q-.41-3.73-2.61-5.2a10 10 0 0 0-5.67-1.48 8.28 8.28 0 0 0-6.38 2.5 9.9 9.9 0 0 0-2.31 7 9.75 9.75 0 0 0 2.09 6.48c1.4 1.66 3.57 2.49 6.53 2.49a7.89 7.89 0 0 0 6.71-3 7.4 7.4 0 0 0 1.58-3.94h-4.9a4.2 4.2 0 0 1-.87 2.25 3 3 0 0 1-2.4.86 3.2 3.2 0 0 1-3.24-2.18 8.2 8.2 0 0 1-.48-3.08 8.9 8.9 0 0 1 .48-3.22 3.3 3.3 0 0 1 3.33-2.3m-10.15-3.82c-10.12 0-9.52 9-9.52 9v9.1h4.59v-8.57a7 7 0 0 1 .52-3.11c.63-1.19 1.86-1.79 3.7-1.79h.55l.77.07v-4.66h-.4zm-16.87 13.31c-.175.26-.388.492-.63.69a4 4 0 0 1-2.57.7 4.34 4.34 0 0 1-2.44-.59 4.13 4.13 0 0 1-1.86-3.64h12.71a24 24 0 0 0-.16-3.47 8.44 8.44 0 0 0-1.39-3.6 7 7 0 0 0-3-2.58 9.8 9.8 0 0 0-4.1-.82 8.43 8.43 0 0 0-6.24 2.42q-2.4 2.42-2.4 7 0 4.83 2.66 7a9.5 9.5 0 0 0 6.14 2.15 8.48 8.48 0 0 0 6.57-2.55 6.14 6.14 0 0 0 1.59-2.64zm-6.18-8.55a3.6 3.6 0 0 1 2.72-1 4 4 0 0 1 2.71.94 3.83 3.83 0 0 1 1.21 2.76h-7.86a4.7 4.7 0 0 1 1.22-2.7m-7.76 13.3h-4.19v-10.56a2.93 2.93 0 0 0-.775-2.331 2.94 2.94 0 0 0-2.275-.929 3.09 3.09 0 0 0-3.18 3.26v10.56h-4.2v-10.56a2.92 2.92 0 0 0-3-3.26 3.07 3.07 0 0 0-3.18 3.26v10.56h-4.2v-10.46c0-4.36 2.89-7.66 7.38-7.66a6.48 6.48 0 0 1 5.21 2.43 6.71 6.71 0 0 1 5.17-2.43c4.57 0 7.27 3.17 7.27 7.66zm84.36-23.57s-4.6-.5-4.6 3.22v4.92a5.5 5.5 0 0 0-2-1.93 5.67 5.67 0 0 0-2.82-.7 6.72 6.72 0 0 0-5.5 2.56 11.3 11.3 0 0 0-2 7.15 9.43 9.43 0 0 0 2.09 6.34c1.39 1.65 4.12 2.37 6.54 2.37 8.46 0 8.36-7.25 8.36-7.25zm-5.5 18.76a3.37 3.37 0 0 1-2.95 1.43 3.24 3.24 0 0 1-2.89-1.44 7.46 7.46 0 0 1-.95-4 7 7 0 0 1 .94-3.75 3.2 3.2 0 0 1 2.93-1.51 3.5 3.5 0 0 1 2.31.83c1.08.92 1.61 2.56 1.61 4.7a6.4 6.4 0 0 1-1 3.74m-76.23 13.84h3.46l-6.25 17.73h-4.71l-6.19-17.68h4.92l3.52 12.43 3.13-10.83a2.084 2.084 0 0 1 2.12-1.65m13.3-.47h.39v4.71l-.77-.06h-.55c-1.85 0-3.1.61-3.73 1.81a7 7 0 0 0-.54 3.14v8.48h-4.63v-9s-.61-9 9.61-9zm18.07 7a8.7 8.7 0 0 0-1.39-3.62 7.14 7.14 0 0 0-3-2.58 10 10 0 0 0-4.1-.82 8.44 8.44 0 0 0-6.25 2.42q-2.4 2.43-2.4 7 0 4.85 2.66 7a9.55 9.55 0 0 0 6.15 2.15 8.47 8.47 0 0 0 6.57-2.55 6.3 6.3 0 0 0 1.6-2.65h-4.88a3.3 3.3 0 0 1-.63.7 4.07 4.07 0 0 1-2.6.73 4.37 4.37 0 0 1-2.47-.58 4.19 4.19 0 0 1-1.82-3.68h12.71a23 23 0 0 0-.15-3.49zm-12.45.89a4.7 4.7 0 0 1 1.21-2.69 3.63 3.63 0 0 1 2.73-1 4 4 0 0 1 2.71.94 3.83 3.83 0 0 1 1.21 2.76zm-42.39-13.58v23.78h-4.35v-20.45c0-3.5 4.35-3.33 4.35-3.33m3.6 6.16h4.66v17.62h-4.66zm0-5.74h4.65v4.61h-4.65zm-19.969-1.838c-.123-14.7-18.488-26.533-41.021-26.345C57.042 32.19 38.878 44.327 39 59.028c.003.38.007 1.43.008 1.563.13 15.594 16.2 28.093 41.032 27.886 24.984-.209 40.696-12.97 40.566-28.565zM80.013 83.769c-21.665.181-39.32-10.908-39.436-24.768-.005-.558.03-1.11.08-1.66l.25-1.697c.037-.181.096-.359.139-.54.891.259 1.538.437 1.853.508 9.967 2.27 13.929 4.634 15.104 5.48a4.24 4.24 0 0 1 2.803-1.078h.004a4.17 4.17 0 0 1 3.116 1.403c1.252-.806 2.777-.977 4.323-.439 1.011.346 1.81.991 2.319 1.872 1.032-.33 2.198-.254 3.365.251 2.248.965 2.572 3.043 2.529 4.362a4.927 4.927 0 0 1 4.817 4.928c0 .64-.128 1.28-.371 1.867.741.373 2.005.893 3.124.756 1.063-.133 1.38-.474 1.453-.575l.02-.028-3.01-3.323c-.525-.493-.658-1-.342-1.346a.7.7 0 0 1 .516-.23c.35.001.648.253.866.438 1.632 1.36 3.585 3.376 3.604 3.396l.05.053c.042.05.168.153.582.227.138.027.293.04.452.04.305 0 1.075-.05 1.636-.51a4 4 0 0 0 .317-.305l.116-.15c.512-.652.026-1.317-.076-1.444l-3.662-4.117a2.4 2.4 0 0 1-.268-.304c-.399-.53-.219-.88-.076-1.043a.7.7 0 0 1 .504-.22c.328 0 .63.217.91.449.981.82 2.311 2.13 3.598 3.397l.81.801c.1.065.585.364 1.26.365.54 0 1.094-.184 1.645-.548.764-.499 1.118-1.108 1.084-1.862-.056-.658-.606-1.183-.611-1.19l-5.035-5.066c-.52-.444-.673-.98-.375-1.348a.72.72 0 0 1 .528-.247c.327 0 .612.217.9.458.896.75 2.798 2.453 5.654 5.061l.28.256c.003 0 .523.36 1.293.363.51 0 1.02-.16 1.517-.474.546-.348.861-.847.888-1.404.05-1.013-.658-1.64-.665-1.646-1.343-1.176-12.833-11.225-15.505-13.236-1.545-1.164-2.403-1.47-3.288-1.583-.095-.014-.192-.015-.297-.017a5 5 0 0 0-1.186.162c-1.362.372-3.153 1.646-4.416 2.648-1.644 1.304-3.184 2.526-4.685 2.86a6.3 6.3 0 0 1-1.521.16c-1.417-.004-2.948-.396-3.81-.977-.48-.324-.826-.711-1-1.12-.447-1.039.22-1.875.529-2.186l3.457-3.733.072-.072a39 39 0 0 0-1.508.4c-1.255.348-2.526.703-3.815.703h-.006c-3.55-.006-7.082-.857-10.496-2.528-.387-.18-3.932-1.78-7.51-1.786q-.14 0-.28.005c-5.7.126-8.187 2.606-10.82 5.232L66.75 51a1 1 0 0 0-.112.172c.391.445 1.413.752 2.523.755.473 0 .948-.053 1.41-.156 1.038-.23 2.462-1.36 3.839-2.451l.095-.076c1.528-1.213 3.108-2.466 4.72-2.973a6.7 6.7 0 0 1 2.035-.342h.009c.693 0 1.231.135 1.622.253.853.254 1.82.817 3.234 1.882 2.312 1.735 10.41 8.773 15.12 12.892 2.62-1.158 9.265-3.884 17.436-5.696l.006-.032c.012.06.032.117.044.177l.242 1.69q.053.622.06 1.253c.116 13.859-17.353 25.241-39.02 25.422"/><path fill="#1a1a1a" d="M76.403 69.285c-.45-.002-.932.165-1.252.274-.217.075-.349.122-.454.122h-.067l-.093-.046a.28.28 0 0 1-.119-.187c-.094-.135-.065-.35.1-.752.008-.02.506-1.416.075-2.62-.21-.525-.602-1.006-1.305-1.308a3.5 3.5 0 0 0-1.372-.31c-.95 0-1.556.485-1.833.776-.068.07-.162.15-.287.15-.039 0-.204-.022-.272-.224a.4.4 0 0 1-.068-.207 3.2 3.2 0 0 0-.174-.833 2.34 2.34 0 0 0-1.553-1.427 3.7 3.7 0 0 0-1.08-.172c-1.852-.002-2.858 1.525-2.899 1.59l-.367.57-.013-.106c-.008.004-.016.012-.021.01-.077-.02-.087-.67-.087-.67a2.5 2.5 0 0 0-.094-.423 2.48 2.48 0 0 0-2.327-1.663 2.5 2.5 0 0 0-2.494 2.496c0 .313.064.609.17.885a2.5 2.5 0 0 0 2.283 1.51c.643 0 1.147-.393 1.722-.696.155-.081.32-.093.367-.025a.4.4 0 0 1 .064.211.4.4 0 0 1 .037.22c-.058.341-.134 1.077.102 1.846.254.736.805 1.486 1.95 1.932q.437.17.863.169c.513 0 1.02-.178 1.547-.547.128-.091.224-.135.316-.128a.34.34 0 0 1 .226.1c.05.056.07.123.075.193a.55.55 0 0 1 .03.298c-.027.189-.04.483.048.816.176.53.618 1.136 1.682 1.568q.552.224 1.033.225c.705 0 1.188-.356 1.569-.707.134-.123.252-.204.387-.204.2 0 .278.144.314.29a.9.9 0 0 1 .078.36c.014.39.106.758.248 1.1a3.203 3.203 0 0 0 6.1-1.351 3.1 3.1 0 0 0-.232-1.174 3.25 3.25 0 0 0-2.924-1.93"/></svg>
+            <nav class="nav">
+                <span id="nomeUsuario" style="color: #1a1a1a; font-weight: 500; margin-right: 16px; font-size: 14px;"></span>
+                <button onclick="navegar('index')" class="nav-link">Voltar</button>
+            </nav>
+        </div>
+    </header>
+
+    <section class="hero" style="padding: 40px 20px;">
+        <div class="hero-content">
+            <h2 class="hero-title" style="font-size: 36px;">⏱️ Available Time</h2>
+            <p class="hero-subtitle">Colaboradores com tempo perdido a partir de 1 minuto nos últimos 7 dias</p>
+            <div class="data-badge" id="dataBadge" style="display: inline-block; margin-top: 12px;">Carregando...</div>
+        </div>
+    </section>
+
+    <main class="main-content">
+        <div class="container">
+            <button id="backBtn" style="display: inline-block; margin-bottom: 24px; padding: 12px 24px; background: white; border: none; border-radius: 10px; color: #1a1a1a; font-weight: 600; font-size: 15px; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.1); cursor: pointer;">← Voltar ao Menu</button>
+            
+            <!-- Sistema de Abas -->
+            <div class="tabs-container">
+                <div class="tabs-header">
+                    <button class="tab-button active" data-tab="pendentes" onclick="trocarAba('pendentes')">
+                        📋 Pendentes (Últimos 7 dias)
+                    </button>
+                    <button class="tab-button" data-tab="historico" onclick="trocarAba('historico')">
+                        📊 Histórico
+                    </button>
+                </div>
+                
+                <!-- Aba Pendentes -->
+                <div id="tabPendentes" class="tab-content active">
+            <!-- Cards de resumo -->
+            <div class="resumo-grid" id="resumoGrid">
+                <div class="resumo-card destaque">
+                    <div class="resumo-valor" id="totalMinutos">-</div>
+                    <div class="resumo-label">Horas Perdidas</div>
+                </div>
+                <div class="resumo-card">
+                    <div class="resumo-valor" id="totalColaboradores">-</div>
+                    <div class="resumo-label">Colaboradores</div>
+                </div>
+                <div class="resumo-card">
+                    <div class="resumo-valor" id="mediaMinutos">-</div>
+                    <div class="resumo-label">Média por pessoa</div>
+                </div>
+                <div class="resumo-card">
+                    <div class="resumo-valor" id="mediaAproveitamento">-</div>
+                    <div class="resumo-label">Aproveitamento médio</div>
+                </div>
+            </div>
+            
+                    <!-- Filtros de Busca -->
+                    <div class="filtros-container" style="margin-bottom: 24px; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        <div class="filtros-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; align-items: end;">
+                            <div class="filtro-group">
+                                <label class="filtro-label">🔍 Buscar por Nome</label>
+                                <input type="text" id="filtroBusca" class="filtro-select" placeholder="Colaborador ou Gestor..." style="padding: 10px 14px; width: 100%;">
+                            </div>
+                            <div class="filtro-group">
+                                <label class="filtro-label">Colaborador</label>
+                                <select id="filtroColaborador" class="filtro-select" style="padding: 10px 14px; width: 100%;">
+                                    <option value="todos">Todos</option>
+                                </select>
+                            </div>
+                            <div class="filtro-group">
+                                <label class="filtro-label">Status de Justificação</label>
+                                <select id="filtroJustificado" class="filtro-select" style="padding: 10px 14px; width: 100%;">
+                                    <option value="todos">Todos</option>
+                                    <option value="justificado">Justificado</option>
+                                    <option value="nao_justificado">Não Justificado</option>
+                                    <option value="parcial">Parcialmente Justificado</option>
+                                </select>
+                            </div>
+                </div>
+            </div>
+            
+            <!-- Tabela -->
+            <div class="tabela-container">
+                <div class="tabela-header">
+                            <span>Registros de Available Time</span>
+                    <span class="tabela-count" id="tabelaCount">0 registros</span>
+                </div>
+                <div class="tabela-scroll">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th class="sortable" data-sort="data">Data</th>
+                                <th class="sortable" data-sort="colaborador">Colaborador</th>
+                                <th class="sortable" data-sort="gestor">
+                                    <div style="display: flex; flex-direction: column; gap: 6px;">
+                                        <span>Gestor</span>
+                                        <select id="filtroGestor" class="filtro-select-inline" style="font-size: 11px; padding: 4px 8px;">
+                                            <option value="todos">Todos</option>
+                                        </select>
+                                    </div>
+                                </th>
+                                <th class="sortable" data-sort="setor">Setor</th>
+                                <th class="sortable" data-sort="area">Área</th>
+                                <th class="sortable" data-sort="turno">
+                                    <div style="display: flex; flex-direction: column; gap: 6px;">
+                                        <span>Turno</span>
+                                        <select id="filtroTurno" class="filtro-select-inline" style="font-size: 11px; padding: 4px 8px;">
+                                            <option value="todos">Todos</option>
+                                            <option value="T1">T1</option>
+                                            <option value="T2">T2</option>
+                                            <option value="T3">T3</option>
+                                        </select>
+                                    </div>
+                                </th>
+                                <th class="sortable" data-sort="target_duration">Target (h)</th>
+                                <th class="sortable" data-sort="net_work_duration">Trabalhado (h)</th>
+                                <th class="sortable" data-sort="available_time_minutos">Tempo Perdido</th>
+                                <th class="sortable sort-desc" data-sort="percentual_aproveitamento">Aproveitamento</th>
+                                <th>Justificativas</th>
+                                        <th style="width: 400px;">Preenchimento</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelaBody">
+                            <!-- Dados serão inseridos aqui -->
+                        </tbody>
+                    </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Botão de salvar em massa -->
+                    <div style="margin-top: 20px; display: flex; justify-content: space-between; align-items: center; background: white; padding: 16px 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                        <div>
+                            <span id="contadorSelecionados" style="font-weight: 600; color: #1a1a1a;">0 selecionados</span>
+                        </div>
+                        <button id="btnSalvarMassa" class="btn-salvar" onclick="salvarJustificativasMassa()" style="min-width: 150px;" disabled>
+                            <span class="spinner"></span>
+                            <span class="btn-text">Salvar Selecionados</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Aba Histórico -->
+                <div id="tabHistorico" class="tab-content">
+                    <!-- Seletor de Data -->
+                    <div class="historico-date-selector" style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px;">
+                        <div class="filtro-group">
+                            <label class="filtro-label">Data Inicial</label>
+                            <input type="date" id="historicoDataInicio" class="filtro-select" style="padding: 10px 14px;">
+                        </div>
+                        <div class="filtro-group">
+                            <label class="filtro-label">Data Final</label>
+                            <input type="date" id="historicoDataFim" class="filtro-select" style="padding: 10px 14px;">
+                        </div>
+                        <button class="btn-filtrar" onclick="carregarHistorico()" style="padding: 10px 24px;">Buscar</button>
+                    </div>
+                    
+                    <!-- Filtros de Busca Histórico -->
+                    <div class="filtros-container" style="margin-bottom: 24px; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        <div class="filtros-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; align-items: end;">
+                            <div class="filtro-group">
+                                <label class="filtro-label">🔍 Buscar por Nome</label>
+                                <input type="text" id="filtroBuscaHistorico" class="filtro-select" placeholder="Colaborador ou Gestor..." style="padding: 10px 14px; width: 100%;">
+                            </div>
+                            <div class="filtro-group">
+                                <label class="filtro-label">Turno</label>
+                                <select id="filtroTurnoHistorico" class="filtro-select" style="padding: 10px 14px; width: 100%;">
+                                    <option value="todos">Todos</option>
+                                    <option value="T1">T1</option>
+                                    <option value="T2">T2</option>
+                                    <option value="T3">T3</option>
+                                </select>
+                            </div>
+                            <div class="filtro-group">
+                                <label class="filtro-label">Status de Justificação</label>
+                                <select id="filtroJustificadoHistorico" class="filtro-select" style="padding: 10px 14px; width: 100%;">
+                                    <option value="todos">Todos</option>
+                                    <option value="justificado">Justificado</option>
+                                    <option value="nao_justificado">Não Justificado</option>
+                                    <option value="parcial">Parcialmente Justificado</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Tabela Histórico -->
+                    <div class="tabela-container">
+                        <div class="tabela-header">
+                            <span>Histórico de Available Time</span>
+                            <span class="tabela-count" id="tabelaCountHistorico">0 registros</span>
+                        </div>
+                        <div class="tabela-scroll">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th class="sortable" data-sort="data">Data</th>
+                                        <th class="sortable" data-sort="colaborador">Colaborador</th>
+                                        <th class="sortable" data-sort="gestor">Gestor</th>
+                                        <th class="sortable" data-sort="setor">Setor</th>
+                                        <th class="sortable" data-sort="area">Área</th>
+                                        <th class="sortable" data-sort="turno">Turno</th>
+                                        <th class="sortable" data-sort="target_duration">Target (h)</th>
+                                        <th class="sortable" data-sort="net_work_duration">Trabalhado (h)</th>
+                                        <th class="sortable" data-sort="available_time_minutos">Tempo Perdido</th>
+                                        <th class="sortable sort-desc" data-sort="percentual_aproveitamento">Aproveitamento</th>
+                                        <th>Justificativas</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabelaBodyHistorico">
+                                    <!-- Dados históricos serão inseridos aqui -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <!-- Modal de Justificativa -->
+    <div id="modalJustificativa" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Justificar Available Time</h3>
+                <button class="modal-close" onclick="fecharModalJustificativa()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Colaborador</label>
+                    <input type="text" id="modalColaborador" class="form-input" readonly>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Tempo Perdido</label>
+                    <input type="text" id="modalTempoPerdido" class="form-input" readonly>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Minutos Justificados *</label>
+                    <input type="number" id="modalMinutosJustificados" class="form-input" min="0" step="0.5" placeholder="Ex: 10">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Justificativa *</label>
+                    <select id="modalJustificativaSelect" class="form-select">
+                        <option value="">Selecione...</option>
+                        <option value="Ambulatório">Ambulatório</option>
+                        <option value="Atraso fretado">Atraso fretado</option>
+                        <option value="Check Survey">Check Survey</option>
+                        <option value="Desligamento">Desligamento</option>
+                        <option value="Escala incorreta">Escala incorreta</option>
+                        <option value="Erro sistêmico">Erro sistêmico</option>
+                        <option value="Exame periódico">Exame periódico</option>
+                        <option value="Outros">Outros</option>
+                        <option value="Queda sistêmica">Queda sistêmica</option>
+                        <option value="Reunião semestral">Reunião semestral</option>
+                        <option value="Saída antecipada">Saída antecipada</option>
+                        <option value="Saída não autorizada">Saída não autorizada</option>
+                        <option value="Tarefa travada">Tarefa travada</option>
+                        <option value="Treinamento">Treinamento</option>
+                        <option value="Comportamental">Comportamental</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Descrição</label>
+                    <textarea id="modalDescricao" class="form-textarea" rows="4" placeholder="Descreva o motivo da justificativa..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancelar" onclick="fecharModalJustificativa()">Cancelar</button>
+                <button id="btnSalvarJustificativa" class="btn-salvar" onclick="salvarJustificativa()">
+                    <span class="spinner"></span>
+                    <span class="btn-text">Salvar</span>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+
+    <script>
+        const SCRIPT_URL = '<?= scriptUrl ?>';
+        function navegar(pagina) { window.top.location.href = SCRIPT_URL + '?page=' + pagina; }
+        
+        let dadosAvailableTime = [];
+        let dadosFiltrados = [];
+        let dadosHistorico = [];
+        let dadosHistoricoFiltrados = [];
+        let resumo = null;
+        let abaAtual = 'pendentes';
+        
+        
+        // Menu hambúrguer
+        document.addEventListener('DOMContentLoaded', function() {
+            google.script.run
+                .withSuccessHandler(function(podeVer) {
+                    if (!podeVer) {
+                        document.body.innerHTML = `
+                            <div style="display: flex; align-items: center; justify-content: center; height: 100vh; flex-direction: column; gap: 20px; font-family: Arial;">
+                                <h1 style="color: #c62828; font-size: 32px;">Acesso Negado</h1>
+                                <p style="color: #666; font-size: 18px;">Você não tem permissão para acessar esta página.</p>
+                                <button onclick="navegar('index')" style="padding: 12px 24px; background: #1a1a1a; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px;">Voltar ao Menu</button>
+                                <p style="color: #999; font-size: 13px; margin-top: 8px;">Solicite ao administrador o acesso necessário.</p>
+                            </div>
+                        `;
+                        return;
+                    }
+                    inicializar();
+                })
+                .withFailureHandler(function(error) {
+                    document.body.innerHTML = `
+                        <div style="display: flex; align-items: center; justify-content: center; height: 100vh; flex-direction: column; gap: 20px; font-family: Arial;">
+                            <h1 style="color: #c62828; font-size: 32px;">Erro</h1>
+                            <p style="color: #666; font-size: 18px;">Erro ao verificar permissões: ${error.message}</p>
+                            <button onclick="navegar('index')" style="padding: 12px 24px; background: #1a1a1a; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px;">Voltar ao Menu</button>
+                            <p style="color: #999; font-size: 13px; margin-top: 8px;">Solicite ao administrador o acesso necessário.</p>
+                        </div>
+                    `;
+                })
+                .podeVerPagina('availabletime');
+            
+            function inicializar() {
+            const menuContainer = document.getElementById('menuContainer');
+            if (menuContainer) {
+                menuContainer.innerHTML = `
+                    <button id="menuHamburguer" class="menu-hamburger" aria-label="Menu">
+                        <span></span><span></span><span></span>
+                    </button>
+                `;
+            }
+
+            const menuHTML = `
+                <div id="menuLateral" class="menu-lateral">
+                    <div class="menu-header">
+                        <div class="menu-logo">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="150" height="60" fill="none" viewBox="0 0 300 120" style="height: 40px; width: auto;"><path fill="#ffffff" d="M259.143 41.465q-2.2-2.81-6.7-2.81t-6.7 2.77a10.1 10.1 0 0 0-2.18 6.57c-.063 2.382.72 4.71 2.21 6.57q2.2 2.72 6.7 2.72t6.7-2.72a10.08 10.08 0 0 0 2.21-6.57 10.1 10.1 0 0 0-2.24-6.53m-3.64 10.58a4.04 4.04 0 0 1-3.08 1.42 4.05 4.05 0 0 1-3.08-1.42 6.6 6.6 0 0 1-1.07-4.05 6.53 6.53 0 0 1 1.07-4 4.072 4.072 0 0 1 6.16 0 6.6 6.6 0 0 1 1.07 4 6.66 6.66 0 0 1-1.07 4.05m-33.94-12.13a11.25 11.25 0 0 0-5.12-1.13c-3 0-5 .77-6.26 2.31a6.7 6.7 0 0 0-1.29 3.77h4.42a3.3 3.3 0 0 1 .65-1.61 2.92 2.92 0 0 1 2.32-.8c.765-.04 1.529.1 2.23.41a1.54 1.54 0 0 1 .75 1.49 1.37 1.37 0 0 1-1 1.3 7.5 7.5 0 0 1-1.83.4l-1.57.19c-1.391.12-2.748.5-4 1.12a5 5 0 0 0-2.51 4.68 4.84 4.84 0 0 0 1.56 3.84 6.26 6.26 0 0 0 4 1.36c10 .44 9.87-5.27 10-6.45v-6.57c-.15-2.11-.89-3.57-2.35-4.31m-2.31 10a3.65 3.65 0 0 1-1.32 3.16 4.76 4.76 0 0 1-2.76.87 2.48 2.48 0 0 1-1.6-.52 2 2 0 0 1-.66-1.69 2.09 2.09 0 0 1 1.08-1.94 6.7 6.7 0 0 1 2.1-.63l1-.19a8 8 0 0 0 1.23-.32q.469-.172.89-.44zm-20.49-7.26a3 3 0 0 1 2.52 1.06c.37.522.607 1.126.69 1.76h4.93q-.41-3.73-2.61-5.2a10 10 0 0 0-5.67-1.48 8.28 8.28 0 0 0-6.38 2.5 9.9 9.9 0 0 0-2.31 7 9.75 9.75 0 0 0 2.09 6.48c1.4 1.66 3.57 2.49 6.53 2.49a7.89 7.89 0 0 0 6.71-3 7.4 7.4 0 0 0 1.58-3.94h-4.9a4.2 4.2 0 0 1-.87 2.25 3 3 0 0 1-2.4.86 3.2 3.2 0 0 1-3.24-2.18 8.2 8.2 0 0 1-.48-3.08 8.9 8.9 0 0 1 .48-3.22 3.3 3.3 0 0 1 3.33-2.3m-10.15-3.82c-10.12 0-9.52 9-9.52 9v9.1h4.59v-8.57a7 7 0 0 1 .52-3.11c.63-1.19 1.86-1.79 3.7-1.79h.55l.77.07v-4.66h-.4zm-16.87 13.31c-.175.26-.388.492-.63.69a4 4 0 0 1-2.57.7 4.34 4.34 0 0 1-2.44-.59 4.13 4.13 0 0 1-1.86-3.64h12.71a24 24 0 0 0-.16-3.47 8.44 8.44 0 0 0-1.39-3.6 7 7 0 0 0-3-2.58 9.8 9.8 0 0 0-4.1-.82 8.43 8.43 0 0 0-6.24 2.42q-2.4 2.42-2.4 7 0 4.83 2.66 7a9.5 9.5 0 0 0 6.14 2.15 8.48 8.48 0 0 0 6.57-2.55 6.14 6.14 0 0 0 1.59-2.64zm-6.18-8.55a3.6 3.6 0 0 1 2.72-1 4 4 0 0 1 2.71.94 3.83 3.83 0 0 1 1.21 2.76h-7.86a4.7 4.7 0 0 1 1.22-2.7m-7.76 13.3h-4.19v-10.56a2.93 2.93 0 0 0-.775-2.331 2.94 2.94 0 0 0-2.275-.929 3.09 3.09 0 0 0-3.18 3.26v10.56h-4.2v-10.56a2.92 2.92 0 0 0-3-3.26 3.07 3.07 0 0 0-3.18 3.26v10.56h-4.2v-10.46c0-4.36 2.89-7.66 7.38-7.66a6.48 6.48 0 0 1 5.21 2.43 6.71 6.71 0 0 1 5.17-2.43c4.57 0 7.27 3.17 7.27 7.66zm84.36-23.57s-4.6-.5-4.6 3.22v4.92a5.5 5.5 0 0 0-2-1.93 5.67 5.67 0 0 0-2.82-.7 6.72 6.72 0 0 0-5.5 2.56 11.3 11.3 0 0 0-2 7.15 9.43 9.43 0 0 0 2.09 6.34c1.39 1.65 4.12 2.37 6.54 2.37 8.46 0 8.36-7.25 8.36-7.25zm-5.5 18.76a3.37 3.37 0 0 1-2.95 1.43 3.24 3.24 0 0 1-2.89-1.44 7.46 7.46 0 0 1-.95-4 7 7 0 0 1 .94-3.75 3.2 3.2 0 0 1 2.93-1.51 3.5 3.5 0 0 1 2.31.83c1.08.92 1.61 2.56 1.61 4.7a6.4 6.4 0 0 1-1 3.74m-76.23 13.84h3.46l-6.25 17.73h-4.71l-6.19-17.68h4.92l3.52 12.43 3.13-10.83a2.084 2.084 0 0 1 2.12-1.65m13.3-.47h.39v4.71l-.77-.06h-.55c-1.85 0-3.1.61-3.73 1.81a7 7 0 0 0-.54 3.14v8.48h-4.63v-9s-.61-9 9.61-9zm18.07 7a8.7 8.7 0 0 0-1.39-3.62 7.14 7.14 0 0 0-3-2.58 10 10 0 0 0-4.1-.82 8.44 8.44 0 0 0-6.25 2.42q-2.4 2.43-2.4 7 0 4.85 2.66 7a9.55 9.55 0 0 0 6.15 2.15 8.47 8.47 0 0 0 6.57-2.55 6.3 6.3 0 0 0 1.6-2.65h-4.88a3.3 3.3 0 0 1-.63.7 4.07 4.07 0 0 1-2.6.73 4.37 4.37 0 0 1-2.47-.58 4.19 4.19 0 0 1-1.82-3.68h12.71a23 23 0 0 0-.15-3.49zm-12.45.89a4.7 4.7 0 0 1 1.21-2.69 3.63 3.63 0 0 1 2.73-1 4 4 0 0 1 2.71.94 3.83 3.83 0 0 1 1.21 2.76zm-42.39-13.58v23.78h-4.35v-20.45c0-3.5 4.35-3.33 4.35-3.33m3.6 6.16h4.66v17.62h-4.66zm0-5.74h4.65v4.61h-4.65zm-19.969-1.838c-.123-14.7-18.488-26.533-41.021-26.345C57.042 32.19 38.878 44.327 39 59.028c.003.38.007 1.43.008 1.563.13 15.594 16.2 28.093 41.032 27.886 24.984-.209 40.696-12.97 40.566-28.565zM80.013 83.769c-21.665.181-39.32-10.908-39.436-24.768-.005-.558.03-1.11.08-1.66l.25-1.697c.037-.181.096-.359.139-.54.891.259 1.538.437 1.853.508 9.967 2.27 13.929 4.634 15.104 5.48a4.24 4.24 0 0 1 2.803-1.078h.004a4.17 4.17 0 0 1 3.116 1.403c1.252-.806 2.777-.977 4.323-.439 1.011.346 1.81.991 2.319 1.872 1.032-.33 2.198-.254 3.365.251 2.248.965 2.572 3.043 2.529 4.362a4.927 4.927 0 0 1 4.817 4.928c0 .64-.128 1.28-.371 1.867.741.373 2.005.893 3.124.756 1.063-.133 1.38-.474 1.453-.575l.02-.028-3.01-3.323c-.525-.493-.658-1-.342-1.346a.7.7 0 0 1 .516-.23c.35.001.648.253.866.438 1.632 1.36 3.585 3.376 3.604 3.396l.05.053c.042.05.168.153.582.227.138.027.293.04.452.04.305 0 1.075-.05 1.636-.51a4 4 0 0 0 .317-.305l.116-.15c.512-.652.026-1.317-.076-1.444l-3.662-4.117a2.4 2.4 0 0 1-.268-.304c-.399-.53-.219-.88-.076-1.043a.7.7 0 0 1 .504-.22c.328 0 .63.217.91.449.981.82 2.311 2.13 3.598 3.397l.81.801c.1.065.585.364 1.26.365.54 0 1.094-.184 1.645-.548.764-.499 1.118-1.108 1.084-1.862-.056-.658-.606-1.183-.611-1.19l-5.035-5.066c-.52-.444-.673-.98-.375-1.348a.72.72 0 0 1 .528-.247c.327 0 .612.217.9.458.896.75 2.798 2.453 5.654 5.061l.28.256c.003 0 .523.36 1.293.363.51 0 1.02-.16 1.517-.474.546-.348.861-.847.888-1.404.05-1.013-.658-1.64-.665-1.646-1.343-1.176-12.833-11.225-15.505-13.236-1.545-1.164-2.403-1.47-3.288-1.583-.095-.014-.192-.015-.297-.017a5 5 0 0 0-1.186.162c-1.362.372-3.153 1.646-4.416 2.648-1.644 1.304-3.184 2.526-4.685 2.86a6.3 6.3 0 0 1-1.521.16c-1.417-.004-2.948-.396-3.81-.977-.48-.324-.826-.711-1-1.12-.447-1.039.22-1.875.529-2.186l3.457-3.733.072-.072a39 39 0 0 0-1.508.4c-1.255.348-2.526.703-3.815.703h-.006a17 17 0 0 1-1.27-.069l-.415-.032c-1.811-.117-7.57-1.579-12.648-3.62l.018-.015 1.403-1.077c7.137-5.163 17.513-8.46 29.09-8.557 11.96-.1 22.69 3.239 29.93 8.578l1.391 1.082c.093.077.176.159.267.237l-.453.211c-4.012 1.836-7.759 2.728-11.454 2.728h-.018c-3.55-.006-7.082-.857-10.496-2.528-.387-.18-3.932-1.78-7.51-1.786q-.14 0-.28.005c-5.7.126-8.187 2.606-10.82 5.232L66.75 51a1 1 0 0 0-.112.172c.391.445 1.413.752 2.523.755.473 0 .948-.053 1.41-.156 1.038-.23 2.462-1.36 3.839-2.451l.095-.076c1.528-1.213 3.108-2.466 4.72-2.973a6.7 6.7 0 0 1 2.035-.342h.009c.693 0 1.231.135 1.622.253.853.254 1.82.817 3.234 1.882 2.312 1.735 10.41 8.773 15.12 12.892 2.62-1.158 9.265-3.884 17.436-5.696l.006-.032c.012.06.032.117.044.177l.242 1.69q.053.622.06 1.253c.116 13.859-17.353 25.241-39.02 25.422"/><path fill="#ffffff" d="M76.403 69.285c-.45-.002-.932.165-1.252.274-.217.075-.349.122-.454.122h-.067l-.093-.046a.28.28 0 0 1-.119-.187c-.094-.135-.065-.35.1-.752.008-.02.506-1.416.075-2.62-.21-.525-.602-1.006-1.305-1.308a3.5 3.5 0 0 0-1.372-.31c-.95 0-1.556.485-1.833.776-.068.07-.162.15-.287.15-.039 0-.204-.022-.272-.224a.4.4 0 0 1-.068-.207 3.2 3.2 0 0 0-.174-.833 2.34 2.34 0 0 0-1.553-1.427 3.7 3.7 0 0 0-1.08-.172c-1.852-.002-2.858 1.525-2.899 1.59l-.367.57-.013-.106c-.008.004-.016.012-.021.01-.077-.02-.087-.67-.087-.67a2.5 2.5 0 0 0-.094-.423 2.48 2.48 0 0 0-2.327-1.663 2.5 2.5 0 0 0-2.494 2.496c0 .313.064.609.17.885a2.5 2.5 0 0 0 2.283 1.51c.643 0 1.147-.393 1.722-.696.155-.081.32-.093.367-.025a.4.4 0 0 1 .064.211.4.4 0 0 1 .037.22c-.058.341-.134 1.077.102 1.846.254.736.805 1.486 1.95 1.932q.437.17.863.169c.513 0 1.02-.178 1.547-.547.128-.091.224-.135.316-.128a.34.34 0 0 1 .226.1c.05.056.07.123.075.193a.55.55 0 0 1 .03.298c-.027.189-.04.483.048.816.176.53.618 1.136 1.682 1.568q.552.224 1.033.225c.705 0 1.188-.356 1.569-.707.134-.123.252-.204.387-.204.2 0 .278.144.314.29a.9.9 0 0 1 .078.36c.014.39.106.758.248 1.1a3.203 3.203 0 0 0 6.1-1.351 3.1 3.1 0 0 0-.232-1.174 3.25 3.25 0 0 0-2.924-1.93"/></svg>
+                        </div>
+                        <button id="menuFechar" class="menu-fechar">&times;</button>
+                    </div>
+                    <nav class="menu-nav">
+                        <a href="?page=index" class="sidebar-menu-item"><span class="sidebar-menu-icon">🏠</span><span class="sidebar-menu-text">Início</span></a>
+                        <a href="?page=chamada" class="sidebar-menu-item"><span class="sidebar-menu-icon">📝</span><span class="sidebar-menu-text">Chamada</span></a>
+                        <a href="?page=flow" class="sidebar-menu-item"><span class="sidebar-menu-icon">👥</span><span class="sidebar-menu-text">Flow</span></a>
+                        <a href="?page=historico" class="sidebar-menu-item"><span class="sidebar-menu-icon">📅</span><span class="sidebar-menu-text">Histórico</span></a>
+                        <a href="?page=ausencia" class="sidebar-menu-item"><span class="sidebar-menu-icon">🗓️</span><span class="sidebar-menu-text">Ausências</span></a>
+                        <a href="?page=availabletime" class="sidebar-menu-item active"><span class="sidebar-menu-icon">⏱️</span><span class="sidebar-menu-text">Available Time</span></a>
+                        <a href="?page=people" class="sidebar-menu-item"><span class="sidebar-menu-icon">👥</span><span class="sidebar-menu-text">Visão de People</span></a>
+                    </nav>
+                </div>
+                <div id="menuOverlay" class="menu-overlay"></div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', menuHTML);
+
+            const menuHamburguer = document.getElementById('menuHamburguer');
+            const menuLateral = document.getElementById('menuLateral');
+            const menuFechar = document.getElementById('menuFechar');
+            const menuOverlay = document.getElementById('menuOverlay');
+
+            if (menuHamburguer && menuLateral) {
+                menuHamburguer.addEventListener('click', () => {
+                    menuLateral.classList.add('active');
+                    menuOverlay.classList.add('active');
+                });
+                menuFechar.addEventListener('click', () => {
+                    menuLateral.classList.remove('active');
+                    menuOverlay.classList.remove('active');
+                });
+                menuOverlay.addEventListener('click', () => {
+                    menuLateral.classList.remove('active');
+                    menuOverlay.classList.remove('active');
+                });
+            }
+            
+            // Configurar navegação dos links do menu
+            document.querySelectorAll('.sidebar-menu-item[href]').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const href = link.getAttribute('href');
+                    const page = href.split('=')[1];
+                    navegar(page);
+                });
+            });
+            
+            // Botão voltar ao menu
+            document.getElementById('backBtn').addEventListener('click', () => { navegar('index'); });
+            
+            // Carregar dados primeiro (últimos 7 dias fixos)
+            carregarDados();
+            // Carregar filtros depois (não bloqueia)
+            setTimeout(() => {
+                carregarFiltros();
+            }, 500);
+            }
+        });
+        
+        function carregarDados() {
+            const loading = document.getElementById('loading');
+            if (loading) loading.style.display = 'flex';
+            
+            const hoje = new Date();
+            const seteDiasAtras = new Date();
+            seteDiasAtras.setDate(hoje.getDate() - 7);
+            const ontem = new Date();
+            ontem.setDate(ontem.getDate() - 1);
+            
+            const dataInicio = seteDiasAtras.toISOString().split('T')[0];
+            const dataFim = ontem.toISOString().split('T')[0];
+            
+            google.script.run
+                .withSuccessHandler(function(data) {
+                    dadosAvailableTime = data || [];
+                    // Mostrar todos os registros (>= 1 minuto perdido), independente de justificação
+                    dadosFiltrados = dadosAvailableTime.filter(d => {
+                        const minutosPerdidos = parseFloat(d.available_time_minutos) || 0;
+                        return minutosPerdidos >= 1;
+                    });
+                    
+                    // Carregar gestores dos dados carregados
+                    carregarGestoresDosDados();
+                    
+                    // Atualizar data badge (mostrar período)
+                    document.getElementById('dataBadge').textContent = `${formatarData(dataInicio)} - ${formatarData(dataFim)}`;
+                    
+                    atualizarResumo();
+                    // Aplicar ordenação padrão por colaborador (A-Z)
+                    dadosFiltrados.sort((a, b) => {
+                        const nomeA = (a.colaborador || '').toLowerCase();
+                        const nomeB = (b.colaborador || '').toLowerCase();
+                        return nomeA.localeCompare(nomeB, 'pt-BR');
+                    });
+                    ordenacaoAtual = { campo: 'colaborador', direcao: 'asc' };
+                    renderizarTabela();
+                    if (loading) loading.style.display = 'none';
+                })
+                .withFailureHandler(function(error) {
+                    console.error('Erro ao carregar dados:', error);
+                    if (loading) loading.style.display = 'none';
+                    mostrarToast('Erro ao carregar dados: ' + error.message, 'error');
+                })
+                .getAvailableTimeD1({}, dataInicio, dataFim);
+        }
+        
+        function carregarFiltros() {
+            // Carregar colaboradores (para o filtro separado, não no header)
+            google.script.run
+                .withSuccessHandler(function(colaboradores) {
+                    if (!colaboradores) return;
+                    const select = document.getElementById('filtroColaborador');
+                    if (!select) return;
+                    colaboradores.forEach(c => {
+                        const option = document.createElement('option');
+                        option.value = c;
+                        option.textContent = c;
+                        select.appendChild(option);
+                    });
+                })
+                .withFailureHandler(function(error) {
+                    console.error('Erro ao carregar colaboradores:', error);
+                })
+                .getColaboradoresAvailableTime();
+            
+        }
+        
+        // Carregar gestores dos dados já carregados
+        function carregarGestoresDosDados() {
+            if (!dadosAvailableTime || dadosAvailableTime.length === 0) {
+                console.log('Nenhum dado disponível para carregar gestores');
+                return;
+            }
+            
+            const gestoresUnicos = {};
+            
+            dadosAvailableTime.forEach(d => {
+                const gestor = d.gestor || 'Sem Gestor';
+                if (!gestoresUnicos[gestor]) {
+                    gestoresUnicos[gestor] = {
+                        gestor: gestor,
+                        total_pendentes: 0
+                    };
+                }
+                // Contar apenas pendentes (não justificados totalmente)
+                const minutosPerdidos = parseFloat(d.available_time_minutos) || 0;
+                const minutosJustificados = parseFloat(d.minutos_justificados) || 0;
+                if (minutosPerdidos >= 1 && minutosJustificados < minutosPerdidos) {
+                    gestoresUnicos[gestor].total_pendentes++;
+                }
+            });
+            
+            const select = document.getElementById('filtroGestor');
+            if (!select) {
+                console.log('Select de gestor não encontrado');
+                return;
+            }
+            
+            // Limpar opções existentes (exceto "Todos")
+            while (select.children.length > 1) {
+                select.removeChild(select.lastChild);
+            }
+            
+            // Ordenar gestores alfabeticamente
+            const gestoresArray = Object.values(gestoresUnicos).sort((a, b) => 
+                a.gestor.localeCompare(b.gestor, 'pt-BR', { sensitivity: 'base' })
+            );
+            
+            console.log('Carregando gestores:', gestoresArray.length);
+            
+            gestoresArray.forEach(g => {
+                        const option = document.createElement('option');
+                option.value = g.gestor;
+                option.textContent = `${g.gestor} (${g.total_pendentes} pendentes)`;
+                        select.appendChild(option);
+                    });
+        }
+        
+        let ordenacaoAtual = { campo: null, direcao: 'asc' };
+        
+        function ordenarTabela(campo) {
+            // Se clicou no mesmo campo, inverte a direção
+            if (ordenacaoAtual.campo === campo) {
+                ordenacaoAtual.direcao = ordenacaoAtual.direcao === 'asc' ? 'desc' : 'asc';
+            } else {
+                ordenacaoAtual.campo = campo;
+                ordenacaoAtual.direcao = 'asc';
+            }
+            
+            // Verifica se é descendente por padrão
+            const th = document.querySelector(`th[data-sort="${campo}"]`);
+            if (th && th.classList.contains('sort-desc') && ordenacaoAtual.direcao === 'asc') {
+                ordenacaoAtual.direcao = 'desc';
+            }
+            
+            dadosFiltrados.sort((a, b) => {
+                let valA, valB;
+                
+                switch(campo) {
+                    case 'data':
+                        valA = new Date(a.data || 0).getTime();
+                        valB = new Date(b.data || 0).getTime();
+                        break;
+                    case 'colaborador':
+                    case 'gestor':
+                    case 'setor':
+                    case 'area':
+                    case 'turno':
+                        valA = (a[campo] || '').toString().toLowerCase();
+                        valB = (b[campo] || '').toString().toLowerCase();
+                        break;
+                    case 'target_duration':
+                    case 'net_work_duration':
+                    case 'available_time_minutos':
+                    case 'percentual_aproveitamento':
+                        valA = parseFloat(a[campo]) || 0;
+                        valB = parseFloat(b[campo]) || 0;
+                        break;
+                    default:
+                        valA = (a[campo] || '').toString().toLowerCase();
+                        valB = (b[campo] || '').toString().toLowerCase();
+                }
+                
+                if (valA < valB) return ordenacaoAtual.direcao === 'asc' ? -1 : 1;
+                if (valA > valB) return ordenacaoAtual.direcao === 'asc' ? 1 : -1;
+                return 0;
+            });
+            
+            // Atualizar indicadores visuais
+            document.querySelectorAll('th.sortable').forEach(th => {
+                th.classList.remove('sort-asc', 'sort-desc');
+            });
+            if (th) {
+                th.classList.add(ordenacaoAtual.direcao === 'asc' ? 'sort-asc' : 'sort-desc');
+            }
+            
+            renderizarTabela();
+        }
+        
+        function aplicarFiltros() {
+            // Aplicar filtro de busca localmente
+            const busca = document.getElementById('filtroBusca')?.value.toLowerCase().trim() || '';
+            
+            const turno = document.getElementById('filtroTurno').value;
+            const gestor = document.getElementById('filtroGestor').value;
+            const colaborador = document.getElementById('filtroColaborador').value;
+            const justificado = document.getElementById('filtroJustificado').value;
+            
+            dadosFiltrados = dadosAvailableTime.filter(d => {
+                // Filtrar: apenas >= 1 minuto perdido
+                const minutosPerdidos = parseFloat(d.available_time_minutos) || 0;
+                if (minutosPerdidos < 1) return false;
+                
+                // Filtro de status de justificação
+                if (justificado !== 'todos') {
+                const minutosJustificados = parseFloat(d.minutos_justificados) || 0;
+                    const temJustificativa = d.justificativa && d.justificativa.trim() !== '';
+                    
+                    if (justificado === 'justificado') {
+                        // Totalmente justificado: minutos justificados >= minutos perdidos
+                        if (minutosJustificados < minutosPerdidos || !temJustificativa) return false;
+                    } else if (justificado === 'nao_justificado') {
+                        // Não justificado: sem justificativa ou sem minutos justificados
+                        if (temJustificativa || minutosJustificados > 0) return false;
+                    } else if (justificado === 'parcial') {
+                        // Parcialmente justificado: tem justificativa mas não justificou tudo
+                        if (!temJustificativa || minutosJustificados >= minutosPerdidos || minutosJustificados === 0) return false;
+                    }
+                }
+                
+                // Filtro de busca (colaborador ou gestor)
+                if (busca) {
+                    const nomeColab = (d.colaborador || '').toLowerCase();
+                    const nomeGestor = (d.gestor || '').toLowerCase();
+                    if (!nomeColab.includes(busca) && !nomeGestor.includes(busca)) {
+                        return false;
+                    }
+                }
+                
+                // Aplicar filtros de dropdown (apenas gestor e turno)
+                if (turno !== 'todos' && d.turno !== turno) return false;
+                if (gestor !== 'todos' && d.gestor !== gestor) return false;
+                if (colaborador !== 'todos' && d.colaborador !== colaborador) return false;
+                return true;
+            });
+            
+            atualizarResumo();
+            // Manter ordenação atual ao aplicar filtros
+            if (ordenacaoAtual.campo) {
+                ordenarTabela(ordenacaoAtual.campo);
+            } else {
+                renderizarTabela();
+            }
+        }
+        
+        // Aplicar filtros automaticamente ao mudar e adicionar listeners de ordenação
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                // Filtro de busca (input)
+                document.getElementById('filtroBusca')?.addEventListener('input', function() {
+                    aplicarFiltros();
+                });
+                
+                // Filtros de dropdown
+                document.getElementById('filtroColaborador')?.addEventListener('change', aplicarFiltros);
+                document.getElementById('filtroTurno').addEventListener('change', aplicarFiltros);
+                document.getElementById('filtroGestor').addEventListener('change', aplicarFiltros);
+                document.getElementById('filtroJustificado').addEventListener('change', aplicarFiltros);
+                
+                // Adicionar listeners de ordenação nos headers
+                document.querySelectorAll('th.sortable').forEach(th => {
+                    th.addEventListener('click', function(e) {
+                        // Não ordenar se clicou no select dentro do header
+                        if (e.target.tagName === 'SELECT') return;
+                        const campo = this.getAttribute('data-sort');
+                        if (campo) ordenarTabela(campo);
+                    });
+                });
+            }, 500);
+        });
+        
+        let dadosModalJustificativa = {};
+        
+        function abrirModalJustificativa(data, colaborador, setor, area, turno, gestor, minutosPerdidos, justificativaExistente, minutosJustificadosExistente, descricaoExistente) {
+            dadosModalJustificativa = { data, colaborador, setor, area, turno, gestor, minutosPerdidos };
+            
+            // Arredonda para cima para permitir que o usuário coloque o valor completo
+            const minutosPerdidosArredondado = Math.ceil(minutosPerdidos);
+            
+            document.getElementById('modalColaborador').value = colaborador;
+            document.getElementById('modalTempoPerdido').value = minutosPerdidosArredondado + ' minutos';
+            document.getElementById('modalMinutosJustificados').value = minutosJustificadosExistente || '';
+            document.getElementById('modalMinutosJustificados').max = minutosPerdidosArredondado;
+            document.getElementById('modalJustificativaSelect').value = justificativaExistente || '';
+            document.getElementById('modalDescricao').value = descricaoExistente || '';
+            
+            document.getElementById('modalJustificativa').style.display = 'flex';
+        }
+        
+        function fecharModalJustificativa() {
+            document.getElementById('modalJustificativa').style.display = 'none';
+            dadosModalJustificativa = {};
+        }
+        
+        function salvarJustificativa() {
+            const btnSalvar = document.getElementById('btnSalvarJustificativa');
+            const btnText = btnSalvar.querySelector('.btn-text');
+            
+            const minutos = parseFloat(document.getElementById('modalMinutosJustificados').value);
+            const justificativa = document.getElementById('modalJustificativaSelect').value;
+            const descricao = document.getElementById('modalDescricao').value.trim();
+            
+            if (!minutos || minutos <= 0) {
+                mostrarToast('⚠️ Informe os minutos justificados', 'error');
+                return;
+            }
+            
+            // Permite até o valor arredondado para cima
+            const minutosPerdidosMax = Math.ceil(dadosModalJustificativa.minutosPerdidos);
+            if (minutos > minutosPerdidosMax) {
+                mostrarToast('⚠️ Minutos justificados não podem ser maiores que o tempo perdido', 'error');
+                return;
+            }
+            
+            if (!justificativa) {
+                mostrarToast('⚠️ Selecione uma justificativa', 'error');
+                return;
+            }
+            
+            // Ativar estado de salvando
+            btnSalvar.disabled = true;
+            btnSalvar.classList.add('saving');
+            btnText.textContent = 'Salvando...';
+            
+            const dados = {
+                data: dadosModalJustificativa.data,
+                colaborador: dadosModalJustificativa.colaborador,
+                setor: dadosModalJustificativa.setor,
+                area: dadosModalJustificativa.area,
+                turno: dadosModalJustificativa.turno,
+                gestor: dadosModalJustificativa.gestor,
+                minutosJustificados: minutos,
+                justificativa: justificativa,
+                descricao: descricao
+            };
+            
+            google.script.run
+                .withSuccessHandler(function(result) {
+                    // Restaurar botão
+                    btnSalvar.disabled = false;
+                    btnSalvar.classList.remove('saving');
+                    btnText.textContent = 'Salvar';
+                    
+                    if (result.sucesso) {
+                        mostrarToast('✓ Justificativa salva com sucesso', 'success');
+                        fecharModalJustificativa();
+                        carregarDados(); // Recarrega para mostrar a justificativa
+                    } else {
+                        mostrarToast('Erro: ' + result.message, 'error');
+                    }
+                })
+                .withFailureHandler(function(error) {
+                    // Restaurar botão
+                    btnSalvar.disabled = false;
+                    btnSalvar.classList.remove('saving');
+                    btnText.textContent = 'Salvar';
+                    
+                    mostrarToast('Erro ao salvar: ' + error.message, 'error');
+                })
+                .salvarJustificativaAvailableTime(dados);
+        }
+        
+        function atualizarResumo() {
+            const total = dadosFiltrados.length;
+            const totalMinutos = dadosFiltrados.reduce((acc, d) => acc + (parseFloat(d.available_time_minutos) || 0), 0);
+            const totalHoras = totalMinutos / 60;
+            const mediaMinutos = total > 0 ? totalMinutos / total : 0;
+            const mediaAprov = total > 0 ? 
+                dadosFiltrados.reduce((acc, d) => acc + (parseFloat(d.percentual_aproveitamento) || 0), 0) / total : 0;
+            
+            document.getElementById('totalMinutos').textContent = totalHoras.toFixed(1) + ' h';
+            document.getElementById('totalColaboradores').textContent = total;
+            document.getElementById('mediaMinutos').textContent = Math.round(mediaMinutos) + ' min';
+            document.getElementById('mediaAproveitamento').textContent = mediaAprov.toFixed(1) + '%';
+        }
+        
+        function renderizarTabela() {
+            const tbody = document.getElementById('tabelaBody');
+            const count = document.getElementById('tabelaCount');
+            
+            count.textContent = dadosFiltrados.length + ' registros';
+            
+            if (dadosFiltrados.length === 0) {
+                // Verificar se é porque não selecionou gestor
+                const gestorSelecionado = document.getElementById('filtroGestor')?.value || 'todos';
+                
+                if (gestorSelecionado === 'todos' || !dadosAvailableTime || dadosAvailableTime.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="12">
+                                <div class="empty-state">
+                                    <div class="empty-state-icon">📊</div>
+                                    <div class="empty-state-text" style="font-size: 18px; font-weight: 600; margin-bottom: 8px;">Selecione um Gestor</div>
+                                    <div style="font-size: 14px; color: #888;">Escolha um gestor no filtro acima para visualizar as pendências de Available Time.</div>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="12">
+                                <div class="empty-state">
+                                    <div class="empty-state-icon">📭</div>
+                                    <div class="empty-state-text">Nenhum registro encontrado para os filtros selecionados</div>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }
+                return;
+            }
+            
+            tbody.innerHTML = dadosFiltrados.map(d => {
+                const minutos = parseFloat(d.available_time_minutos) || 0;
+                const aprov = parseFloat(d.percentual_aproveitamento) || 0;
+                
+                // Classe do tempo
+                let tempoClass = 'tempo-moderado';
+                if (minutos >= 30) tempoClass = 'tempo-alto';
+                
+                // Classe do aproveitamento
+                let aprovClass = 'aproveitamento-bom';
+                if (aprov < 90) aprovClass = 'aproveitamento-medio';
+                if (aprov < 80) aprovClass = 'aproveitamento-ruim';
+                
+                // Badge do turno
+                let turnoBadge = 'badge-t1';
+                if (d.turno === 'T2') turnoBadge = 'badge-t2';
+                if (d.turno === 'T3') turnoBadge = 'badge-t3';
+                
+                // Formatar data
+                const dataFormatada = formatarData(d.data);
+                
+                return `
+                    <tr>
+                        <td><span style="font-weight: 600; color: #1a1a1a;">${dataFormatada}</span></td>
+                        <td><span class="colaborador-nome">${d.colaborador || '-'}</span></td>
+                        <td>${d.gestor || '-'}</td>
+                        <td>${d.setor || '-'}</td>
+                        <td>${d.area || '-'}</td>
+                        <td><span class="badge-turno ${turnoBadge}">${d.turno || '-'}</span></td>
+                        <td>${formatarHoras(d.target_duration)}</td>
+                        <td>${formatarHoras(d.net_work_duration)}</td>
+                        <td><span class="tempo-perdido ${tempoClass}">${Math.round(minutos)} min</span></td>
+                        <td><span class="aproveitamento ${aprovClass}">${aprov.toFixed(1)}%</span></td>
+                        <td>
+                            ${(() => {
+                                const minutosJustificados = parseFloat(d.minutos_justificados) || 0;
+                                const temJustificativa = d.justificativa && d.justificativa.trim() !== '';
+                                
+                                if (!temJustificativa || minutosJustificados === 0) {
+                                    return '<span style="color: #dc2626; font-size: 12px; font-weight: 600;">❌ Não justificado</span>';
+                                } else if (minutosJustificados >= minutos) {
+                                    return `
+                                <div style="font-size: 12px;">
+                                    <div style="font-weight: 600; color: #166534; margin-bottom: 4px;">✓ ${d.justificativa}</div>
+                                            <div style="color: #166534; font-size: 11px;">${Math.round(minutosJustificados)}/${Math.round(minutos)} min</div>
+                                    ${d.descricao ? `<div style="color: #888; font-size: 10px; margin-top: 2px; font-style: italic;">${d.descricao.substring(0, 30)}${d.descricao.length > 30 ? '...' : ''}</div>` : ''}
+                                </div>
+                                    `;
+                                } else {
+                                    return `
+                                        <div style="font-size: 12px;">
+                                            <div style="font-weight: 600; color: #f59e0b; margin-bottom: 4px;">⚠ ${d.justificativa}</div>
+                                            <div style="color: #f59e0b; font-size: 11px;">${Math.round(minutosJustificados)}/${Math.round(minutos)} min (parcial)</div>
+                                            ${d.descricao ? `<div style="color: #888; font-size: 10px; margin-top: 2px; font-style: italic;">${d.descricao.substring(0, 30)}${d.descricao.length > 30 ? '...' : ''}</div>` : ''}
+                                        </div>
+                                    `;
+                                }
+                            })()}
+                        </td>
+                        <td>
+                            <div class="justificativa-inline">
+                                <input type="checkbox" class="justificativa-checkbox" 
+                                    data-id="${d.data || ''}_${(d.colaborador || '').replace(/"/g, '&quot;')}"
+                                    onchange="atualizarContadorSelecionados()">
+                                <input type="number" class="justificativa-input-minutos" 
+                                    placeholder="Min" 
+                                    min="0" 
+                                    max="${Math.ceil(minutos)}"
+                                    step="0.5"
+                                    value="${d.minutos_justificados || ''}"
+                                    data-id="${d.data || ''}_${(d.colaborador || '').replace(/"/g, '&quot;')}">
+                                <select class="justificativa-select" 
+                                    data-id="${d.data || ''}_${(d.colaborador || '').replace(/"/g, '&quot;')}">
+                                    <option value="">Selecione...</option>
+                                    <option value="Ambulatório" ${d.justificativa === 'Ambulatório' ? 'selected' : ''}>Ambulatório</option>
+                                    <option value="Atraso fretado" ${d.justificativa === 'Atraso fretado' ? 'selected' : ''}>Atraso fretado</option>
+                                    <option value="Check Survey" ${d.justificativa === 'Check Survey' ? 'selected' : ''}>Check Survey</option>
+                                    <option value="Comportamental" ${d.justificativa === 'Comportamental' ? 'selected' : ''}>Comportamental</option>
+                                    <option value="Desligamento" ${d.justificativa === 'Desligamento' ? 'selected' : ''}>Desligamento</option>
+                                    <option value="Escala incorreta" ${d.justificativa === 'Escala incorreta' ? 'selected' : ''}>Escala incorreta</option>
+                                    <option value="Erro sistêmico" ${d.justificativa === 'Erro sistêmico' ? 'selected' : ''}>Erro sistêmico</option>
+                                    <option value="Exame periódico" ${d.justificativa === 'Exame periódico' ? 'selected' : ''}>Exame periódico</option>
+                                    <option value="Outros" ${d.justificativa === 'Outros' ? 'selected' : ''}>Outros</option>
+                                    <option value="Queda sistêmica" ${d.justificativa === 'Queda sistêmica' ? 'selected' : ''}>Queda sistêmica</option>
+                                    <option value="Reunião semestral" ${d.justificativa === 'Reunião semestral' ? 'selected' : ''}>Reunião semestral</option>
+                                    <option value="Saída antecipada" ${d.justificativa === 'Saída antecipada' ? 'selected' : ''}>Saída antecipada</option>
+                                    <option value="Saída não autorizada" ${d.justificativa === 'Saída não autorizada' ? 'selected' : ''}>Saída não autorizada</option>
+                                    <option value="Tarefa travada" ${d.justificativa === 'Tarefa travada' ? 'selected' : ''}>Tarefa travada</option>
+                                    <option value="Treinamento" ${d.justificativa === 'Treinamento' ? 'selected' : ''}>Treinamento</option>
+                                </select>
+                                <textarea class="justificativa-textarea" 
+                                    placeholder="Descrição (opcional)" 
+                                    data-id="${d.data || ''}_${(d.colaborador || '').replace(/"/g, '&quot;')}">${d.descricao || ''}</textarea>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+            
+        }
+        
+        // Atualizar contador de selecionados
+        function atualizarContadorSelecionados() {
+            const checkboxes = document.querySelectorAll('.justificativa-checkbox:checked');
+            const contador = document.getElementById('contadorSelecionados');
+            const btnSalvar = document.getElementById('btnSalvarMassa');
+            
+            if (contador) {
+                contador.textContent = checkboxes.length + ' selecionado' + (checkboxes.length !== 1 ? 's' : '');
+            }
+            
+            if (btnSalvar) {
+                btnSalvar.disabled = checkboxes.length === 0;
+            }
+        }
+        
+        // Salvar justificativas em massa
+        function salvarJustificativasMassa() {
+            const checkboxes = document.querySelectorAll('.justificativa-checkbox:checked');
+            
+            if (checkboxes.length === 0) {
+                mostrarToast('⚠️ Selecione pelo menos um registro', 'error');
+                return;
+            }
+            
+            const registros = [];
+            let temDescricao = false;
+            
+            checkboxes.forEach(checkbox => {
+                const id = checkbox.getAttribute('data-id');
+                const [data, colaborador] = id.split('_');
+                
+                const inputMinutos = document.querySelector(`.justificativa-input-minutos[data-id="${id}"]`);
+                const selectJustificativa = document.querySelector(`.justificativa-select[data-id="${id}"]`);
+                const textareaDescricao = document.querySelector(`.justificativa-textarea[data-id="${id}"]`);
+                
+                const minutos = parseFloat(inputMinutos?.value) || 0;
+                const justificativa = selectJustificativa?.value || '';
+                const descricao = (textareaDescricao?.value || '').trim();
+                
+                if (!minutos || minutos <= 0) {
+                    mostrarToast(`⚠️ Informe os minutos justificados para ${colaborador}`, 'error');
+                    return;
+                }
+                
+                if (!justificativa) {
+                    mostrarToast(`⚠️ Selecione uma justificativa para ${colaborador}`, 'error');
+                    return;
+                }
+                
+                // Verificar se tem descrição
+                if (descricao) {
+                    temDescricao = true;
+                }
+                
+                // Buscar dados completos do registro (decodificar HTML entities)
+                const colaboradorDecodificado = colaborador.replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+                const registro = dadosFiltrados.find(d => 
+                    (d.data || '') === data && 
+                    (d.colaborador || '') === colaboradorDecodificado
+                );
+                
+                if (registro) {
+                    registros.push({
+                        data: data,
+                        colaborador: registro.colaborador,
+                        setor: registro.setor || '',
+                        area: registro.area || '',
+                        turno: registro.turno || '',
+                        gestor: registro.gestor || '',
+                        minutosJustificados: minutos,
+                        justificativa: justificativa,
+                        descricao: descricao
+                    });
+                }
+            });
+            
+            if (registros.length === 0) return;
+            
+            const btnSalvar = document.getElementById('btnSalvarMassa');
+            const btnText = btnSalvar.querySelector('.btn-text');
+            
+            btnSalvar.disabled = true;
+            btnSalvar.classList.add('saving');
+            btnText.textContent = 'Salvando...';
+            
+            // Se tiver descrição, salvar um por um. Se não, usar MERGE
+            if (temDescricao) {
+                // Salvar um por um
+                let salvos = 0;
+                let erros = 0;
+                
+                registros.forEach((reg, index) => {
+                    google.script.run
+                        .withSuccessHandler(function(result) {
+                            salvos++;
+                            if (salvos + erros === registros.length) {
+                                btnSalvar.disabled = false;
+                                btnSalvar.classList.remove('saving');
+                                btnText.textContent = 'Salvar Selecionados';
+                                
+                                if (erros === 0) {
+                                    mostrarToast(`✓ ${salvos} justificativa(s) salva(s) com sucesso`, 'success');
+                                    carregarDados();
+                                } else {
+                                    mostrarToast(`⚠️ ${salvos} salvo(s), ${erros} erro(s)`, 'error');
+                                }
+                            }
+                        })
+                        .withFailureHandler(function(error) {
+                            erros++;
+                            if (salvos + erros === registros.length) {
+                                btnSalvar.disabled = false;
+                                btnSalvar.classList.remove('saving');
+                                btnText.textContent = 'Salvar Selecionados';
+                                mostrarToast(`⚠️ ${salvos} salvo(s), ${erros} erro(s)`, 'error');
+                            }
+                        })
+                        .salvarJustificativaAvailableTime(reg);
+                });
+            } else {
+                // Usar MERGE para salvar em batch
+                google.script.run
+                    .withSuccessHandler(function(result) {
+                        btnSalvar.disabled = false;
+                        btnSalvar.classList.remove('saving');
+                        btnText.textContent = 'Salvar Selecionados';
+                        
+                        if (result.sucesso) {
+                            mostrarToast(`✓ ${result.total || registros.length} justificativa(s) salva(s) com sucesso`, 'success');
+                            carregarDados();
+                        } else {
+                            mostrarToast('Erro: ' + result.message, 'error');
+                        }
+                    })
+                    .withFailureHandler(function(error) {
+                        btnSalvar.disabled = false;
+                        btnSalvar.classList.remove('saving');
+                        btnText.textContent = 'Salvar Selecionados';
+                        mostrarToast('Erro ao salvar: ' + error.message, 'error');
+                    })
+                    .salvarJustificativaAvailableTimeBatch(registros);
+            }
+        }
+        
+        function formatarData(dataStr) {
+            if (!dataStr) return '-';
+            const data = new Date(dataStr + 'T00:00:00');
+            const diasSemana = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+            const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+            const dia = data.getDate().toString().padStart(2, '0');
+            const mes = meses[data.getMonth()];
+            return `${diasSemana[data.getDay()]}, ${dia}/${(data.getMonth() + 1).toString().padStart(2, '0')}`;
+        }
+        
+        function formatarHoras(valor) {
+            if (!valor) return '-';
+            const horas = parseFloat(valor);
+            const h = Math.floor(horas);
+            const m = Math.round((horas - h) * 60);
+            return `${h}h${m.toString().padStart(2, '0')}`;
+        }
+        
+        // Carregar nome do usuário
+        google.script.run
+            .withSuccessHandler(function(email) {
+                const nomeUsuario = document.getElementById('nomeUsuario');
+                if (nomeUsuario && email) {
+                    nomeUsuario.innerHTML = 'Você está conectado: <span style="font-weight: 700;">' + email.split('@')[0] + '</span>';
+                }
+            })
+            .getUsuarioEmail();
+        
+        // Sistema de Abas
+        function trocarAba(aba) {
+            abaAtual = aba;
+            
+            // Atualizar botões
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`[data-tab="${aba}"]`).classList.add('active');
+            
+            // Atualizar conteúdo
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            if (aba === 'pendentes') {
+                document.getElementById('tabPendentes').classList.add('active');
+            } else {
+                document.getElementById('tabHistorico').classList.add('active');
+                // Inicializar datas padrão (últimos 7 dias)
+                const hoje = new Date();
+                const seteDiasAtras = new Date();
+                seteDiasAtras.setDate(hoje.getDate() - 7);
+                document.getElementById('historicoDataFim').value = hoje.toISOString().split('T')[0];
+                document.getElementById('historicoDataInicio').value = seteDiasAtras.toISOString().split('T')[0];
+            }
+        }
+        
+        // Carregar histórico
+        function carregarHistorico() {
+            const dataInicio = document.getElementById('historicoDataInicio').value;
+            const dataFim = document.getElementById('historicoDataFim').value;
+            
+            if (!dataInicio || !dataFim) {
+                mostrarToast('⚠️ Selecione as datas inicial e final', 'error');
+                return;
+            }
+            
+            if (new Date(dataInicio) > new Date(dataFim)) {
+                mostrarToast('⚠️ Data inicial não pode ser maior que data final', 'error');
+                return;
+            }
+            
+            const loading = document.getElementById('loading');
+            if (loading) loading.style.display = 'flex';
+            
+            google.script.run
+                .withSuccessHandler(function(data) {
+                    dadosHistorico = data || [];
+                    aplicarFiltrosHistorico();
+                    if (loading) loading.style.display = 'none';
+                })
+                .withFailureHandler(function(error) {
+                    console.error('Erro ao carregar histórico:', error);
+                    if (loading) loading.style.display = 'none';
+                    mostrarToast('Erro ao carregar histórico: ' + error.message, 'error');
+                })
+                .getAvailableTimeHistorico(dataInicio, dataFim, {});
+        }
+        
+        // Aplicar filtros no histórico
+        function aplicarFiltrosHistorico() {
+            const busca = document.getElementById('filtroBuscaHistorico')?.value.toLowerCase().trim() || '';
+            const turno = document.getElementById('filtroTurnoHistorico').value;
+            const justificado = document.getElementById('filtroJustificadoHistorico').value;
+            
+            dadosHistoricoFiltrados = dadosHistorico.filter(d => {
+                const minutosPerdidos = parseFloat(d.available_time_minutos) || 0;
+                if (minutosPerdidos < 1) return false;
+                
+                // Filtro de status de justificação
+                if (justificado !== 'todos') {
+                    const minutosJustificados = parseFloat(d.minutos_justificados) || 0;
+                    const temJustificativa = d.justificativa && d.justificativa.trim() !== '';
+                    
+                    if (justificado === 'justificado') {
+                        if (minutosJustificados < minutosPerdidos || !temJustificativa) return false;
+                    } else if (justificado === 'nao_justificado') {
+                        if (temJustificativa || minutosJustificados > 0) return false;
+                    } else if (justificado === 'parcial') {
+                        if (!temJustificativa || minutosJustificados >= minutosPerdidos || minutosJustificados === 0) return false;
+                    }
+                }
+                
+                // Filtro de busca
+                if (busca) {
+                    const nomeColab = (d.colaborador || '').toLowerCase();
+                    const nomeGestor = (d.gestor || '').toLowerCase();
+                    if (!nomeColab.includes(busca) && !nomeGestor.includes(busca)) {
+                        return false;
+                    }
+                }
+                
+                // Filtro de turno
+                if (turno !== 'todos' && d.turno !== turno) return false;
+                
+                return true;
+            });
+            
+            renderizarTabelaHistorico();
+        }
+        
+        // Renderizar tabela histórica (sem edição)
+        function renderizarTabelaHistorico() {
+            const tbody = document.getElementById('tabelaBodyHistorico');
+            const count = document.getElementById('tabelaCountHistorico');
+            
+            count.textContent = dadosHistoricoFiltrados.length + ' registros';
+            
+            if (dadosHistoricoFiltrados.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="11">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">📭</div>
+                                <div class="empty-state-text">Nenhum registro encontrado para os filtros selecionados</div>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            tbody.innerHTML = dadosHistoricoFiltrados.map(d => {
+                const minutos = parseFloat(d.available_time_minutos) || 0;
+                const aprov = parseFloat(d.percentual_aproveitamento) || 0;
+                
+                // Classe do tempo
+                let tempoClass = 'tempo-moderado';
+                if (minutos >= 30) tempoClass = 'tempo-alto';
+                
+                // Classe do aproveitamento
+                let aprovClass = 'aproveitamento-bom';
+                if (aprov < 90) aprovClass = 'aproveitamento-medio';
+                if (aprov < 80) aprovClass = 'aproveitamento-ruim';
+                
+                // Badge do turno
+                let turnoBadge = 'badge-t1';
+                if (d.turno === 'T2') turnoBadge = 'badge-t2';
+                if (d.turno === 'T3') turnoBadge = 'badge-t3';
+                
+                // Formatar data
+                const dataFormatada = formatarData(d.data);
+                
+                return `
+                    <tr>
+                        <td>${dataFormatada}</td>
+                        <td><span class="colaborador-nome">${d.colaborador || '-'}</span></td>
+                        <td>${d.gestor || '-'}</td>
+                        <td>${d.setor || '-'}</td>
+                        <td>${d.area || '-'}</td>
+                        <td><span class="badge-turno ${turnoBadge}">${d.turno || '-'}</span></td>
+                        <td>${formatarHoras(d.target_duration)}</td>
+                        <td>${formatarHoras(d.net_work_duration)}</td>
+                        <td><span class="tempo-perdido ${tempoClass}">${Math.round(minutos)} min</span></td>
+                        <td><span class="aproveitamento ${aprovClass}">${aprov.toFixed(1)}%</span></td>
+                        <td>
+                            ${(() => {
+                                const minutosJustificados = parseFloat(d.minutos_justificados) || 0;
+                                const temJustificativa = d.justificativa && d.justificativa.trim() !== '';
+                                
+                                if (!temJustificativa || minutosJustificados === 0) {
+                                    return '<span style="color: #dc2626; font-size: 12px; font-weight: 600;">❌ Não justificado</span>';
+                                } else if (minutosJustificados >= minutos) {
+                                    return `
+                                        <div style="font-size: 12px;">
+                                            <div style="font-weight: 600; color: #166534; margin-bottom: 4px;">✓ ${d.justificativa}</div>
+                                            <div style="color: #166534; font-size: 11px;">${Math.round(minutosJustificados)}/${Math.round(minutos)} min</div>
+                                            ${d.descricao ? `<div style="color: #888; font-size: 10px; margin-top: 2px; font-style: italic;">${d.descricao.substring(0, 30)}${d.descricao.length > 30 ? '...' : ''}</div>` : ''}
+                                        </div>
+                                    `;
+                                } else {
+                                    return `
+                                        <div style="font-size: 12px;">
+                                            <div style="font-weight: 600; color: #f59e0b; margin-bottom: 4px;">⚠ ${d.justificativa}</div>
+                                            <div style="color: #f59e0b; font-size: 11px;">${Math.round(minutosJustificados)}/${Math.round(minutos)} min (parcial)</div>
+                                            ${d.descricao ? `<div style="color: #888; font-size: 10px; margin-top: 2px; font-style: italic;">${d.descricao.substring(0, 30)}${d.descricao.length > 30 ? '...' : ''}</div>` : ''}
+                                        </div>
+                                    `;
+                                }
+                            })()}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+        
+        // Adicionar listeners para filtros do histórico
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                document.getElementById('filtroBuscaHistorico')?.addEventListener('input', aplicarFiltrosHistorico);
+                document.getElementById('filtroTurnoHistorico')?.addEventListener('change', aplicarFiltrosHistorico);
+                document.getElementById('filtroJustificadoHistorico')?.addEventListener('change', aplicarFiltrosHistorico);
+            }, 500);
+        });
+    </script>
+</body>
+</html>
+

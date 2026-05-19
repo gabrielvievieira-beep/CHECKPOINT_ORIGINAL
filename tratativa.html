@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Tratativa de Alterações — Checkpoint BA01</title>
+<?!= include('style') ?>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh;}
+
+/* ── TOPBAR ─────────────────────────────────────────────── */
+.tr-topbar{position:sticky;top:0;z-index:200;display:flex;align-items:center;justify-content:space-between;
+  padding:0 24px;height:56px;background:rgba(10,16,34,.98);backdrop-filter:blur(12px);
+  border-bottom:1px solid rgba(255,255,255,.04);box-shadow:0 4px 24px rgba(0,0,0,.5);}
+.tr-topbar::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(249,115,22,.7) 20%,rgba(255,215,0,.9) 50%,rgba(249,115,22,.7) 80%,transparent);
+  background-size:200% 100%;animation:tb-sweep 5s linear infinite;}
+@keyframes tb-sweep{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.tr-tb-left{display:flex;align-items:center;gap:12px;}
+.tr-tb-icon{width:36px;height:36px;background:linear-gradient(135deg,rgba(249,115,22,.2),rgba(255,215,0,.1));
+  border:1px solid rgba(249,115,22,.4);border-radius:10px;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 12px rgba(249,115,22,.15);}
+.tr-tb-brand{font-size:16px;font-weight:800;color:#fff;letter-spacing:-.3px;}
+.tr-tb-brand span{background:linear-gradient(90deg,#fb923c,#FFD700);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.tr-sep{width:1px;height:20px;background:rgba(255,255,255,.1);}
+.tr-pill{padding:3px 10px;border:1px solid rgba(249,115,22,.3);border-radius:20px;font-size:11px;font-weight:600;color:rgba(249,115,22,.8);background:rgba(249,115,22,.07);}
+.tr-tb-right{display:flex;align-items:center;gap:10px;}
+.tr-btn{display:flex;align-items:center;gap:6px;padding:0 14px;height:32px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:none;transition:all .2s;}
+.tr-btn-ghost{background:rgba(255,255,255,.07);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.1);}
+.tr-btn-ghost:hover{background:rgba(255,255,255,.12);color:#fff;}
+.tr-clock{font-size:12px;font-weight:600;color:rgba(255,255,255,.4);font-variant-numeric:tabular-nums;}
+
+/* ── TABS ─────────────────────────────────────────────── */
+.tr-tabs{display:flex;border-bottom:1px solid rgba(255,255,255,.06);background:rgba(10,16,34,.6);padding:0 24px;}
+.tr-tab{display:flex;align-items:center;gap:8px;padding:14px 20px;font-size:13px;font-weight:600;
+  color:rgba(255,255,255,.4);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;user-select:none;}
+.tr-tab:hover{color:rgba(255,255,255,.7);}
+.tr-tab.active{color:#fb923c;border-bottom-color:#fb923c;}
+.tr-tab-badge{padding:2px 7px;border-radius:20px;font-size:10px;font-weight:700;background:rgba(249,115,22,.12);color:#fb923c;}
+.tr-tab-badge.green{background:rgba(74,222,128,.1);color:#4ade80;}
+
+/* ── MAIN ─────────────────────────────────────────────── */
+.tr-main{padding:24px;max-width:1200px;margin:0 auto;}
+
+/* ── KPI BAR ─────────────────────────────────────────── */
+.tr-kpi-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;}
+.tr-kpi{background:rgba(22,34,65,.85);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:16px 20px;display:flex;flex-direction:column;gap:4px;transition:border-color .2s;}
+.tr-kpi:hover{border-color:rgba(255,255,255,.14);}
+.tr-kpi-num{font-size:28px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1;}
+.tr-kpi-lbl{font-size:11px;font-weight:600;color:rgba(255,255,255,.4);letter-spacing:.5px;text-transform:uppercase;}
+.kpi-orange .tr-kpi-num{color:#fb923c;}
+.kpi-sky    .tr-kpi-num{color:#38bdf8;}
+.kpi-green  .tr-kpi-num{color:#4ade80;}
+.kpi-red    .tr-kpi-num{color:#f87171;}
+
+/* ── FILTROS ─────────────────────────────────────────── */
+.tr-filters{background:rgba(22,34,65,.85);border:1px solid rgba(255,255,255,.07);border-radius:14px;
+  padding:18px 20px;margin-bottom:20px;display:flex;flex-direction:column;gap:14px;}
+.tr-filters-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.tr-search{display:flex;align-items:center;gap:8px;flex:1;min-width:200px;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:0 12px;height:38px;}
+.tr-search input{flex:1;background:none;border:none;outline:none;color:#e2e8f0;font-size:13px;}
+.tr-search input::placeholder{color:rgba(255,255,255,.3);}
+.tr-input-date{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;
+  padding:0 12px;height:38px;color:#e2e8f0;font-size:13px;outline:none;cursor:pointer;}
+.tr-input-date::-webkit-calendar-picker-indicator{filter:invert(.6);}
+.tr-label-sm{font-size:11px;font-weight:600;color:rgba(255,255,255,.4);white-space:nowrap;text-transform:uppercase;letter-spacing:.4px;}
+.tr-chip{padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;
+  border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:rgba(255,255,255,.5);transition:all .18s;user-select:none;}
+.tr-chip:hover{border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.75);}
+.tr-chip.active{background:rgba(249,115,22,.12);border-color:rgba(249,115,22,.35);color:#fb923c;}
+.tr-chip.green.active{background:rgba(74,222,128,.1);border-color:rgba(74,222,128,.3);color:#4ade80;}
+.tr-chip.red.active{background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.3);color:#f87171;}
+.tr-chip.sky.active{background:rgba(56,189,248,.1);border-color:rgba(56,189,248,.3);color:#38bdf8;}
+.tr-btn-clear{padding:0 14px;height:34px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;
+  border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:rgba(255,255,255,.4);transition:all .2s;}
+.tr-btn-clear:hover{background:rgba(255,255,255,.08);color:rgba(255,255,255,.7);}
+
+/* ── SECTION HEADER ──────────────────────────────────── */
+.tr-section-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.tr-section-title{font-size:14px;font-weight:700;color:rgba(255,255,255,.6);}
+.tr-count{font-size:12px;font-weight:700;padding:2px 10px;border-radius:20px;background:rgba(249,115,22,.1);border:1px solid rgba(249,115,22,.2);color:#fb923c;}
+.tr-reload{display:flex;align-items:center;gap:6px;padding:0 12px;height:30px;border-radius:8px;font-size:11px;font-weight:700;
+  cursor:pointer;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:rgba(255,255,255,.5);transition:all .2s;}
+.tr-reload:hover{border-color:rgba(249,115,22,.3);color:#fb923c;}
+
+/* ── CARDS ───────────────────────────────────────────── */
+.tr-list{display:flex;flex-direction:column;gap:10px;}
+.tr-card{background:rgba(22,34,65,.85);border:1px solid rgba(255,255,255,.07);border-radius:14px;
+  padding:18px 20px;transition:all .2s;}
+.tr-card:hover{border-color:rgba(249,115,22,.2);box-shadow:0 4px 20px rgba(0,0,0,.3);}
+.tr-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:14px;}
+.tr-card-left{display:flex;align-items:center;gap:14px;}
+.tr-avatar{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;flex-shrink:0;}
+.tr-card-info{}
+.tr-card-name{font-size:14px;font-weight:700;color:#fff;margin-bottom:3px;}
+.tr-card-meta{font-size:12px;color:rgba(255,255,255,.4);}
+.tr-card-badges{display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end;}
+.tr-status-badge{padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.4px;}
+.st-PENDENTE{background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.3);color:#fbbf24;}
+.st-VALIDAR{background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.25);color:#38bdf8;}
+.st-CONCLUÍDO,.st-CONCLUIDO{background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.25);color:#4ade80;}
+.st-CANCELADO{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);color:#f87171;}
+.tr-tipo-tag{font-size:10px;font-weight:600;padding:2px 8px;border-radius:6px;}
+.tp-escala,.tp-MUDANCA_ESCALA{background:rgba(168,85,247,.12);color:#c084fc;}
+.tp-gestor,.tp-MUDANCA_GESTOR{background:rgba(249,115,22,.12);color:#fb923c;}
+.tp-desligamento,.tp-DESLIGAMENTO{background:rgba(239,68,68,.1);color:#f87171;}
+.tp-outro,.tp-OUTRO{background:rgba(255,255,255,.07);color:rgba(255,255,255,.5);}
+.tp-area{background:rgba(56,189,248,.1);color:#38bdf8;}
+.tp-setor{background:rgba(20,184,166,.12);color:#2dd4bf;}
+.tp-cargo{background:rgba(234,179,8,.12);color:#facc15;}
+.tp-turno{background:rgba(99,102,241,.12);color:#818cf8;}
+.tp-supervisor{background:rgba(236,72,153,.12);color:#f472b6;}
+.tp-empresa{background:rgba(16,185,129,.12);color:#34d399;}
+
+/* ── DETALHES DO CARD ─────────────────────────────────── */
+.tr-card-body{display:grid;grid-template-columns:1fr 1fr;gap:8px 24px;padding:14px 16px;
+  background:rgba(255,255,255,.03);border-radius:10px;margin-bottom:14px;font-size:12px;}
+.tr-detail{display:flex;flex-direction:column;gap:2px;}
+.tr-detail-label{font-size:10px;font-weight:600;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.4px;}
+.tr-detail-val{font-size:13px;color:rgba(255,255,255,.75);}
+/* ── AÇÕES ────────────────────────────────────────────── */
+.tr-card-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;}
+.tr-action-btn{padding:6px 16px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:none;transition:all .2s;height:32px;}
+.btn-validar{background:rgba(56,189,248,.12);color:#38bdf8;border:1px solid rgba(56,189,248,.3);}
+.btn-validar:hover{background:rgba(56,189,248,.22);}
+.btn-concluir{background:rgba(74,222,128,.1);color:#4ade80;border:1px solid rgba(74,222,128,.25);}
+.btn-concluir:hover{background:rgba(74,222,128,.2);}
+.btn-cancelar{background:rgba(239,68,68,.1);color:#f87171;border:1px solid rgba(239,68,68,.25);}
+.btn-cancelar:hover{background:rgba(239,68,68,.2);}
+.tr-action-btn:disabled{opacity:.5;cursor:not-allowed;}
+
+/* ── LOADING / EMPTY ─────────────────────────────────── */
+.tr-loading{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:80px 0;color:rgba(255,255,255,.4);}
+.tr-spinner{width:36px;height:36px;border:3px solid rgba(249,115,22,.15);border-top-color:#fb923c;border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.tr-empty{text-align:center;padding:60px 24px;color:rgba(255,255,255,.3);}
+.tr-empty-icon{font-size:36px;margin-bottom:12px;opacity:.5;}
+.tr-empty-title{font-size:14px;font-weight:600;color:rgba(255,255,255,.4);margin-bottom:6px;}
+
+/* ── TOAST ───────────────────────────────────────────── */
+.tr-toast{position:fixed;bottom:24px;right:24px;z-index:999;background:#1e2d4f;border:1px solid rgba(249,115,22,.3);
+  border-radius:12px;padding:12px 18px;font-size:13px;font-weight:600;color:#e2e8f0;
+  box-shadow:0 8px 32px rgba(0,0,0,.5);transform:translateY(80px);opacity:0;transition:all .3s;pointer-events:none;}
+.tr-toast.show{transform:translateY(0);opacity:1;}
+.tr-toast.success{border-color:rgba(74,222,128,.35);color:#4ade80;}
+.tr-toast.error{border-color:rgba(239,68,68,.35);color:#f87171;}
+/* ── Botão Menu Principal ─────────────────────────────────── */
+#btnMenuHome {
+  height: 42px !important;
+  font-size: 14px !important;
+  padding: 0 22px !important;
+  font-weight: 700 !important;
+  border-radius: 10px !important;
+}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="tr-topbar">
+  <div class="tr-tb-left">
+    <div class="tr-tb-icon">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fb923c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
+      </svg>
+    </div>
+    <div class="tr-tb-brand">Tratativa de <span>Alterações</span></div>
+    <div class="tr-sep"></div>
+    <div class="tr-pill">Pendências de Flow</div>
+  </div>
+  <div class="tr-tb-right">
+    <span id="nomeUsuario" style="font-size:12px;color:rgba(255,255,255,.35);"></span>
+    <div class="tr-clock" id="trClock"></div>
+    <div id="menuContainer"></div>
+    <button class="tr-btn tr-btn-ghost" id="btnMenuHome" onclick="window.top.location.href='<?= ScriptApp.getService().getUrl() ?>'">← Menu</button>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tr-tabs">
+  <div class="tr-tab active" id="tabPend" onclick="trocarTab('pendentes')">
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    Pendentes
+    <span class="tr-tab-badge" id="badgePend">—</span>
+  </div>
+  <div class="tr-tab" id="tabHist" onclick="trocarTab('historico')">
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    Histórico
+    <span class="tr-tab-badge green" id="badgeHist">—</span>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="tr-main">
+
+  <!-- KPIs -->
+  <div class="tr-kpi-bar">
+    <div class="tr-kpi kpi-orange"><div class="tr-kpi-num" id="kpiPend">—</div><div class="tr-kpi-lbl">⏳ Pendentes</div></div>
+    <div class="tr-kpi kpi-sky">   <div class="tr-kpi-num" id="kpiVal">—</div><div class="tr-kpi-lbl">🔵 Validar</div></div>
+    <div class="tr-kpi kpi-green"> <div class="tr-kpi-num" id="kpiConc">—</div><div class="tr-kpi-lbl">✅ Concluídos</div></div>
+    <div class="tr-kpi kpi-red">   <div class="tr-kpi-num" id="kpiCanc">—</div><div class="tr-kpi-lbl">❌ Cancelados</div></div>
+  </div>
+
+  <!-- FILTROS -->
+  <div class="tr-filters">
+    <div class="tr-filters-row">
+      <div class="tr-search">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" opacity=".4"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input id="searchInput" placeholder="Buscar colaborador ou responsável..." oninput="renderLista()"/>
+      </div>
+      <span class="tr-label-sm">De:</span>
+      <input class="tr-input-date" type="date" id="filtroInicio" onchange="renderLista()"/>
+      <span class="tr-label-sm">Até:</span>
+      <input class="tr-input-date" type="date" id="filtroFim" onchange="renderLista()"/>
+      <button class="tr-btn-clear" onclick="limparFiltros()">✕ Limpar</button>
+    </div>
+    <div class="tr-filters-row">
+      <span class="tr-label-sm">Tipo:</span>
+      <div id="tipoChips" style="display:flex;gap:6px;flex-wrap:wrap;">
+        <div class="tr-chip active" data-tipo="todos"        onclick="setTipo(this)">Todos</div>
+        <div class="tr-chip"        data-tipo="escala"       onclick="setTipo(this)">Escala</div>
+        <div class="tr-chip"        data-tipo="MUDANCA_ESCALA" onclick="setTipo(this)">Mudança Escala</div>
+        <div class="tr-chip"        data-tipo="gestor"       onclick="setTipo(this)">Gestor</div>
+        <div class="tr-chip"        data-tipo="MUDANCA_GESTOR" onclick="setTipo(this)">Mudança Gestor</div>
+        <div class="tr-chip"        data-tipo="desligamento" onclick="setTipo(this)">Desligamento</div>
+        <div class="tr-chip"        data-tipo="area"         onclick="setTipo(this)">Área</div>
+        <div class="tr-chip"        data-tipo="setor"        onclick="setTipo(this)">Setor</div>
+        <div class="tr-chip"        data-tipo="turno"        onclick="setTipo(this)">Turno</div>
+        <div class="tr-chip"        data-tipo="cargo"        onclick="setTipo(this)">Cargo</div>
+        <div class="tr-chip"        data-tipo="outro"        onclick="setTipo(this)">Outro</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LISTA -->
+  <div class="tr-section-hdr">
+    <div class="tr-section-title" id="sectionTitle">Pendentes</div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <div class="tr-count" id="countBadge">—</div>
+      <button class="tr-reload" onclick="recarregar()">
+        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        Recarregar
+      </button>
+    </div>
+  </div>
+  <div id="listaContainer"><div class="tr-loading"><div class="tr-spinner"></div><span>Carregando...</span></div></div>
+</div>
+
+<!-- TOAST -->
+<div class="tr-toast" id="trToast"></div>
+
+<script>
+// ── Formatação com separador de milhar (pt-BR) ──────────────────────
+const fmt = n => (n == null || n === '' ? '—' : Number(n).toLocaleString('pt-BR'));
+
+/* ════════════════════════════════════════════════════════
+   STATE
+════════════════════════════════════════════════════════ */
+let abaAtual       = 'pendentes';
+let dadosPendentes = null;
+let dadosHistorico = null;
+let filtroTipo     = 'todos';
+
+const TIPO_LABELS = {
+  escala:'Alteração de Escala', MUDANCA_ESCALA:'Mudança de Escala',
+  gestor:'Alteração de Gestor', MUDANCA_GESTOR:'Mudança de Gestor',
+  area:'Troca de Área', setor:'Alteração de Setor', cargo:'Alteração de Cargo',
+  supervisor:'Alteração de Supervisor', turno:'Alteração de Turno',
+  empresa:'Alteração de Empresa', desligamento:'Desligamento',
+  DESLIGAMENTO:'Desligamento', OUTRO:'Outro', outro:'Outro'
+};
+
+/* ════════════════════════════════════════════════════════
+   CLOCK & USER
+════════════════════════════════════════════════════════ */
+setInterval(()=>{
+  document.getElementById('trClock').textContent=
+    new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+},1000);
+
+google.script.run.withSuccessHandler(e=>{
+  if(e) document.getElementById('nomeUsuario').textContent=e.split('@')[0];
+}).getUsuarioEmail();
+
+/* ════════════════════════════════════════════════════════
+   TABS
+════════════════════════════════════════════════════════ */
+function trocarTab(aba){
+  abaAtual = aba;
+  document.querySelectorAll('.tr-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(aba==='pendentes'?'tabPend':'tabHist').classList.add('active');
+  document.getElementById('sectionTitle').textContent = aba==='pendentes'?'Pendentes':'Histórico';
+
+  const dados = aba==='pendentes' ? dadosPendentes : dadosHistorico;
+  if(dados===null){ carregarAba(); } else { renderLista(); }
+}
+
+/* ════════════════════════════════════════════════════════
+   CARREGAR DADOS
+════════════════════════════════════════════════════════ */
+function carregarAba(){
+  ChaLoader.start('listaContainer', 'Carregando...');
+
+  const fn = abaAtual==='pendentes' ? 'listarSolicitacoesAlteracao' : 'listarSolicitacoesHistorico';
+  google.script.run
+    .withSuccessHandler(lista=>{
+      ChaLoader.complete();
+      if(abaAtual==='pendentes'){ dadosPendentes=lista||[]; atualizarKPIs(dadosPendentes); }
+      else { dadosHistorico=lista||[]; atualizarKPIsHistorico(dadosHistorico); }
+      renderLista();
+    })
+    .withFailureHandler(e=>{
+      ChaLoader.error();
+      document.getElementById('listaContainer').innerHTML=
+        `<div class="tr-empty"><div class="tr-empty-icon">⚠️</div><div class="tr-empty-title">Erro ao carregar: ${e.message}</div></div>`;
+    })
+    [fn]({});
+}
+
+function recarregar(){
+  if(abaAtual==='pendentes') dadosPendentes=null;
+  else dadosHistorico=null;
+  carregarAba();
+}
+
+/* ════════════════════════════════════════════════════════
+   KPIs
+════════════════════════════════════════════════════════ */
+function atualizarKPIs(lista){
+  const pend = lista.filter(s=>(s.status||'').toUpperCase()==='PENDENTE').length;
+  const val  = lista.filter(s=>(s.status||'').toUpperCase()==='VALIDAR').length;
+  animNum('kpiPend', pend);
+  animNum('kpiVal',  val);
+  document.getElementById('badgePend').textContent = fmt(pend+val) || '0';
+}
+function atualizarKPIsHistorico(lista){
+  const conc = lista.filter(s=>['CONCLUÍDO','CONCLUIDO'].includes((s.status||'').toUpperCase())).length;
+  const canc = lista.filter(s=>(s.status||'').toUpperCase()==='CANCELADO').length;
+  animNum('kpiConc', conc);
+  animNum('kpiCanc', canc);
+  document.getElementById('badgeHist').textContent = fmt(lista.length) || '0';
+}
+function animNum(id,target){
+  const el=document.getElementById(id);
+  if(!el||el.textContent===String(target)) return;
+  let v=0;const step=Math.max(1,Math.ceil(target/20));
+  const t=setInterval(()=>{v=Math.min(v+step,target);el.textContent=fmt(v);if(v>=target)clearInterval(t);},30);
+}
+
+/* ════════════════════════════════════════════════════════
+   FILTROS
+════════════════════════════════════════════════════════ */
+function setTipo(el){
+  document.querySelectorAll('#tipoChips .tr-chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  filtroTipo = el.dataset.tipo;
+  renderLista();
+}
+function limparFiltros(){
+  document.getElementById('searchInput').value='';
+  document.getElementById('filtroInicio').value='';
+  document.getElementById('filtroFim').value='';
+  filtroTipo='todos';
+  document.querySelectorAll('#tipoChips .tr-chip').forEach((c,i)=>c.classList.toggle('active',i===0));
+  renderLista();
+}
+
+/* ════════════════════════════════════════════════════════
+   RENDER
+════════════════════════════════════════════════════════ */
+function renderLista(){
+  const dados = abaAtual==='pendentes' ? dadosPendentes : dadosHistorico;
+  if(!dados){ carregarAba(); return; }
+
+  const q   = (document.getElementById('searchInput').value||'').toLowerCase().trim();
+  const di  = document.getElementById('filtroInicio').value;
+  const df  = document.getElementById('filtroFim').value;
+  const aba = abaAtual;
+
+  let lista = dados.filter(s=>{
+    if(filtroTipo!=='todos' && s.tipo_alteracao!==filtroTipo) return false;
+    if(q){
+      const hay=(s.colaborador||'')+(s.responsavel||'')+(s.gestor||'');
+      if(!hay.toLowerCase().includes(q)) return false;
+    }
+    const dataSol=(s.data_solicitacao||'').split(' ')[0];
+    if(di && dataSol && dataSol<di) return false;
+    if(df && dataSol && dataSol>df) return false;
+    return true;
+  });
+
+  document.getElementById('countBadge').textContent = fmt(lista.length)+' resultado'+(lista.length!==1?'s':'');
+
+  if(!lista.length){
+    document.getElementById('listaContainer').innerHTML=
+      '<div class="tr-empty"><div class="tr-empty-icon">🔍</div><div class="tr-empty-title">Nenhuma solicitação encontrada</div></div>';
+    return;
+  }
+
+  const mostrarBotoes = aba==='pendentes';
+  const html = lista.map(s=>renderCard(s, mostrarBotoes)).join('');
+  document.getElementById('listaContainer').innerHTML=`<div class="tr-list">${html}</div>`;
+}
+
+function renderCard(s, mostrarBotoes){
+  const status  = (s.status||'PENDENTE').toUpperCase();
+  const tipo    = s.tipo_alteracao||'outro';
+  const tipoTxt = TIPO_LABELS[tipo]||tipo;
+  const initials= (s.colaborador||'?').split(' ').slice(0,2).map(n=>n[0]).join('').toUpperCase();
+  const hue     = (parseInt(s.idgroot)||0)%360;
+  const dataSol = fmtData(s.data_solicitacao);
+  const dataRes = s.data_resolvida ? fmtData(s.data_resolvida) : null;
+
+  // Detalhes dinâmicos
+  let details = [];
+  if(s.gestor)           details.push({l:'Gestor atual',v:s.gestor});
+  if(s.escala)           details.push({l:'Escala atual',v:s.escala});
+  if(s.nova_escala)      details.push({l:'Nova escala',v:s.nova_escala});
+  if(s.novo_gestor)      details.push({l:'Novo gestor',v:s.novo_gestor});
+  if(s.data_desligamento)details.push({l:'Data deslig.',v:fmtDataSimples(s.data_desligamento)});
+  if(s.descricao&&!s.descricao.includes(':')) details.push({l:'Descrição',v:s.descricao});
+  details.push({l:'Solicitado em',v:dataSol});
+  if(s.responsavel)      details.push({l:'Responsável',v:(s.responsavel||'').split('@')[0]});
+  if(dataRes)            details.push({l:'Resolvido em',v:dataRes});
+  if(s.responsavel_tratativa) details.push({l:'Tratado por',v:(s.responsavel_tratativa||'').split('@')[0]});
+
+  const detailsHtml = details.map(d=>`
+    <div class="tr-detail">
+      <span class="tr-detail-label">${d.l}</span>
+      <span class="tr-detail-val">${d.v||'—'}</span>
+    </div>`).join('');
+
+  const acoesHtml = mostrarBotoes ? `
+    <div class="tr-card-actions">
+      ${status==='PENDENTE' && (tipo==='desligamento'||tipo==='DESLIGAMENTO') ? `<button class="tr-action-btn btn-validar" onclick="acao(this,'${s.idgroot}','VALIDAR')">🔵 Validar</button>` : ''}
+      <button class="tr-action-btn btn-concluir" onclick="acao(this,'${s.idgroot}','CONCLUÍDO')">✅ Concluído</button>
+      <button class="tr-action-btn btn-cancelar" onclick="acao(this,'${s.idgroot}','CANCELADO')">❌ Cancelar</button>
+    </div>` : '';
+
+  return `
+  <div class="tr-card">
+    <div class="tr-card-top">
+      <div class="tr-card-left">
+        <div class="tr-avatar" style="background:hsla(${hue},60%,40%,.2);border:1px solid hsla(${hue},60%,50%,.3);color:hsl(${hue},60%,70%);">${initials}</div>
+        <div class="tr-card-info">
+          <div class="tr-card-name">${s.colaborador||'—'}</div>
+          <div class="tr-card-meta">ID: ${s.idgroot||'—'}</div>
+        </div>
+      </div>
+      <div class="tr-card-badges">
+        <span class="tr-status-badge st-${status}">${status}</span>
+        <span class="tr-tipo-tag tp-${tipo}">${tipoTxt}</span>
+      </div>
+    </div>
+    <div class="tr-card-body">${detailsHtml}</div>
+    ${acoesHtml}
+  </div>`;
+}
+
+/* ════════════════════════════════════════════════════════
+   AÇÃO
+════════════════════════════════════════════════════════ */
+function acao(btn, idgroot, novoStatus){
+  const card = btn.closest('.tr-card');
+  card.querySelectorAll('.tr-action-btn').forEach(b=>{b.disabled=true;});
+  btn.textContent = '⏳ Aguarde...';
+
+  google.script.run
+    .withSuccessHandler(r=>{
+      if(r.success){
+        mostrarToast('Status atualizado com sucesso!','success');
+        dadosPendentes=null;
+        carregarAba();
+      } else {
+        mostrarToast(r.message||'Erro ao atualizar','error');
+        card.querySelectorAll('.tr-action-btn').forEach(b=>{b.disabled=false;});
+      }
+    })
+    .withFailureHandler(e=>{
+      mostrarToast(e.message,'error');
+      card.querySelectorAll('.tr-action-btn').forEach(b=>{b.disabled=false;});
+    })
+    .atualizarStatusSolicitacao(idgroot, null, novoStatus, null);
+}
+
+/* ════════════════════════════════════════════════════════
+   UTILS
+════════════════════════════════════════════════════════ */
+function fmtData(v){
+  if(!v) return '—';
+  const m=String(v).match(/(\d{4})-(\d{2})-(\d{2})[T ]?(\d{2})?:?(\d{2})?/);
+  if(m) return `${m[3]}/${m[2]}/${m[1]}${m[4]?', '+m[4]+':'+(m[5]||'00'):''}`;
+  return String(v);
+}
+function fmtDataSimples(v){
+  if(!v) return '—';
+  const m=String(v).match(/(\d{4})-(\d{2})-(\d{2})/);
+  if(m) return `${m[3]}/${m[2]}/${m[1]}`;
+  return String(v);
+}
+
+function mostrarToast(msg,tipo){
+  const t=document.getElementById('trToast');
+  t.textContent=msg; t.className='tr-toast '+(tipo||'');
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3500);
+}
+
+/* ════════════════════════════════════════════════════════
+   INIT
+════════════════════════════════════════════════════════ */
+carregarAba();
+</script>
+</body>
+</html>
