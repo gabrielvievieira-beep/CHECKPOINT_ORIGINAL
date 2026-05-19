@@ -166,15 +166,20 @@ function invalidarCacheRegistros() {
  * Filtro de AREA: exclui Customer, Operations, Software e demais áreas bloqueadas
  */
 function getRegistrosDiaAtual() {
+  const hoje    = new Date();
+  const dataStr = Utilities.formatDate(hoje, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+  return getRegistrosDia(dataStr);
+}
+
+function getRegistrosDia(dataStr) {
   try {
-    const cached = getChunkedCache(CACHE_KEY_REGISTROS_DIA);
+    const hoje      = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd');
+    const ehHoje    = (dataStr === hoje);
+    const cached    = ehHoje ? getChunkedCache(CACHE_KEY_REGISTROS_DIA) : null;
     if (cached) {
-      Logger.log('getRegistrosDiaAtual: retornando do cache (' + cached.length + ' registros)');
+      Logger.log('getRegistrosDia: retornando do cache (' + cached.length + ' registros) para ' + dataStr);
       return cached;
     }
-
-    const hoje    = new Date();
-    const dataStr = Utilities.formatDate(hoje, Session.getScriptTimeZone(), 'yyyy-MM-dd');
 
     const areasExcl  = (typeof AREAS_EXCLUIDAS !== 'undefined' && AREAS_EXCLUIDAS.length > 0)
                        ? AREAS_EXCLUIDAS
@@ -226,9 +231,9 @@ function getRegistrosDiaAtual() {
     const result = _bqQuery(query, token, 60000, true);
     const rows   = _parseRows(result);
 
-    if (rows.length > 0) putChunkedCache(CACHE_KEY_REGISTROS_DIA, rows, CACHE_DURATION_REGISTROS);
+    if (rows.length > 0 && ehHoje) putChunkedCache(CACHE_KEY_REGISTROS_DIA, rows, CACHE_DURATION_REGISTROS);
 
-    Logger.log('getRegistrosDiaAtual: ' + rows.length + ' registros do BQ → cache 2 min');
+    Logger.log('getRegistrosDia: ' + rows.length + ' registros do BQ para ' + dataStr);
     return rows;
 
   } catch (error) {
