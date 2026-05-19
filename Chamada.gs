@@ -264,20 +264,18 @@ function registrarDSRDoDia() {
     const token   = getTokenBigQuery();
     const agora   = new Date();
     const dataStr = Utilities.formatDate(agora, Session.getScriptTimeZone(), 'yyyy-MM-dd');
-    const email   = getUsuarioEmail();
-
     const updateQuery = `
       UPDATE \`${PROJECT_ID}.${DATASET_ID}.${TABLE_HISTORICO}\` h
       SET STATUS_PRESENCA = 'DSR - Escala',
-          RESPONSAVEL = '${email}'
+          RESPONSAVEL = 'checkpoint-auto'
       WHERE h.DATA_ABS = DATE '${dataStr}'
         AND (h.STATUS_PRESENCA IS NULL OR TRIM(h.STATUS_PRESENCA) = '')
         AND EXISTS (
           SELECT 1
-          FROM \`${PROJECT_ID}.${DATASET_ID}.${TABLE_COLABORADORES}\` c
-          WHERE CAST(c.ID_GROOT AS INT64) = CAST(h.IDGROOT AS INT64)
-            AND UPPER(TRIM(COALESCE(c.ESCALA, ''))) = '${turma}'
-            AND c.STATUS NOT IN ('Inativo', 'INATIVO')
+          FROM \`meli-sbox.BRBA01.V_MTX_COLABORADORES\` m
+          WHERE CAST(m.ID_GROOT AS INT64) = CAST(h.IDGROOT AS INT64)
+            AND UPPER(TRIM(COALESCE(m.ESCALA, ''))) = '${turma}'
+            AND m.STATUS NOT IN ('Inativo', 'INATIVO')
         )
     `;
 
@@ -334,7 +332,7 @@ function inicializarChamadaDia() {
         DATE '${dataStr}',
         CAST(ID_GROOT AS INT64)                                                        AS IDGROOT,
         COLABORADOR,
-        CASE WHEN UPPER(TRIM(COALESCE(ESCALA, ''))) = '${turmaFolga}'
+        CASE WHEN UPPER(TRIM(COALESCE(m.ESCALA, ''))) = '${turmaFolga}'
              THEN 'DSR - Escala'
              ELSE CAST(NULL AS STRING)
         END                                                                            AS STATUS_PRESENCA,
@@ -345,6 +343,11 @@ function inicializarChamadaDia() {
         TURNO,
         CAST(CONCAT('${ddmmyy}', CAST(CAST(ID_GROOT AS INT64) AS STRING)) AS INT64)   AS CHAVE
       FROM \`${PROJECT_ID}.${DATASET_ID}.${TABLE_COLABORADORES}\`
+      LEFT JOIN (
+        SELECT CAST(ID_GROOT AS INT64) AS ID_GROOT_MTX, ESCALA
+        FROM \`meli-sbox.BRBA01.V_MTX_COLABORADORES\`
+        WHERE ID_GROOT IS NOT NULL
+      ) m ON CAST(ID_GROOT AS INT64) = m.ID_GROOT_MTX
       WHERE ${filtros.join('\n        AND ')}
       QUALIFY ROW_NUMBER() OVER (PARTITION BY ID_GROOT ORDER BY COLABORADOR) = 1
     `;
