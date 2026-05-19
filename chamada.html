@@ -4758,7 +4758,7 @@ function renderTurnoCard(turno, lista) {
             </div>
             <div class="cha-gestor-acts">
               <button class="cha-gact-btn gact-pres"
-                      onclick="event.stopPropagation();marcarGestor('${turnoEsc}','${gSafe}','PRESENTE')"
+                      onclick="event.stopPropagation();marcarGestor('${turnoEsc}','${gSafe}','P - Presente')"
                       title="Todos presentes">✓ Presentes</button>
               <button class="cha-gact-btn gact-falt"
                       onclick="event.stopPropagation();marcarGestor('${turnoEsc}','${gSafe}','FI - Falta Injustificada')"
@@ -4865,7 +4865,7 @@ function renderTurnoCard(turno, lista) {
           </div>
           <div class="cha-turno-acts">
             <button class="cha-act-btn act-pres"
-                    onclick="event.stopPropagation();marcarTodos('${turnoEsc}','PRESENTE')"
+                    onclick="event.stopPropagation();marcarTodos('${turnoEsc}','P - Presente')"
                     title="Marcar todos como Presente">
               <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
               Todos presentes
@@ -5147,7 +5147,7 @@ function renderGestorCard(g, gestorNames) {
         Todos registrados
        </button>`
     : `<button class="cha-colab-mark-all"
-        onclick="event.stopPropagation();marcarGestorCard(this.closest('.cha-gcard'),'PRESENTE')">
+        onclick="event.stopPropagation();marcarGestorCard(this.closest('.cha-gcard'),'P - Presente')">
         <svg viewBox="0 0 24 24" style="width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round"><polyline points="20 6 9 17 4 12"/></svg>
         Marcar todos presentes
        </button>`;
@@ -5259,7 +5259,7 @@ function renderLideresCard(lideres) {
         Todos registrados
        </button>`
     : `<button class="cha-colab-mark-all"
-        onclick="event.stopPropagation();marcarGestorCard(this.closest('.cha-gcard'),'PRESENTE')">
+        onclick="event.stopPropagation();marcarGestorCard(this.closest('.cha-gcard'),'P - Presente')">
         <svg viewBox="0 0 24 24" style="width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round"><polyline points="20 6 9 17 4 12"/></svg>
         Marcar todos presentes
        </button>`;
@@ -5338,7 +5338,7 @@ function marcarGestorCard(card, status) {
   if (!card) return;
   let alterados = 0;
   const stCode     = statusCode(status);
-  const isPresente = status === 'PRESENTE';
+  const isPresente = stCode === 'PRESENTE';
   const isFalta    = stCode === 'FI';
   const isOther    = !isPresente && !isFalta && status !== 'PENDENTE';
   const stDef      = _STATUS_BY_VAL[status];
@@ -5510,7 +5510,7 @@ function atualizarGestorCardStats(card) {
       markAllBtn.classList.remove('all-done');
       markAllBtn.disabled = false;
       markAllBtn.innerHTML = `<svg viewBox="0 0 24 24" style="width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round"><polyline points="20 6 9 17 4 12"/></svg> Marcar todos presentes`;
-      markAllBtn.onclick = e => { e.stopPropagation(); marcarGestorCard(card, 'PRESENTE'); };
+      markAllBtn.onclick = e => { e.stopPropagation(); marcarGestorCard(card, 'P - Presente'); };
     }
   }
 
@@ -5540,7 +5540,7 @@ function atualizarGestorCardStats(card) {
         markBtn.className = 'cha-gcard-mark-btn gbtn-pres';
         markBtn.disabled  = false;
         markBtn.innerHTML = `<svg viewBox="0 0 24 24" style="width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round"><polyline points="20 6 9 17 4 12"/></svg> Todos presentes`;
-        markBtn.onclick   = e => { e.stopPropagation(); marcarGestorCard(card, 'PRESENTE'); };
+        markBtn.onclick   = e => { e.stopPropagation(); marcarGestorCard(card, 'P - Presente'); };
       }
     }
   }
@@ -5653,7 +5653,7 @@ function colabRowHtml(r, pal, isGestor) {
       <div class="cha-cl-acts">
         <button class="cha-qbtn qb-pres ${isPresente ? 'active' : ''}"
                 title="Marcar Presente"
-                onclick="event.stopPropagation();setQuickStatus(this,'${esc(id)}','PRESENTE')">
+                onclick="event.stopPropagation();setQuickStatus(this,'${esc(id)}','P - Presente')">
           <svg viewBox="0 0 24 24" style="width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2.8;stroke-linecap:round;stroke-linejoin:round"><polyline points="20 6 9 17 4 12"/></svg>
           Presente
         </button>
@@ -5675,11 +5675,11 @@ function _atualizarStatusChip(row, status) {
   if (!chip) return;
   const code = statusCode(status);
   chip.className = 'cha-cl-status ' + (
-    status === 'PRESENTE' ? 'st-pres' :
+    code   === 'PRESENTE' ? 'st-pres' :
     code   === 'FI'       ? 'st-falt' :
     status === 'PENDENTE' ? 'st-pend' : 'st-outr'
   );
-  const txt = status === 'PRESENTE' ? '✓ Presente'
+  const txt = code === 'PRESENTE' ? '✓ Presente'
             : code   === 'FI'       ? '✗ Falta'
             : status === 'PENDENTE' ? 'Pendente'
             : status.length > 12    ? status.substring(0,12) + '…' : status;
@@ -5694,7 +5694,7 @@ function setQuickStatus(btn, id, status) {
 
   // Atualiza classe visual da row
   row.classList.remove('cl-pres', 'cl-falt', 'cl-outr', 'cl-pend-anim');
-  if      (status === 'PRESENTE') row.classList.add('cl-pres');
+  if      (stCode === 'PRESENTE') row.classList.add('cl-pres');
   else if (stCode === 'FI')       row.classList.add('cl-falt');
   else if (status !== 'PENDENTE') row.classList.add('cl-outr');
   else                            row.classList.add('cl-pend-anim');
@@ -5705,7 +5705,7 @@ function setQuickStatus(btn, id, status) {
   // Atualiza estado dos botões
   const acts = row.querySelector('.cha-cl-acts');
   if (acts) {
-    acts.querySelector('.qb-pres')?.classList.toggle('active', status === 'PRESENTE');
+    acts.querySelector('.qb-pres')?.classList.toggle('active', stCode === 'PRESENTE');
     acts.querySelector('.qb-falt')?.classList.toggle('active', stCode === 'FI');
     const sel = acts.querySelector('.cha-qsel');
     if (sel) sel.value = status;
@@ -5736,7 +5736,7 @@ function setQuickStatusSel(sel, id) {
   const stCode = statusCode(status);
 
   row.classList.remove('cl-pres', 'cl-falt', 'cl-outr', 'cl-pend-anim');
-  if      (status === 'PRESENTE') row.classList.add('cl-pres');
+  if      (stCode === 'PRESENTE') row.classList.add('cl-pres');
   else if (stCode === 'FI')       row.classList.add('cl-falt');
   else if (status !== 'PENDENTE') row.classList.add('cl-outr');
   else                            row.classList.add('cl-pend-anim');
@@ -5746,7 +5746,7 @@ function setQuickStatusSel(sel, id) {
 
   const acts = row.querySelector('.cha-cl-acts');
   if (acts) {
-    acts.querySelector('.qb-pres')?.classList.toggle('active', status === 'PRESENTE');
+    acts.querySelector('.qb-pres')?.classList.toggle('active', stCode === 'PRESENTE');
     acts.querySelector('.qb-falt')?.classList.toggle('active', stCode === 'FI');
   }
 
@@ -5842,7 +5842,7 @@ function linhaColaborador(r, pal, isGestor = false) {
       ${gateHtml}
       <div class="cha-cl-acts">
         <button class="cqa-btn cqa-ok${isPresente ? ' active' : ''}"
-          onclick="pickStatusColab(this,'${idSafe}','PRESENTE')"
+          onclick="pickStatusColab(this,'${idSafe}','P - Presente')"
           title="Marcar Presente">
           <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
         </button>
@@ -5884,7 +5884,7 @@ function pickStatusColab(btn, id, status) {
   if (!row) return;
 
   const code       = statusCode(status);
-  const isPresente = status === 'PRESENTE';
+  const isPresente = code === 'PRESENTE';
   const isFalta    = code === 'FI';
   const stDef      = _STATUS_BY_VAL[status];
 
@@ -6063,7 +6063,7 @@ function marcarGestor(turno, gestor, status) {
   atualizarSumario();
   atualizarActionBar();
 
-  const label = { PRESENTE:'presentes', 'FI - Falta Injustificada':'falta', PENDENTE:'limpos' };
+  const label = { 'P - Presente':'presentes', 'FI - Falta Injustificada':'falta', PENDENTE:'limpos' };
   mostrarToast(`${gestor}: ${alterados} marcados como ${label[status] || status}`, 'success');
 }
 
@@ -6158,7 +6158,7 @@ function marcarTodos(turno, status) {
   atualizarSumario();
   atualizarActionBar();
 
-  const label = { PRESENTE:'presentes', 'FI - Falta Injustificada':'falta', PENDENTE:'limpos' };
+  const label = { 'P - Presente':'presentes', 'FI - Falta Injustificada':'falta', PENDENTE:'limpos' };
   mostrarToast(`Turno ${turno}: ${alterados} marcados como ${label[status] || status}`, 'success');
 }
 
@@ -6814,7 +6814,6 @@ function atualizarSumario() {
 // ── Definição completa dos status (código PEOPLE) ─────────
 const STATUS_DEF = [
   // ── PRESENTE ─────────────────────────────────────────────────────────
-  { value:'PRESENTE',                            label:'Presente',                      code:'PRESENTE', icon:'P',   color:'#10b981', bg:'rgba(16,185,129,.15)'  },
   { value:'P - Presente',                        label:'Presente',                      code:'PRESENTE', icon:'P',   color:'#10b981', bg:'rgba(16,185,129,.15)'  },
   { value:'HE - Presente Hora Extra',            label:'HE · Hora Extra',               code:'PRESENTE', icon:'HE',  color:'#34d399', bg:'rgba(52,211,153,.15)'  },
   { value:'PCO - Protocolo COVID',               label:'PCO · Protocolo COVID',         code:'PRESENTE', icon:'PCO', color:'#0d9488', bg:'rgba(13,148,136,.15)'  },
@@ -6886,7 +6885,10 @@ function statusEfetivo(r) {
   const alt = alteracoesPendentes[id];
   if (alt) {
     const s = (alt.status || '').trim();
-    return _STATUS_VALIDOS.includes(s) ? s : 'PENDENTE';
+    if (!_STATUS_VALIDOS.includes(s)) return 'PENDENTE';
+    const def = _STATUS_BY_VAL[s];
+    if (def && def.code === 'PRESENTE') return 'PRESENTE';
+    return s;
   }
 
   const st = (r.status_presenca || '').trim();
