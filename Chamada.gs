@@ -336,8 +336,8 @@ function inicializarChamadaDia() {
         CAST(ID_GROOT AS INT64)                                                        AS IDGROOT,
         COLABORADOR,
         CASE
-          WHEN UPPER(TRIM(COALESCE(m.ESCALA, ''))) = '${turmaFolga}' THEN 'DSR - Escala'
-          WHEN ap.JUSTIFICATIVA IS NOT NULL                          THEN ap.JUSTIFICATIVA
+          WHEN UPPER(TRIM(COALESCE(ESCALA, ''))) = '${turmaFolga}' THEN 'DSR - Escala'
+          WHEN ap.JUSTIFICATIVA IS NOT NULL                        THEN ap.JUSTIFICATIVA
           ELSE CAST(NULL AS STRING)
         END                                                                            AS STATUS_PRESENCA,
         CAST(NULL AS TIME)                                                             AS CLOCK_IN,
@@ -347,11 +347,6 @@ function inicializarChamadaDia() {
         TURNO,
         CAST(CONCAT('${ddmmyy}', CAST(CAST(ID_GROOT AS INT64) AS STRING)) AS INT64)   AS CHAVE
       FROM \`${PROJECT_ID}.${DATASET_ID}.${TABLE_COLABORADORES}\`
-      LEFT JOIN (
-        SELECT CAST(ID_GROOT AS INT64) AS ID_GROOT_MTX, ESCALA
-        FROM \`meli-sbox.BRBA01.V_MTX_COLABORADORES\`
-        WHERE ID_GROOT IS NOT NULL
-      ) m ON CAST(ID_GROOT AS INT64) = m.ID_GROOT_MTX
       LEFT JOIN (
         SELECT CAST(IDGROOT AS INT64) AS IDGROOT_AP, JUSTIFICATIVA
         FROM \`meli-sbox.BRBA01.CP_AUSENCIAS_PROGRAMADAS\`
