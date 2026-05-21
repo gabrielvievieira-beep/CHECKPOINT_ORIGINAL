@@ -2,14 +2,26 @@
 MERGE meli-sbox.BRBA01.CP_HISTORICO_ABS AS Destino
 
 USING (
-  WITH Presenca_Hoje AS (
+  WITH
+  -- Catraca T3: janela das 18:00 de ontem até 17:59 de hoje (horário Brasil)
+  Presenca_T3 AS (
     SELECT DISTINCT
       CAST(EMPLOYEE_ID AS STRING) AS EMPLOYEE_ID
     FROM meli-bi-data.WHOWNER.BT_SHP_TYA_EMPLOYEE_TIMECARD,
     UNNEST(PUNCHES) AS Ponto
-    WHERE
-      DATE(CAST(WORK_START_DATE AS TIMESTAMP), 'America/Sao_Paulo') = CURRENT_DATE('America/Sao_Paulo')
-      AND Ponto.TYPE = 'IN'
+    WHERE Ponto.TYPE = 'IN'
+      AND DATETIME_ADD(WORK_START_DATE, INTERVAL 1 HOUR)
+          BETWEEN DATETIME(DATE_SUB(CURRENT_DATE('America/Sao_Paulo'), INTERVAL 1 DAY), TIME '18:00:00')
+              AND DATETIME(CURRENT_DATE('America/Sao_Paulo'), TIME '17:59:59')
+  ),
+  -- Catraca não-T3: qualquer horário de hoje (lógica original)
+  Presenca_Normal AS (
+    SELECT DISTINCT
+      CAST(EMPLOYEE_ID AS STRING) AS EMPLOYEE_ID
+    FROM meli-bi-data.WHOWNER.BT_SHP_TYA_EMPLOYEE_TIMECARD,
+    UNNEST(PUNCHES) AS Ponto
+    WHERE Ponto.TYPE = 'IN'
+      AND DATE(DATETIME_ADD(WORK_START_DATE, INTERVAL 1 HOUR)) = CURRENT_DATE('America/Sao_Paulo')
   ),
   Base AS (
     SELECT
@@ -19,25 +31,41 @@ USING (
       C.SETOR,
       C.GESTOR,
       C.TURNO,
-      CURRENT_DATE('America/Sao_Paulo')                       AS DATA_ABS,
+      -- T3: DATA_ABS = ontem (dia em que o turno começou)
+      -- Demais: DATA_ABS = hoje
       CASE
-        WHEN P.EMPLOYEE_ID IS NOT NULL THEN 'P - Presente'
-        ELSE NULL                          -- Não passou na catraca = PENDENTE (não FALTA)
+        WHEN C.TURNO = 'T3'
+          THEN DATE_SUB(CURRENT_DATE('America/Sao_Paulo'), INTERVAL 1 DAY)
+        ELSE
+          CURRENT_DATE('America/Sao_Paulo')
+      END                                                     AS DATA_ABS,
+      CASE
+        WHEN C.TURNO = 'T3'  AND T3.EMPLOYEE_ID IS NOT NULL THEN 'P - Presente'
+        WHEN C.TURNO != 'T3' AND PN.EMPLOYEE_ID IS NOT NULL THEN 'P - Presente'
+        ELSE NULL
       END                                                     AS STATUS_PRESENCA,
       CASE
-        WHEN P.EMPLOYEE_ID IS NOT NULL THEN 'verdi-flow-auto'
+        WHEN C.TURNO = 'T3'  AND T3.EMPLOYEE_ID IS NOT NULL THEN 'verdi-flow-auto'
+        WHEN C.TURNO != 'T3' AND PN.EMPLOYEE_ID IS NOT NULL THEN 'verdi-flow-auto'
         ELSE NULL
       END                                                     AS RESPONSAVEL,
       CAST(
         CONCAT(
-          FORMAT_DATE('%d%m%y', CURRENT_DATE('America/Sao_Paulo')),
+          FORMAT_DATE('%d%m%y',
+            CASE
+              WHEN C.TURNO = 'T3'
+                THEN DATE_SUB(CURRENT_DATE('America/Sao_Paulo'), INTERVAL 1 DAY)
+              ELSE
+                CURRENT_DATE('America/Sao_Paulo')
+            END
+          ),
           CAST(CAST(C.ID_GROOT AS INT64) AS STRING)
         ) AS INT64
       )                                                       AS CHAVE,
       ROW_NUMBER() OVER (PARTITION BY CAST(C.ID_GROOT AS INT64) ORDER BY C.COLABORADOR) AS RN
     FROM meli-sbox.BRBA01.CP_LISTA_COLABORADORES AS C
-    LEFT JOIN Presenca_Hoje AS P
-      ON CAST(C.ID_GROOT AS STRING) = P.EMPLOYEE_ID
+    LEFT JOIN Presenca_T3     AS T3 ON CAST(C.ID_GROOT AS STRING) = T3.EMPLOYEE_ID AND C.TURNO =  'T3'
+    LEFT JOIN Presenca_Normal AS PN ON CAST(C.ID_GROOT AS STRING) = PN.EMPLOYEE_ID AND C.TURNO != 'T3'
     WHERE C.ID_GROOT IS NOT NULL
       AND TRIM(CAST(C.ID_GROOT AS STRING)) != ''
       AND C.STATUS NOT IN ('Inativo', 'INATIVO')
