@@ -376,12 +376,11 @@ function inicializarChamadaDia() {
 /**
  * Atualizar status de um registro único
  */
-function salvarRegistro(registro) {
+function salvarRegistro(registro, data) {
   try {
     const token   = getTokenBigQuery();
     const email   = getUsuarioEmail();
-    const agora   = new Date();
-    const dataStr = Utilities.formatDate(agora, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+    const dataStr = data || Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd');
 
     const query = `
       UPDATE \`${PROJECT_ID}.${DATASET_ID}.${TABLE_HISTORICO}\`
@@ -417,7 +416,7 @@ function salvarRegistro(registro) {
 /**
  * Salvar batch de registros com MERGE
  */
-function salvarRegistroBatch(registros) {
+function salvarRegistroBatch(registros, data) {
   try {
     if (!registros || registros.length === 0) {
       return { success: false, message: 'Nenhum registro para salvar' };
@@ -425,9 +424,9 @@ function salvarRegistroBatch(registros) {
 
     const token   = getTokenBigQuery();
     const email   = getUsuarioEmail();
-    const agora   = new Date();
-    const dataStr = Utilities.formatDate(agora, Session.getScriptTimeZone(), 'yyyy-MM-dd');
-    const ddmmyy  = Utilities.formatDate(agora, Session.getScriptTimeZone(), 'ddMMyy');
+    const dataStr = data || Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd');
+    const partes  = dataStr.split('-');
+    const ddmmyy  = partes[2] + partes[1] + partes[0].slice(2);
 
     const unicos = {};
     registros.forEach(r => { unicos[r.idgroot] = r; });
