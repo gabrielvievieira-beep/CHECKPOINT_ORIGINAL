@@ -336,8 +336,8 @@ function inicializarChamadaDia() {
         CAST(ID_GROOT AS INT64)                                                        AS IDGROOT,
         COLABORADOR,
         CASE
-          WHEN UPPER(TRIM(COALESCE(ESCALA, ''))) = '${turmaFolga}' THEN 'DSR - Escala'
           WHEN ap.JUSTIFICATIVA IS NOT NULL                        THEN ap.JUSTIFICATIVA
+          WHEN UPPER(TRIM(COALESCE(ESCALA, ''))) = '${turmaFolga}' THEN 'DSR - Escala'
           ELSE CAST(NULL AS STRING)
         END                                                                            AS STATUS_PRESENCA,
         CAST(NULL AS TIME)                                                             AS CLOCK_IN,
@@ -350,8 +350,8 @@ function inicializarChamadaDia() {
       LEFT JOIN (
         SELECT CAST(IDGROOT AS INT64) AS IDGROOT_AP, JUSTIFICATIVA
         FROM \`meli-sbox.BRBA01.CP_AUSENCIAS_PROGRAMADAS\`
-        WHERE DATA_ABS <= DATE '${dataStr}'
-          AND DATA_FIM  >= DATE '${dataStr}'
+        WHERE DATA_INICIO <= DATE '${dataStr}'
+          AND DATA_FIM    >= DATE '${dataStr}'
         QUALIFY ROW_NUMBER() OVER (PARTITION BY IDGROOT ORDER BY DATA_FIM DESC) = 1
       ) ap ON CAST(ID_GROOT AS INT64) = ap.IDGROOT_AP
       WHERE ${filtros.join('\n        AND ')}
