@@ -85,6 +85,37 @@ function getTurmaFolgaData_(dataStr) {
   return FOLGA_CYCLE[((diff % 8) + 8) % 8];
 }
 
+// ── Buscar todas as escalas em folga para uma data (fonte: CP_ESCALAS_ROTATIVAS) ─
+function getTurmasEmFolgaDia_(dataStr) {
+  try {
+    const token = getTokenBigQuery();
+    const res = UrlFetchApp.fetch(
+      `https://bigquery.googleapis.com/bigquery/v2/projects/${PROJECT_ID}/queries`,
+      {
+        method: 'POST', contentType: 'application/json',
+        headers: { 'Authorization': 'Bearer ' + token },
+        payload: JSON.stringify({
+          query: `SELECT DISTINCT ESCALA FROM \`${PROJECT_ID}.${DATASET_ID}.${TABLE_ESCALAS}\`
+                  WHERE DATA = DATE '${dataStr}' AND FOLGA = true`,
+          useLegacySql: false, timeoutMs: 15000
+        }),
+        muteHttpExceptions: true
+      }
+    );
+    const result = JSON.parse(res.getContentText());
+    if (!result.rows) return [];
+    return result.rows.map(r => r.f[0].v).filter(Boolean);
+  } catch(e) {
+    Logger.log('[getTurmasEmFolgaDia_] erro: ' + e.toString());
+    return [];
+  }
+}
+
+// Exposta ao frontend via google.script.run
+function getTurmasEmFolgaDia(dataStr) {
+  return getTurmasEmFolgaDia_(dataStr);
+}
+
 // ── Buscar colaboradores escalados para um dia específico ────────────────────
 //
 // Schema de CP_ESCALAS_ROTATIVAS: DATA (DATE), ESCALA (STRING), FOLGA (BOOL)
@@ -132,10 +163,12 @@ function getEscalasDia(data) {
       ? `AND ESCALA IN (${escalasAtivas.map(e => `'${esc(e)}'`).join(', ')})`
       : '/* fallback: todas as escalas */';
 
-    // Filtro DSR: exclui a turma de folga do dia, independente do CP_ESCALAS_ROTATIVAS
-    const turmaFolga = getTurmaFolgaData_(data);
-    const filtroDSR  = `AND UPPER(TRIM(COALESCE(ESCALA, ''))) != '${turmaFolga}'`;
-    Logger.log('[getEscalasDia] Turma de folga do dia (' + data + '): ' + turmaFolga + ' → excluída do count');
+    // Filtro DSR: exclui todas as escalas em folga no dia (via CP_ESCALAS_ROTATIVAS)
+    const turmasEmFolga = getTurmasEmFolgaDia_(data);
+    const filtroDSR     = turmasEmFolga.length > 0
+      ? `AND UPPER(TRIM(COALESCE(ESCALA, ''))) NOT IN (${turmasEmFolga.map(t => `'${t}'`).join(', ')})`
+      : '';
+    Logger.log('[getEscalasDia] Escalas em folga (' + data + '): ' + (turmasEmFolga.join(', ') || 'nenhuma'));
 
     // Filtro de CARGO (whitelist)
     const filtroCargo = (typeof CARGOS_INCLUIDOS !== 'undefined' && CARGOS_INCLUIDOS.length > 0)
