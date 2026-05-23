@@ -4002,8 +4002,12 @@ let activeTurnoTab = null;  // null = todos os turnos, string = turno específic
 let activeArea     = null;  // null = todos as áreas, string = área específica
 
 // ── Data selecionada (YYYY-MM-DD) ─────────────────────────
-let dataSelecionada = new Date().toISOString().split('T')[0];
-function eHoje() { return dataSelecionada === new Date().toISOString().split('T')[0]; }
+function _dataHojeLocal() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+let dataSelecionada = _dataHojeLocal();
+function eHoje() { return dataSelecionada === _dataHojeLocal(); }
 
 // ── Modo Gestor ───────────────────────────────────────────
 let modoGestor = null;       // null = supervisor; string = nome do gestor selecionado
@@ -4114,7 +4118,7 @@ function onDataChange(valor) {
 }
 
 function voltarHoje() {
-  const hoje = new Date().toISOString().split('T')[0];
+  const hoje = _dataHojeLocal();
   dataSelecionada = hoje;
   document.getElementById('inputDataChamada').value = hoje;
   alteracoesPendentes = {};

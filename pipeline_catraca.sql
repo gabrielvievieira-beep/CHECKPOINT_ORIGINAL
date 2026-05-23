@@ -3,16 +3,27 @@ MERGE meli-sbox.BRBA01.CP_HISTORICO_ABS AS Destino
 
 USING (
   WITH
-  -- Catraca T3: janela das 18:00 de ontem até 17:59 de hoje (horário Brasil)
-  Presenca_T3 AS (
+  -- T3 Janela 1: bateu ponto entre 20:00 e 23:59 de hoje → registrar no MESMO DIA
+  Presenca_T3_Hoje AS (
     SELECT DISTINCT
       CAST(EMPLOYEE_ID AS STRING) AS EMPLOYEE_ID
     FROM meli-bi-data.WHOWNER.BT_SHP_TYA_EMPLOYEE_TIMECARD,
     UNNEST(PUNCHES) AS Ponto
     WHERE Ponto.TYPE = 'IN'
       AND DATETIME_ADD(WORK_START_DATE, INTERVAL 1 HOUR)
-          BETWEEN DATETIME(DATE_SUB(CURRENT_DATE('America/Sao_Paulo'), INTERVAL 1 DAY), TIME '18:00:00')
-              AND DATETIME(CURRENT_DATE('America/Sao_Paulo'), TIME '17:59:59')
+          BETWEEN DATETIME(CURRENT_DATE('America/Sao_Paulo'), TIME '20:00:00')
+              AND DATETIME(CURRENT_DATE('America/Sao_Paulo'), TIME '23:59:59')
+  ),
+  -- T3 Janela 2: bateu ponto entre 00:00 e 18:00 de hoje → registrar em D-1
+  Presenca_T3_D1 AS (
+    SELECT DISTINCT
+      CAST(EMPLOYEE_ID AS STRING) AS EMPLOYEE_ID
+    FROM meli-bi-data.WHOWNER.BT_SHP_TYA_EMPLOYEE_TIMECARD,
+    UNNEST(PUNCHES) AS Ponto
+    WHERE Ponto.TYPE = 'IN'
+      AND DATETIME_ADD(WORK_START_DATE, INTERVAL 1 HOUR)
+          BETWEEN DATETIME(CURRENT_DATE('America/Sao_Paulo'), TIME '00:00:00')
+              AND DATETIME(CURRENT_DATE('America/Sao_Paulo'), TIME '18:00:00')
   ),
   -- Catraca não-T3: qualquer horário de hoje (lógica original)
   Presenca_Normal AS (
@@ -31,28 +42,32 @@ USING (
       C.SETOR,
       C.GESTOR,
       C.TURNO,
-      -- T3: DATA_ABS = ontem (dia em que o turno começou)
-      -- Demais: DATA_ABS = hoje
+      -- T3: 20:00-23:59 → mesmo dia | 00:00-18:00 → D-1
+      -- Não-T3: sempre hoje
       CASE
+        WHEN C.TURNO = 'T3' AND T3H.EMPLOYEE_ID IS NOT NULL
+          THEN CURRENT_DATE('America/Sao_Paulo')
         WHEN C.TURNO = 'T3'
           THEN DATE_SUB(CURRENT_DATE('America/Sao_Paulo'), INTERVAL 1 DAY)
         ELSE
           CURRENT_DATE('America/Sao_Paulo')
       END                                                     AS DATA_ABS,
       CASE
-        WHEN C.TURNO = 'T3'  AND T3.EMPLOYEE_ID IS NOT NULL THEN 'P - Presente'
-        WHEN C.TURNO != 'T3' AND PN.EMPLOYEE_ID IS NOT NULL THEN 'P - Presente'
+        WHEN C.TURNO = 'T3'  AND (T3H.EMPLOYEE_ID IS NOT NULL OR T3D.EMPLOYEE_ID IS NOT NULL) THEN 'P - Presente'
+        WHEN C.TURNO != 'T3' AND PN.EMPLOYEE_ID IS NOT NULL                                   THEN 'P - Presente'
         ELSE NULL
       END                                                     AS STATUS_PRESENCA,
       CASE
-        WHEN C.TURNO = 'T3'  AND T3.EMPLOYEE_ID IS NOT NULL THEN 'verdi-flow-auto'
-        WHEN C.TURNO != 'T3' AND PN.EMPLOYEE_ID IS NOT NULL THEN 'verdi-flow-auto'
+        WHEN C.TURNO = 'T3'  AND (T3H.EMPLOYEE_ID IS NOT NULL OR T3D.EMPLOYEE_ID IS NOT NULL) THEN 'verdi-flow-auto'
+        WHEN C.TURNO != 'T3' AND PN.EMPLOYEE_ID IS NOT NULL                                   THEN 'verdi-flow-auto'
         ELSE NULL
       END                                                     AS RESPONSAVEL,
       CAST(
         CONCAT(
           FORMAT_DATE('%d%m%y',
             CASE
+              WHEN C.TURNO = 'T3' AND T3H.EMPLOYEE_ID IS NOT NULL
+                THEN CURRENT_DATE('America/Sao_Paulo')
               WHEN C.TURNO = 'T3'
                 THEN DATE_SUB(CURRENT_DATE('America/Sao_Paulo'), INTERVAL 1 DAY)
               ELSE
@@ -64,8 +79,9 @@ USING (
       )                                                       AS CHAVE,
       ROW_NUMBER() OVER (PARTITION BY CAST(C.ID_GROOT AS INT64) ORDER BY C.COLABORADOR) AS RN
     FROM meli-sbox.BRBA01.CP_LISTA_COLABORADORES AS C
-    LEFT JOIN Presenca_T3     AS T3 ON CAST(C.ID_GROOT AS STRING) = T3.EMPLOYEE_ID AND C.TURNO =  'T3'
-    LEFT JOIN Presenca_Normal AS PN ON CAST(C.ID_GROOT AS STRING) = PN.EMPLOYEE_ID AND C.TURNO != 'T3'
+    LEFT JOIN Presenca_T3_Hoje AS T3H ON CAST(C.ID_GROOT AS STRING) = T3H.EMPLOYEE_ID AND C.TURNO =  'T3'
+    LEFT JOIN Presenca_T3_D1   AS T3D ON CAST(C.ID_GROOT AS STRING) = T3D.EMPLOYEE_ID AND C.TURNO =  'T3'
+    LEFT JOIN Presenca_Normal   AS PN  ON CAST(C.ID_GROOT AS STRING) = PN.EMPLOYEE_ID  AND C.TURNO != 'T3'
     WHERE C.ID_GROOT IS NOT NULL
       AND TRIM(CAST(C.ID_GROOT AS STRING)) != ''
       AND C.STATUS NOT IN ('Inativo', 'INATIVO')
@@ -102,9 +118,6 @@ THEN
     Destino.SETOR           = Origem.SETOR,
     Destino.TURNO           = Origem.TURNO
 
--- Insere registro para quem ainda não tem linha hoje (safety net)
-WHEN NOT MATCHED THEN
-  INSERT (IDGROOT, COLABORADOR, DATA_ABS, STATUS_PRESENCA, CLOCK_IN,
-          AREA, SETOR, GESTOR, TURNO, RESPONSAVEL, CHAVE)
-  VALUES (Origem.IDGROOT, Origem.COLABORADOR, Origem.DATA_ABS, Origem.STATUS_PRESENCA, NULL,
-          Origem.AREA, Origem.SETOR, Origem.GESTOR, Origem.TURNO, Origem.RESPONSAVEL, Origem.CHAVE)
+-- WHEN NOT MATCHED removido intencionalmente.
+-- A criação de novos registros é responsabilidade exclusiva de inicializarChamadaDia().
+-- Ter dois pontos de INSERT (pipeline + inicialização) causava duplicatas por race condition.

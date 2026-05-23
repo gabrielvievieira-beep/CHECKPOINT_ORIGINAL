@@ -93,10 +93,10 @@ function gerarFiltrosCargoSetor(campoCargo, campoSetor, campoArea) {
   filtros.push(`${campoSetor} IS NOT NULL`);
   filtros.push(`TRIM(${campoSetor}) != ''`);
 
-  // Whitelist tem prioridade: apenas setores permitidos entram
+  // Whitelist tem prioridade: filtra por AREA (os valores de SETORES_INCLUIDOS são nomes de área)
   if (typeof SETORES_INCLUIDOS !== 'undefined' && SETORES_INCLUIDOS.length > 0) {
     const setoresIN = SETORES_INCLUIDOS.map(s => `'${escaparAspas(s.toUpperCase())}'`).join(', ');
-    filtros.push(`UPPER(${campoSetor}) IN (${setoresIN})`);
+    filtros.push(`UPPER(${campoArea}) IN (${setoresIN})`);
   } else {
     const setoresUpper = SETORES_EXCLUIDOS.map(s => `'${escaparAspas(s.toUpperCase())}'`).join(', ');
     const setoresNormal = SETORES_EXCLUIDOS.map(s => `'${escaparAspas(s)}'`).join(', ');

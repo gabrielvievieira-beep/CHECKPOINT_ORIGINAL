@@ -309,63 +309,61 @@ function inicializarChamadaDia() {
     const token      = getTokenBigQuery();
     const turmaFolga = getTurmaFolgaHoje_();
 
-    const countResult = _bqQuery(
-      `SELECT COUNT(1) AS n FROM \`${PROJECT_ID}.${DATASET_ID}.${TABLE_HISTORICO}\`
-       WHERE DATA_ABS = '${dataStr}'`,
-      token, 15000, true
-    );
-    const jaExistem = parseInt(countResult.rows?.[0]?.f?.[0]?.v || '0');
-    if (jaExistem > 0) {
-      Logger.log('inicializarChamadaDia: já existem ' + jaExistem + ' registros para ' + dataStr);
-      // Garante DSR nos registros já existentes (compatibilidade com dias já inicializados)
-      registrarDSRDoDia();
-      return { success: true, jaExistia: true, total: jaExistem };
-    }
-
     const filtros = ['STATUS NOT IN (\'Inativo\', \'INATIVO\')'];
     filtros.push(...gerarFiltrosCargoSetor('CARGO', 'SETOR', 'AREA'));
     filtros.push('ID_GROOT IS NOT NULL');
     filtros.push("TRIM(CAST(ID_GROOT AS STRING)) != ''");
 
-    const insertQuery = `
-      INSERT INTO \`${PROJECT_ID}.${DATASET_ID}.${TABLE_HISTORICO}\`
-        (DATA_ABS, IDGROOT, COLABORADOR, STATUS_PRESENCA, CLOCK_IN,
-         AREA, SETOR, GESTOR, TURNO, CHAVE)
-      SELECT
-        DATE '${dataStr}',
-        CAST(ID_GROOT AS INT64)                                                        AS IDGROOT,
-        COLABORADOR,
-        CASE
-          WHEN ap.JUSTIFICATIVA IS NOT NULL                        THEN ap.JUSTIFICATIVA
-          WHEN UPPER(TRIM(COALESCE(ESCALA, ''))) = '${turmaFolga}' THEN 'DSR - Escala'
-          ELSE CAST(NULL AS STRING)
-        END                                                                            AS STATUS_PRESENCA,
-        CAST(NULL AS TIME)                                                             AS CLOCK_IN,
-        AREA,
-        SETOR,
-        GESTOR,
-        TURNO,
-        CAST(CONCAT('${ddmmyy}', CAST(CAST(ID_GROOT AS INT64) AS STRING)) AS INT64)   AS CHAVE
-      FROM \`${PROJECT_ID}.${DATASET_ID}.${TABLE_COLABORADORES}\`
-      LEFT JOIN (
-        SELECT CAST(IDGROOT AS INT64) AS IDGROOT_AP, JUSTIFICATIVA
-        FROM \`meli-sbox.BRBA01.CP_AUSENCIAS_PROGRAMADAS\`
-        WHERE DATA_INICIO <= DATE '${dataStr}'
-          AND DATA_FIM    >= DATE '${dataStr}'
-        QUALIFY ROW_NUMBER() OVER (PARTITION BY IDGROOT ORDER BY PROGRAMADO_EM DESC) = 1
-      ) ap ON CAST(ID_GROOT AS INT64) = ap.IDGROOT_AP
-      WHERE ${filtros.join('\n        AND ')}
-      QUALIFY ROW_NUMBER() OVER (PARTITION BY ID_GROOT ORDER BY COLABORADOR) = 1
+    // MERGE em vez de INSERT: idempotente por design.
+    // Chamadas simultâneas (race condition pipeline vs. abertura da chamada)
+    // não geram duplicatas — WHEN NOT MATCHED só insere se o par (IDGROOT, DATA_ABS)
+    // ainda não existe. Registros já existentes nunca são sobrescritos.
+    const mergeQuery = `
+      MERGE \`${PROJECT_ID}.${DATASET_ID}.${TABLE_HISTORICO}\` AS T
+      USING (
+        SELECT
+          DATE '${dataStr}'                                                                   AS DATA_ABS,
+          CAST(ID_GROOT AS INT64)                                                             AS IDGROOT,
+          COLABORADOR,
+          CASE
+            WHEN ap.JUSTIFICATIVA IS NOT NULL                         THEN ap.JUSTIFICATIVA
+            WHEN UPPER(TRIM(COALESCE(ESCALA, ''))) = '${turmaFolga}'  THEN 'DSR - Escala'
+            ELSE CAST(NULL AS STRING)
+          END                                                                                 AS STATUS_PRESENCA,
+          CAST(NULL AS TIME)                                                                  AS CLOCK_IN,
+          AREA,
+          SETOR,
+          GESTOR,
+          TURNO,
+          CAST(CONCAT('${ddmmyy}', CAST(CAST(ID_GROOT AS INT64) AS STRING)) AS INT64)        AS CHAVE
+        FROM \`${PROJECT_ID}.${DATASET_ID}.${TABLE_COLABORADORES}\`
+        LEFT JOIN (
+          SELECT CAST(IDGROOT AS INT64) AS IDGROOT_AP, JUSTIFICATIVA
+          FROM \`meli-sbox.BRBA01.CP_AUSENCIAS_PROGRAMADAS\`
+          WHERE DATA_INICIO <= DATE '${dataStr}'
+            AND DATA_FIM    >= DATE '${dataStr}'
+          QUALIFY ROW_NUMBER() OVER (PARTITION BY IDGROOT ORDER BY PROGRAMADO_EM DESC) = 1
+        ) ap ON CAST(ID_GROOT AS INT64) = ap.IDGROOT_AP
+        WHERE ${filtros.join('\n        AND ')}
+        QUALIFY ROW_NUMBER() OVER (PARTITION BY ID_GROOT ORDER BY COLABORADOR) = 1
+      ) AS S
+      ON T.IDGROOT = S.IDGROOT AND T.DATA_ABS = S.DATA_ABS
+      WHEN NOT MATCHED THEN
+        INSERT (DATA_ABS, IDGROOT, COLABORADOR, STATUS_PRESENCA, CLOCK_IN,
+                AREA, SETOR, GESTOR, TURNO, CHAVE)
+        VALUES (S.DATA_ABS, S.IDGROOT, S.COLABORADOR, S.STATUS_PRESENCA, S.CLOCK_IN,
+                S.AREA, S.SETOR, S.GESTOR, S.TURNO, S.CHAVE)
     `;
 
-    const insertResult = _bqQuery(insertQuery, token, 120000, false);
-    const total = parseInt(insertResult.numDmlAffectedRows || '0');
+    const mergeResult = _bqQuery(mergeQuery, token, 120000, false);
+    const inseridos   = parseInt(mergeResult.numDmlAffectedRows || '0');
 
+    registrarDSRDoDia();
     invalidarCacheRegistros();
     const registros = getRegistrosDiaAtual();
 
-    Logger.log('inicializarChamadaDia: ' + total + ' registros inseridos para ' + dataStr);
-    return { success: true, jaExistia: false, total: registros.length };
+    Logger.log('inicializarChamadaDia: ' + inseridos + ' registros inseridos para ' + dataStr);
+    return { success: true, jaExistia: inseridos === 0, total: registros.length };
 
   } catch (error) {
     Logger.log('Erro ao inicializar chamada: ' + error.toString());
