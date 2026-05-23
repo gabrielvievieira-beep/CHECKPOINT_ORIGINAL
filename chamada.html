@@ -4065,16 +4065,16 @@ function carregarDados() {
 
   function limparTimers() { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); }
 
-  promisificar('getRegistrosDia', dataSelecionada)
-    .then(regs => {
+  Promise.all([
+    promisificar('getRegistrosDia', dataSelecionada),
+    promisificar('getTurmasEmFolgaDia', dataSelecionada)
+  ]).then(([regs, turmasEmFolga]) => {
       limparTimers();
       ChaProgress.complete();
 
-      // ── DSR: filtra colaboradores de folga da escala 6x2 ──────────────
-      const dataRef    = new Date(dataSelecionada + 'T12:00:00');
-      const turmaFolga = folgaDoDate(dataRef);
+      // ── DSR: filtra todas as escalas em folga (via CP_ESCALAS_ROTATIVAS) ──
       const lista = (regs || []).filter(r =>
-        (r.escala || '').toUpperCase().trim() !== turmaFolga
+        !(turmasEmFolga || []).includes((r.escala || '').toUpperCase().trim())
       );
       const areas    = [...new Set(lista.map(r => normalizarAreaCha(r.area)).filter(Boolean))].sort();
       const gestores = [...new Set(lista.map(r => r.gestor || '').filter(Boolean))].sort();
@@ -4154,12 +4154,13 @@ function inicializarChamada() {
                         : `Chamada inicializada — ${(res.total||0).toLocaleString('pt-BR')} colaboradores.`,
           'info'
         );
-        promisificar('getRegistrosDiaAtual')
-          .then(regs => {
-            // ── DSR: filtra colaboradores de folga da escala 6x2 ─────────
-            const turmaFolga = folgaDoDate(new Date());
+        Promise.all([
+          promisificar('getRegistrosDiaAtual'),
+          promisificar('getTurmasEmFolgaDia', new Date().toISOString().split('T')[0])
+        ]).then(([regs, turmasEmFolga]) => {
+            // ── DSR: filtra todas as escalas em folga (via CP_ESCALAS_ROTATIVAS) ─
             registrosPresenca = (regs || []).filter(r =>
-              (r.escala || '').toUpperCase().trim() !== turmaFolga
+              !(turmasEmFolga || []).includes((r.escala || '').toUpperCase().trim())
             );
             const areas    = [...new Set(registrosPresenca.map(r => normalizarAreaCha(r.area)).filter(Boolean))].sort();
             const gestores = [...new Set(registrosPresenca.map(r => r.gestor || '').filter(Boolean))].sort();

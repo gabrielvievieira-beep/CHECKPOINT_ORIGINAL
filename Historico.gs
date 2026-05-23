@@ -265,12 +265,11 @@ function getFlowDataDia(data) {
       ? `AND CAST(h.IDGROOT AS STRING) IN (${includedIds.map(id => `'${id}'`).join(',')})`
       : 'AND 1 = 0'; // falha segura: sem IDs → mostra vazio em vez de dados gerenciais
 
-    // DSR — filtra turma em folga hoje (mesma lógica da Chamada, aplicada na query)
-    // getTurmaFolgaHoje_() retorna 'A', 'B', 'C' ou 'D' (definida em Chamada.gs)
-    const turmaFolga = getTurmaFolgaHoje_();
-    const dsrFilter  = turmaFolga
-      ? `AND UPPER(TRIM(COALESCE(c_dsr.ESCALA, ''))) != '${turmaFolga}'`
-      : ''; // turma não detectada → não filtra (seguro)
+    // DSR — filtra todas as escalas em folga no dia (via CP_ESCALAS_ROTATIVAS)
+    const turmasHoje = getTurmasEmFolgaDia_(data);
+    const dsrFilter  = turmasHoje.length > 0
+      ? `AND UPPER(TRIM(COALESCE(c_dsr.ESCALA, ''))) NOT IN (${turmasHoje.map(t => `'${t}'`).join(', ')})`
+      : ''; // sem escalas cadastradas → não filtra (seguro)
 
     // Query de um único dia — muito rápida independente do tamanho da tabela
     // LEFT JOIN com CP_LISTA_COLABORADORES (alias c_dsr) para filtro DSR (escala)

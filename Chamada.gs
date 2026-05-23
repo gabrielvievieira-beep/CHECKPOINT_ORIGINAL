@@ -263,10 +263,17 @@ function getTurmaFolgaHoje() { return getTurmaFolgaHoje_(); }
  */
 function registrarDSRDoDia() {
   try {
-    const turma   = getTurmaFolgaHoje_();
-    const token   = getTokenBigQuery();
-    const agora   = new Date();
-    const dataStr = Utilities.formatDate(agora, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+    const token        = getTokenBigQuery();
+    const agora        = new Date();
+    const dataStr      = Utilities.formatDate(agora, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+    const turmasHoje   = getTurmasEmFolgaDia_(dataStr);
+
+    if (turmasHoje.length === 0) {
+      Logger.log('registrarDSRDoDia: nenhuma escala em folga hoje — nada a marcar');
+      return { sucesso: true, turmas: [], atualizados: 0 };
+    }
+
+    const turmasSQL  = turmasHoje.map(t => `'${t}'`).join(', ');
     const updateQuery = `
       UPDATE \`${PROJECT_ID}.${DATASET_ID}.${TABLE_HISTORICO}\` h
       SET STATUS_PRESENCA = 'DSR - Escala',
@@ -277,7 +284,7 @@ function registrarDSRDoDia() {
           SELECT 1
           FROM \`meli-sbox.BRBA01.V_MTX_COLABORADORES\` m
           WHERE CAST(m.ID_GROOT AS INT64) = CAST(h.IDGROOT AS INT64)
-            AND UPPER(TRIM(COALESCE(m.ESCALA, ''))) = '${turma}'
+            AND UPPER(TRIM(COALESCE(m.ESCALA, ''))) IN (${turmasSQL})
             AND m.STATUS NOT IN ('Inativo', 'INATIVO')
         )
     `;
@@ -287,8 +294,8 @@ function registrarDSRDoDia() {
 
     if (affected > 0) invalidarCacheRegistros();
 
-    Logger.log('registrarDSRDoDia: Turma ' + turma + ' → ' + affected + ' registro(s) marcado(s) como DSR');
-    return { sucesso: true, turma: turma, atualizados: affected };
+    Logger.log('registrarDSRDoDia: Escalas ' + turmasHoje.join(', ') + ' → ' + affected + ' registro(s) marcado(s) como DSR');
+    return { sucesso: true, turmas: turmasHoje, atualizados: affected };
   } catch (error) {
     Logger.log('Erro em registrarDSRDoDia: ' + error.toString());
     return { sucesso: false, erro: error.toString() };
@@ -307,7 +314,10 @@ function inicializarChamadaDia() {
     const ddmmyy     = Utilities.formatDate(agora, Session.getScriptTimeZone(), 'ddMMyy');
     const email      = getUsuarioEmail();
     const token      = getTokenBigQuery();
-    const turmaFolga = getTurmaFolgaHoje_();
+    const turmasHoje  = getTurmasEmFolgaDia_(dataStr);
+    const turmasSQL   = turmasHoje.length > 0
+      ? turmasHoje.map(t => `'${t}'`).join(', ')
+      : "'__NENHUMA__'";
 
     const filtros = ['STATUS NOT IN (\'Inativo\', \'INATIVO\')'];
     filtros.push(...gerarFiltrosCargoSetor('CARGO', 'SETOR', 'AREA'));
@@ -327,7 +337,7 @@ function inicializarChamadaDia() {
           COLABORADOR,
           CASE
             WHEN ap.JUSTIFICATIVA IS NOT NULL                         THEN ap.JUSTIFICATIVA
-            WHEN UPPER(TRIM(COALESCE(ESCALA, ''))) = '${turmaFolga}'  THEN 'DSR - Escala'
+            WHEN UPPER(TRIM(COALESCE(ESCALA, ''))) IN (${turmasSQL})   THEN 'DSR - Escala'
             ELSE CAST(NULL AS STRING)
           END                                                                                 AS STATUS_PRESENCA,
           CAST(NULL AS TIME)                                                                  AS CLOCK_IN,
