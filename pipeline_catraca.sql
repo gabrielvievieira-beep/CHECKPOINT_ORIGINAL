@@ -9,21 +9,20 @@ USING (
       CAST(EMPLOYEE_ID AS STRING) AS EMPLOYEE_ID
     FROM meli-bi-data.WHOWNER.BT_SHP_TYA_EMPLOYEE_TIMECARD,
     UNNEST(PUNCHES) AS Ponto
-    WHERE Ponto.TYPE = 'IN'
-      AND DATETIME_ADD(WORK_START_DATE, INTERVAL 1 HOUR)
-          BETWEEN DATETIME(CURRENT_DATE('America/Sao_Paulo'), TIME '20:00:00')
+    WHERE DATETIME_ADD(WORK_START_DATE, INTERVAL 1 HOUR)
+          BETWEEN DATETIME(CURRENT_DATE('America/Sao_Paulo'), TIME '19:00:00')
               AND DATETIME(CURRENT_DATE('America/Sao_Paulo'), TIME '23:59:59')
   ),
-  -- T3 Janela 2: bateu ponto entre 00:00 e 18:00 de hoje → registrar em D-1
+  -- T3 Janela 2: bateu ponto entre 20:00 de ontem e 18:00 de hoje → registrar em D-1
+  -- Cobre o turno completo: quem entrou às 20:00-23:59 de ontem E quem entrou às 00:00-18:00 de hoje
   Presenca_T3_D1 AS (
     SELECT DISTINCT
       CAST(EMPLOYEE_ID AS STRING) AS EMPLOYEE_ID
     FROM meli-bi-data.WHOWNER.BT_SHP_TYA_EMPLOYEE_TIMECARD,
     UNNEST(PUNCHES) AS Ponto
-    WHERE Ponto.TYPE = 'IN'
-      AND DATETIME_ADD(WORK_START_DATE, INTERVAL 1 HOUR)
-          BETWEEN DATETIME(CURRENT_DATE('America/Sao_Paulo'), TIME '00:00:00')
-              AND DATETIME(CURRENT_DATE('America/Sao_Paulo'), TIME '18:00:00')
+    WHERE DATETIME_ADD(WORK_START_DATE, INTERVAL 1 HOUR)
+          BETWEEN DATETIME(DATE_SUB(CURRENT_DATE('America/Sao_Paulo'), INTERVAL 1 DAY), TIME '19:00:00')
+              AND DATETIME(CURRENT_DATE('America/Sao_Paulo'), TIME '17:00:00')
   ),
   -- Catraca não-T3: qualquer horário de hoje (lógica original)
   Presenca_Normal AS (
@@ -31,8 +30,7 @@ USING (
       CAST(EMPLOYEE_ID AS STRING) AS EMPLOYEE_ID
     FROM meli-bi-data.WHOWNER.BT_SHP_TYA_EMPLOYEE_TIMECARD,
     UNNEST(PUNCHES) AS Ponto
-    WHERE Ponto.TYPE = 'IN'
-      AND DATE(DATETIME_ADD(WORK_START_DATE, INTERVAL 1 HOUR)) = CURRENT_DATE('America/Sao_Paulo')
+    WHERE DATE(DATETIME_ADD(WORK_START_DATE, INTERVAL 1 HOUR)) = CURRENT_DATE('America/Sao_Paulo')
   ),
   Base AS (
     SELECT
