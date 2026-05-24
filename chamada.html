@@ -4088,7 +4088,7 @@ function carregarDados() {
 
       if (lista.length === 0) {
         if (eHoje()) {
-          inicializarChamada();
+          mostrarSemRegistros();
         } else {
           mostrarSemRegistros();
         }
@@ -4140,50 +4140,6 @@ function _atualizarBannerData() {
   }
 }
 
-// ══════════════════════════════════════════════════════════
-//  Inicialização da chamada
-// ══════════════════════════════════════════════════════════
-function inicializarChamada() {
-  mostrarInicializando();
-
-  google.script.run
-    .withSuccessHandler(res => {
-      if (res && res.success) {
-        mostrarToast(
-          res.jaExistia ? `Chamada já existia (${(res.total||0).toLocaleString('pt-BR')} registros).`
-                        : `Chamada inicializada — ${(res.total||0).toLocaleString('pt-BR')} colaboradores.`,
-          'info'
-        );
-        Promise.all([
-          promisificar('getRegistrosDiaAtual'),
-          promisificar('getTurmasEmFolgaDia', new Date().toISOString().split('T')[0])
-        ]).then(([regs, turmasEmFolga]) => {
-            // ── DSR: filtra todas as escalas em folga (via CP_ESCALAS_ROTATIVAS) ─
-            registrosPresenca = (regs || []).filter(r =>
-              !(turmasEmFolga || []).includes((r.escala || '').toUpperCase().trim())
-            );
-            const areas    = [...new Set(registrosPresenca.map(r => normalizarAreaCha(r.area)).filter(Boolean))].sort();
-            const gestores = [...new Set(registrosPresenca.map(r => r.gestor || '').filter(Boolean))].sort();
-            const turnos   = [...new Set(registrosPresenca.map(r => r.turno  || '').filter(Boolean))].sort();
-            const setores  = [...new Set(registrosPresenca.map(r => r.setor  || '').filter(Boolean))].sort();
-            preencherSelect('filtroArea',   areas);
-            preencherSelect('filtroGestor', gestores);
-            preencherSelect('filtroTurno',  turnos);
-            preencherSelect('filtroSetor',  setores);
-            // buildTurnoSelector(turnos, registrosPresenca); // substituído por buildTurnoTabBar()
-            atualizarSumario();
-            renderTurnos();
-            atualizarMeta();
-            atualizarTagsAtivas();
-          })
-          .catch(err => mostrarErro('Inicializado, mas erro ao recarregar: ' + err.message));
-      } else {
-        mostrarErro('Falha na inicialização: ' + (res && res.message ? res.message : 'erro desconhecido'));
-      }
-    })
-    .withFailureHandler(err => mostrarErro('Erro ao inicializar: ' + (err.message || err)))
-    .inicializarChamadaDia();
-}
 
 // ══════════════════════════════════════════════════════════
 //  Paleta de cores por turno (valores reais: T1-T4 + ADM)
