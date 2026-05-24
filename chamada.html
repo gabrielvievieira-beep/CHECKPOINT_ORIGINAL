@@ -2167,6 +2167,41 @@
       50%      { opacity:.5; transform:scale(1.4); }
     }
 
+    /* ── Card T3 bloqueado (00:00–19:59) ──────────────────────── */
+    .cha-tp-locked {
+      opacity: 0.45;
+      cursor: not-allowed;
+      pointer-events: none;
+      position: relative;
+    }
+    .cha-tp-lock-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      background: rgba(8,12,28,0.88);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border-radius: inherit;
+      color: #f1f5f9;
+      font-size: 13px;
+      font-weight: 700;
+      text-align: center;
+      padding: 20px;
+      z-index: 3;
+      opacity: 0;
+      transition: opacity 0.22s ease;
+      pointer-events: all;
+      line-height: 1.6;
+      letter-spacing: 0.01em;
+    }
+    .cha-tp-locked:hover .cha-tp-lock-overlay,
+    .cha-tp-locked:focus  .cha-tp-lock-overlay { opacity: 1; }
+    .cha-tp-lock-overlay svg { opacity: 0.9; flex-shrink: 0; width: 32px; height: 32px; stroke: #f59e0b; }
+
     /* ══════════════════════════════════════════════════════════
        AREA PICKER — nível 1.5 (turno selecionado, área não)
     ══════════════════════════════════════════════════════════ */
@@ -4427,11 +4462,30 @@ function renderTurnoPicker(lista) {
     // Delay escalonado: cada card começa o shine em momentos diferentes
     const shineDelay = (idx * 0.55).toFixed(2) + 's';
 
+    // T3 bloqueado em dois cenários:
+    // 1. Data de hoje entre 00:00 e 19:59: o turno começa às 23:24,
+    //    colaboradores do ciclo anterior estão em D-1.
+    // 2. Data futura (D+1 ou além): chamada ainda não existe para o T3.
+    const horaAtual   = new Date().getHours();
+    const eFuturo     = dataSelecionada > _dataHojeLocal();
+    const bloqueadoT3 = t === 'T3' && (
+      (eHoje() && horaAtual < 20) ||
+      eFuturo
+    );
+
     return `
-      <div class="cha-tp-card ${done ? 'cha-tp-done' : ''}"
+      <div class="cha-tp-card ${done ? 'cha-tp-done' : ''} ${bloqueadoT3 ? 'cha-tp-locked' : ''}"
            style="--tc:${pal.color};--tc-rgb:${pal.rgb};--shine-delay:${shineDelay}"
-           onclick="selectTurnoTab('${tSafe}',null)">
+           ${bloqueadoT3 ? '' : `onclick="selectTurnoTab('${tSafe}',null)"`}>
         <div class="idx-card-shine"></div>
+        ${bloqueadoT3 ? `
+        <div class="cha-tp-lock-overlay">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          Chamada indisponível<br>Selecione a data do dia anterior<br>para justificar o T3
+        </div>` : ''}
         <div class="cha-tp-card-top">
           <div class="cha-tp-turno-badge">${esc(t)}</div>
           <svg class="cha-tp-arrow" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>

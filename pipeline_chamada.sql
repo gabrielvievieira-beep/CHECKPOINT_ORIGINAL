@@ -1,0 +1,82 @@
+-- PIPELINE: Inicialização da Chamada do Dia
+-- A variável {{ $json.data_chamada }} é injetada pelo n8n (nó Set anterior).
+-- Para rodar manualmente em uma data específica: altere o valor no nó Set.
+
+MERGE `meli-sbox.BRBA01.CP_HISTORICO_ABS` AS T
+USING (
+  WITH
+  turmas_folga AS (
+    SELECT DISTINCT UPPER(TRIM(ESCALA)) AS ESCALA_FOLGA
+    FROM `meli-sbox.BRBA01.CP_ESCALAS_ROTATIVAS`
+    WHERE DATA = DATE '{{ $json.data_chamada }}'
+      AND FOLGA = true
+  ),
+  ausencias AS (
+    SELECT CAST(IDGROOT AS INT64) AS IDGROOT_AP, JUSTIFICATIVA
+    FROM `meli-sbox.BRBA01.CP_AUSENCIAS_PROGRAMADAS`
+    WHERE DATA_INICIO <= DATE '{{ $json.data_chamada }}'
+      AND DATA_FIM    >= DATE '{{ $json.data_chamada }}'
+    QUALIFY ROW_NUMBER() OVER (PARTITION BY IDGROOT ORDER BY PROGRAMADO_EM DESC) = 1
+  )
+  SELECT
+    DATE '{{ $json.data_chamada }}' AS DATA_ABS,
+    CAST(ID_GROOT AS INT64) AS IDGROOT,
+    COLABORADOR,
+    CASE
+      WHEN aus.JUSTIFICATIVA IS NOT NULL THEN aus.JUSTIFICATIVA
+      WHEN tf.ESCALA_FOLGA IS NOT NULL THEN 'DSR - Escala'
+      ELSE CAST(NULL AS STRING)
+    END AS STATUS_PRESENCA,
+    CAST(NULL AS TIME) AS CLOCK_IN,
+    AREA,
+    SETOR,
+    GESTOR,
+    TURNO,
+    CAST(NULL AS STRING) AS RESPONSAVEL,
+    CAST(CONCAT(FORMAT_DATE('%d%m%y', DATE '{{ $json.data_chamada }}'), CAST(CAST(ID_GROOT AS INT64) AS STRING)) AS INT64) AS CHAVE
+  FROM `meli-sbox.BRBA01.CP_LISTA_COLABORADORES`
+  LEFT JOIN ausencias aus ON CAST(ID_GROOT AS INT64) = aus.IDGROOT_AP
+  LEFT JOIN turmas_folga tf ON UPPER(TRIM(COALESCE(ESCALA, ''))) = tf.ESCALA_FOLGA
+  WHERE STATUS NOT IN ('Inativo', 'INATIVO')
+    AND ID_GROOT IS NOT NULL
+    AND TRIM(CAST(ID_GROOT AS STRING)) != ''
+    AND SETOR IS NOT NULL
+    AND TRIM(SETOR) != ''
+    AND UPPER(TRIM(CARGO)) IN (
+      'REP DE ENVIO 1',
+      'REP DE ENVIO 2',
+      'REP DE ENVIO 3',
+      'OPERADOR LOGÍSTICO 1',
+      'OPERADOR LOGÍSTICO 2',
+      'OPERADOR LOGÍSTICO 3',
+      'SR TEAM LEADER - SHIPPING',
+      'TEAM LEADER - SHIPPING',
+      'TEAM LEADER'
+    )
+    AND UPPER(AREA) IN (
+      'OUTBOUND',
+      'INVENTARIO',
+      'ICQA',
+      'QUALIDADE',
+      'INBOUND',
+      'RETIRO',
+      'RETIROS',
+      'RETURNS'
+    )
+    AND (AREA IS NULL OR UPPER(AREA) NOT IN (
+      'SAFETY', 'FLOW', 'TREINAMENTO', 'PLANT ENGINEERING',
+      'LINE HAUL', 'PEOPLE', 'STAFF', 'CUSTOMER',
+      'OPERATIONS', 'SOFTWARE', 'LOSS PREVENTION', 'CIE'
+    ))
+    AND (AREA IS NULL OR AREA NOT IN (
+      'Safety', 'Flow', 'Treinamento', 'Plant Engineering',
+      'Line Haul', 'People', 'Staff', 'Customer',
+      'Operations', 'Software', 'Loss Prevention', 'CIE'
+    ))
+  QUALIFY ROW_NUMBER() OVER (PARTITION BY ID_GROOT ORDER BY COLABORADOR) = 1
+) AS S
+ON T.IDGROOT = S.IDGROOT
+AND T.DATA_ABS = S.DATA_ABS
+WHEN NOT MATCHED THEN
+  INSERT (DATA_ABS, IDGROOT, COLABORADOR, STATUS_PRESENCA, CLOCK_IN, AREA, SETOR, GESTOR, TURNO, RESPONSAVEL, CHAVE)
+  VALUES (S.DATA_ABS, S.IDGROOT, S.COLABORADOR, S.STATUS_PRESENCA, S.CLOCK_IN, S.AREA, S.SETOR, S.GESTOR, S.TURNO, S.RESPONSAVEL, S.CHAVE)
