@@ -51,7 +51,8 @@ USING (
       'OPERADOR LOGÍSTICO 3',
       'SR TEAM LEADER - SHIPPING',
       'TEAM LEADER - SHIPPING',
-      'TEAM LEADER'
+      'TEAM LEADER',
+      'JOVEM APRENDIZ'
     )
     AND UPPER(AREA) IN (
       'OUTBOUND',

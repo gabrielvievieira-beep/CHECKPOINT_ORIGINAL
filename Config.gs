@@ -44,7 +44,8 @@ const CARGOS_INCLUIDOS = [
   'Operador Logístico 3',    // confirmado no BD — variante que existia sem número na whitelist
   'Sr Team Leader - Shipping',
   'Team Leader - Shipping',  // cargo de líder operacional — card LÍDERES
-  'Team Leader'              // alias curto — também mapeado para card LÍDERES
+  'Team Leader',              // alias curto — também mapeado para card LÍDERES
+  'Jovem Aprendiz'
 ];
 
 // Setores filtrados das queries
