@@ -1861,6 +1861,13 @@
             border-color: #bbf7d0;
         }
         html.light-theme .idx-status-dot { background: #16a34a; }
+
+        #cardPendencias { background: linear-gradient(145deg,#0d0d0d 0%,#161616 55%); border-color: rgba(255,255,255,0.12); }
+        #cardPendencias::before  { background: linear-gradient(90deg,#ef4444,#f97316); opacity: 0; }
+        #cardPendencias:hover::before { opacity: 1; }
+        #cardPendencias:hover { box-shadow: 0 20px 50px rgba(239,68,68,0.12), 0 0 0 1px rgba(239,68,68,0.2); border-color: rgba(239,68,68,0.35); }
+        #cardPendencias::after { background: radial-gradient(ellipse at top left,rgba(239,68,68,0.1),transparent 60%); }
+        #cardPendencias .idx-card-shine { animation-delay: 8.8s; }
     </style>
 </head>
 <body>
@@ -2233,6 +2240,26 @@
                 </div>
                 <div class="idx-card-title">Histórico</div>
                 <div class="idx-card-desc">Consulte registros e ocorrências de períodos anteriores</div>
+                <div class="idx-card-footer">
+                    <span class="idx-card-cta">Abrir módulo</span>
+                    <span class="idx-card-arrow">›</span>
+                </div>
+            </a>
+
+            <a class="idx-card" id="cardPendencias" onclick="navegar('pendencias')">
+                <div class="idx-card-shine"></div>
+                <div class="idx-card-header">
+                    <div class="idx-card-icon" style="background:rgba(239,68,68,0.13);">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="9"/>
+                            <path d="M12 7v5l3 2"/>
+                            <path d="M16.5 16.5 19 19"/>
+                        </svg>
+                    </div>
+                    <span class="idx-card-tag">Operacional</span>
+                </div>
+                <div class="idx-card-title">Pendências</div>
+                <div class="idx-card-desc">Visualize e justifique registros sem resposta dos últimos 30 dias</div>
                 <div class="idx-card-footer">
                     <span class="idx-card-cta">Abrir módulo</span>
                     <span class="idx-card-arrow">›</span>
@@ -2843,6 +2870,8 @@
             })
             .podeVerPagina(page);
     });
+
+
 </script>
 
 <!-- ── MODAL SOBRE O SISTEMA ──────────────────────────────────────────── -->

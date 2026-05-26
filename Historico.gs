@@ -594,3 +594,78 @@ function getTaxaAbsenteismoHistorico(diasHistorico) {
     return { taxa: 0, faltas: 0, total: 0, diasCalculo: diasHistorico || 30 };
   }
 }
+
+// Retorna registros dos últimos 30 dias com STATUS_PRESENCA nulo (pendentes de justificativa)
+function getPendencias30Dias() {
+  try {
+    const areasExcl = (typeof AREAS_EXCLUIDAS !== 'undefined' && AREAS_EXCLUIDAS.length > 0)
+                     ? AREAS_EXCLUIDAS
+                     : ['Safety','Flow','Treinamento','Plant Engineering','Line Haul','People','Staff','Customer','Operations','Software','Loss Prevention'];
+    const areasNOTIN = areasExcl.map(function(a) { return "'" + a.toUpperCase() + "'"; }).join(', ');
+
+    const cargosIncl = (typeof CARGOS_INCLUIDOS !== 'undefined' && CARGOS_INCLUIDOS.length > 0)
+                       ? CARGOS_INCLUIDOS
+                       : ['Representante de Envio 1','Representante de Envio 2','Representante de Envio 3',
+                          'Problem Solver','Operador Logistico 1','Operador Logistico 2',
+                          'Sr Team Leader - Shipping'];
+    const cargosIN = cargosIncl.map(function(a) { return "'" + a.toUpperCase() + "'"; }).join(', ');
+
+    const query = `
+      SELECT
+        COLABORADOR, GESTOR, AREA, SETOR, TURNO,
+        CAST(IDGROOT AS STRING) AS IDGROOT,
+        FORMAT_DATE('%Y-%m-%d', DATA_ABS) AS DATA_ABS
+      FROM \`${PROJECT_ID}.${DATASET_ID}.${TABLE_HISTORICO}\`
+      WHERE DATA_ABS >= DATE_SUB(CURRENT_DATE('America/Sao_Paulo'), INTERVAL 30 DAY)
+        AND DATA_ABS < CURRENT_DATE('America/Sao_Paulo')
+        AND (STATUS_PRESENCA IS NULL OR TRIM(STATUS_PRESENCA) = '')
+        AND (AREA IS NULL OR UPPER(TRIM(AREA)) NOT IN (${areasNOTIN}))
+        AND CAST(IDGROOT AS INT64) IN (
+          SELECT CAST(ID_GROOT AS INT64)
+          FROM \`${PROJECT_ID}.${DATASET_ID}.${TABLE_COLABORADORES}\`
+          WHERE UPPER(TRIM(CARGO)) IN (${cargosIN})
+            AND ID_GROOT IS NOT NULL
+        )
+      ORDER BY GESTOR, COLABORADOR, DATA_ABS DESC
+      LIMIT 5000
+    `;
+
+    const token = getTokenBigQuery();
+    const apiEndpoint = 'https://bigquery.googleapis.com/bigquery/v2/projects/' + PROJECT_ID + '/queries';
+
+    const options = {
+      method: 'POST',
+      contentType: 'application/json',
+      headers: { 'Authorization': 'Bearer ' + token },
+      payload: JSON.stringify({ query: query, useLegacySql: false, timeoutMs: 30000 }),
+      muteHttpExceptions: true
+    };
+
+    let result = JSON.parse(UrlFetchApp.fetch(apiEndpoint, options).getContentText());
+
+    if (result.error) {
+      Logger.log('[getPendencias30Dias] Erro BQ: ' + result.error.message);
+      return [];
+    }
+
+    // BQ não concluiu em 30s — usa Jobs API assíncrona para aguardar
+    if (result.jobComplete === false) {
+      Logger.log('[getPendencias30Dias] jobComplete=false — fallback para Jobs API assíncrona');
+      result = runBigQueryAsync_(query, 5000);
+    }
+
+    if (!result.rows || result.rows.length === 0) return [];
+
+    return result.rows.map(function(row) {
+      var reg = {};
+      result.schema.fields.forEach(function(field, i) {
+        reg[field.name.toLowerCase()] = row.f[i].v;
+      });
+      return reg;
+    });
+
+  } catch (e) {
+    Logger.log('[getPendencias30Dias] Exceção: ' + e.toString());
+    throw e;
+  }
+}

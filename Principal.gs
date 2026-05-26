@@ -26,6 +26,9 @@ function doGet(e) {
       case 'historico':
         template = HtmlService.createTemplateFromFile('historico');
         break;
+      case 'pendencias':
+        template = HtmlService.createTemplateFromFile('pendencias');
+        break;
       case 'flow':
         template = HtmlService.createTemplateFromFile('flow');
         break;

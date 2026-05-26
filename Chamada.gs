@@ -104,7 +104,52 @@ function _bqQuery(sql, token, timeoutMs, useCache) {
   };
   const result = JSON.parse(UrlFetchApp.fetch(apiEndpoint, options).getContentText());
   if (result.error) throw new Error(result.error.message);
+
+  // BQ não concluiu dentro do timeoutMs — faz polling via Jobs API
+  if (result.jobComplete === false) {
+    const jobId  = result.jobReference && result.jobReference.jobId;
+    const jobLoc = (result.jobReference && result.jobReference.location) || '';
+    if (!jobId) throw new Error('BQ retornou jobComplete=false sem jobId. Tente novamente.');
+    return _bqAwaitJob_(jobId, jobLoc, token);
+  }
+
   return result;
+}
+
+// Polling da Jobs API até DONE, depois busca os resultados
+function _bqAwaitJob_(jobId, jobLoc, token) {
+  const baseUrl  = 'https://bigquery.googleapis.com/bigquery/v2/projects/' + PROJECT_ID;
+  const MAX_MS   = 270000; // 4m30s — dentro do limite de 6 min do GAS
+  const POLL_MS  = 2000;
+  const started  = new Date().getTime();
+
+  while (true) {
+    Utilities.sleep(POLL_MS);
+    if (new Date().getTime() - started > MAX_MS) {
+      throw new Error('BQ job timeout após 4min30s. Tente novamente.');
+    }
+    const locParam = jobLoc ? '?location=' + jobLoc : '';
+    const raw = UrlFetchApp.fetch(baseUrl + '/jobs/' + jobId + locParam, {
+      headers: { 'Authorization': 'Bearer ' + token },
+      muteHttpExceptions: true
+    }).getContentText();
+    const status = JSON.parse(raw);
+    if (status.status && status.status.state === 'DONE') {
+      if (status.status.errorResult) {
+        throw new Error('BQ job falhou: ' + status.status.errorResult.message);
+      }
+      break;
+    }
+  }
+
+  const locParam = jobLoc ? '&location=' + jobLoc : '';
+  const rawRes = UrlFetchApp.fetch(
+    baseUrl + '/queries/' + jobId + '?maxResults=5000' + locParam,
+    { headers: { 'Authorization': 'Bearer ' + token }, muteHttpExceptions: true }
+  ).getContentText();
+  const results = JSON.parse(rawRes);
+  if (results.error) throw new Error('Erro ao buscar resultados do job: ' + results.error.message);
+  return results;
 }
 
 function _parseRows(result) {
