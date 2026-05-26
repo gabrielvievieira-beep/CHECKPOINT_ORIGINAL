@@ -1864,7 +1864,7 @@ function renderTabela(lista) {
             <tr data-idgroot="${r.idgroot || ''}" data-data="${dataSelecionada}">
               <td class="col-colab">
                 <strong>${r.colaborador || '—'}</strong>
-                <span>${r.area || ''}</span>
+                <span>${normalizarArea(r.area)}</span>
               </td>
               <td style="color:rgba(255,255,255,.45);font-size:12px;">${r.gestor || '—'}</td>
               <td style="color:rgba(255,255,255,.4);font-size:12px;">${r.setor || '—'}</td>
@@ -1906,6 +1906,15 @@ function isFalta(s) {
   if (!s) return false;
   const u = s.toUpperCase();
   return u.includes('FALTA') || u.includes('FALTOU');
+}
+function normalizarArea(nome) {
+  if (!nome) return '';
+  const upper = nome.toUpperCase().trim();
+  const s = upper.normalize('NFD').replace(/[̀-ͯ]/g, '');
+  if (s === 'INVENTARIO' || s === 'QUALIDADE') return 'ICQA';
+  if (s === 'RETIROS'    || s === 'RETURNS')   return 'REVERSA';
+  if (s === 'TRANSFER MWH' || s === 'TRANSFER') return 'INBOUND';
+  return upper;
 }
 function tagClass(s) {
   if (!s || s === '') return 'tag-PENDENTE';

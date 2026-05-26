@@ -5010,7 +5010,8 @@ function normalizarAreaCha(nome) {
 const AREAS_EXCLUIDAS_UI = new Set([
   'SAFETY','FLOW','TREINAMENTO','PLANT ENGINEERING','LINE HAUL','PEOPLE','STAFF',
   'CUSTOMER','OPERATIONS','SOFTWARE','LOSS PREVENTION',
-  'CIE','__EXCLUIR__'  // CIE = área inválida; __EXCLUIR__ = sentinel da normalizarAreaCha
+  'CIE','__EXCLUIR__',  // CIE = área inválida; __EXCLUIR__ = sentinel da normalizarAreaCha
+  'ALMOXARIFADO','MAINTENANCE','GATE'
 ]);
 
 // Cargos de gestores que NÃO devem aparecer como card na chamada

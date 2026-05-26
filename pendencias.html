@@ -559,11 +559,22 @@ function renderTudo() {
   renderLeaders(visiveis);
 }
 
+/* ── Normalização de área (igual à chamada) ──────────────────── */
+function normalizarArea(nome) {
+  if (!nome) return '';
+  var upper = nome.toUpperCase().trim();
+  var s = upper.normalize ? upper.normalize('NFD').replace(/[̀-ͯ]/g, '') : upper;
+  if (s === 'INVENTARIO' || s === 'QUALIDADE') return 'ICQA';
+  if (s === 'RETIROS'    || s === 'RETURNS')   return 'REVERSA';
+  if (s === 'TRANSFER MWH' || s === 'TRANSFER') return 'INBOUND';
+  return upper;
+}
+
 /* ── Chips de área / turno ───────────────────────────────────── */
 function renderChips(tipo, regs, container) {
   var mapa = {};
   regs.forEach(function(r) {
-    var v = (tipo === 'area' ? r.area : r.turno) || '—';
+    var v = (tipo === 'area' ? normalizarArea(r.area) : r.turno) || '—';
     mapa[v] = (mapa[v] || 0) + 1;
   });
 
@@ -643,7 +654,7 @@ function toggleFiltroGlobal(tipo, val) {
 
 function dadosFiltrados() {
   return dados.filter(function(r) {
-    if (filtroArea  && (r.area  || '—') !== filtroArea)  return false;
+    if (filtroArea  && (normalizarArea(r.area) || '—') !== filtroArea)  return false;
     if (filtroTurno && (r.turno || '—') !== filtroTurno) return false;
     return true;
   });
@@ -678,14 +689,14 @@ function regsGestor() {
 
 function renderMdFiltros() {
   var regs   = regsGestor();
-  var areas  = unicos(regs.map(function(r){ return r.area  || '—'; })).sort();
+  var areas  = unicos(regs.map(function(r){ return normalizarArea(r.area) || '—'; })).sort();
   var turnos = unicos(regs.map(function(r){ return r.turno || '—'; })).sort();
   var html   = '';
 
   if (areas.length > 1) {
     html += '<span class="pd-fl">Área</span>';
     areas.forEach(function(a) {
-      var cnt = regs.filter(function(r){ return (r.area||'—')===a; }).length;
+      var cnt = regs.filter(function(r){ return (normalizarArea(r.area)||'—')===a; }).length;
       html += '<span class="pd-fchip' + (mdFiltroArea===a?' on':'') +
               '" onclick="toggleMdFiltro(\'area\',\'' + esc(a) + '\')">' + a + ' · ' + cnt + '</span>';
     });
@@ -712,7 +723,7 @@ function toggleMdFiltro(tipo, val) {
 
 function renderMdTabela() {
   var regs = regsGestor();
-  if (mdFiltroArea)  regs = regs.filter(function(r){ return (r.area  ||'—')===mdFiltroArea; });
+  if (mdFiltroArea)  regs = regs.filter(function(r){ return (normalizarArea(r.area)||'—')===mdFiltroArea; });
   if (mdFiltroTurno) regs = regs.filter(function(r){ return (r.turno ||'—')===mdFiltroTurno; });
 
   document.getElementById('mdBadge').textContent = regs.length + ' pendente' + (regs.length!==1?'s':'');
@@ -799,7 +810,7 @@ function renderMdTabela() {
   tbody.innerHTML = regs.map(function(r) {
     var iso    = r.data_abs ? r.data_abs.substring(0,10) : '';
     var dataBR = iso ? iso.split('-').reverse().join('/') : '—';
-    var area   = [r.area, r.setor].filter(Boolean).join(' / ') || '—';
+    var area   = [normalizarArea(r.area), r.setor].filter(Boolean).join(' / ') || '—';
     var turno  = r.turno || '—';
     var idg    = r.idgroot || '';
     return '<tr data-idgroot="' + idg + '" data-data="' + iso + '">' +

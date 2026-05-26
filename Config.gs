@@ -65,7 +65,8 @@ const SETORES_INCLUIDOS = [
 const AREAS_EXCLUIDAS = [
   'Safety', 'Flow', 'Treinamento', 'Plant Engineering', 'Line Haul', 'People', 'Staff',
   'Customer', 'Operations', 'Software', 'Loss Prevention',
-  'CIE'  // área inválida confirmada — não representa nenhum grupo operacional
+  'CIE',          // área inválida confirmada — não representa nenhum grupo operacional
+  'Almoxarifado', 'Maintenance', 'Gate'
 ];
 
 // Áreas normalizadas (aliases → nome canônico)
