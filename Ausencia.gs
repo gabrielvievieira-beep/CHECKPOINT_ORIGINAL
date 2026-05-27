@@ -199,7 +199,8 @@ function salvarAusencia(dados) {
             AND DATA_ABS BETWEEN DATE '${dados.dataInicio}' AND DATE '${dataFimReconcilia}'
             AND (STATUS_PRESENCA = 'FI'
                  OR STATUS_PRESENCA IS NULL
-                 OR TRIM(STATUS_PRESENCA) = '')
+                 OR TRIM(STATUS_PRESENCA) = ''
+                 OR TRIM(STATUS_PRESENCA) = 'VAZIO - Justificativa não encontrada')
         `;
 
         const optRec = {

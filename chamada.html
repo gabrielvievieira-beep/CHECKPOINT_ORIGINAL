@@ -6975,10 +6975,11 @@ function statusEfetivo(r) {
   }
 
   const st = (r.status_presenca || '').trim();
-  // Valor do STATUS_DEF — normaliza variantes de PRESENTE
+  // Valor do STATUS_DEF — normaliza variantes de PRESENTE; VAZIO = sem justificativa = PENDENTE
   if (_STATUS_VALIDOS.includes(st)) {
     const def = _STATUS_BY_VAL[st];
     if (def && def.code === 'PRESENTE') return 'PRESENTE';
+    if (def && def.code === 'VAZIO')    return 'PENDENTE';
     return st;
   }
   // Sem status manual: se passou pela catraca (clock_in do timecard) → PRESENTE

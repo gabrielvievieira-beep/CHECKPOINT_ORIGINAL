@@ -552,6 +552,7 @@ function getTaxaAbsenteismoHistorico(diasHistorico) {
           AND DATA_ABS  <  CURRENT_DATE('America/Sao_Paulo')
           AND STATUS_PRESENCA IS NOT NULL
           AND TRIM(STATUS_PRESENCA) != ''
+          AND TRIM(STATUS_PRESENCA) != 'VAZIO - Justificativa não encontrada'
           -- Exclui folgas de escala e afastamentos programados (não são absenteísmo)
           AND UPPER(TRIM(STATUS_PRESENCA)) NOT LIKE 'DSR%'
           AND UPPER(TRIM(STATUS_PRESENCA)) NOT LIKE 'AF -%'
@@ -618,7 +619,7 @@ function getPendencias30Dias() {
       FROM \`${PROJECT_ID}.${DATASET_ID}.${TABLE_HISTORICO}\`
       WHERE DATA_ABS >= DATE_SUB(CURRENT_DATE('America/Sao_Paulo'), INTERVAL 30 DAY)
         AND DATA_ABS < CURRENT_DATE('America/Sao_Paulo')
-        AND (STATUS_PRESENCA IS NULL OR TRIM(STATUS_PRESENCA) = '')
+        AND (STATUS_PRESENCA IS NULL OR TRIM(STATUS_PRESENCA) = '' OR TRIM(STATUS_PRESENCA) = 'VAZIO - Justificativa não encontrada')
         AND (AREA IS NULL OR UPPER(TRIM(AREA)) NOT IN (${areasNOTIN}))
         AND CAST(IDGROOT AS INT64) IN (
           SELECT CAST(ID_GROOT AS INT64)

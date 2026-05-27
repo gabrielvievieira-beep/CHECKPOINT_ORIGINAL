@@ -72,8 +72,9 @@ function getPresenteismoPeriodo(dataInicio, dataFim, filtros) {
         SELECT
           IDGROOT,
           CASE
-            WHEN STATUS_PRESENCA IS NULL       THEN 0
-            WHEN STATUS_PRESENCA LIKE 'DSR%'   THEN 0
+            WHEN STATUS_PRESENCA IS NULL                                       THEN 0
+            WHEN STATUS_PRESENCA = 'VAZIO - Justificativa não encontrada'     THEN 0
+            WHEN STATUS_PRESENCA LIKE 'DSR%'                                  THEN 0
             WHEN STATUS_PRESENCA LIKE 'FE%'    THEN 0
             WHEN STATUS_PRESENCA LIKE 'AF%'    THEN 0
             WHEN STATUS_PRESENCA LIKE 'FJ%'    THEN 0
