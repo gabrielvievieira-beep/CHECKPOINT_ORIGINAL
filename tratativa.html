@@ -146,13 +146,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .tr-toast.show{transform:translateY(0);opacity:1;}
 .tr-toast.success{border-color:rgba(74,222,128,.35);color:#4ade80;}
 .tr-toast.error{border-color:rgba(239,68,68,.35);color:#f87171;}
-/* ── Botão Menu Principal ─────────────────────────────────── */
-#btnMenuHome {
-  height: 42px !important;
-  font-size: 14px !important;
-  padding: 0 22px !important;
-  font-weight: 700 !important;
-  border-radius: 10px !important;
+.tr-btn-home {
+  background: rgba(255,215,0,.08);
+  border: 1px solid rgba(255,215,0,.22) !important;
+  color: rgba(255,215,0,.8) !important;
+  flex-shrink: 0;
+}
+.tr-btn-home:hover {
+  background: rgba(255,215,0,.16) !important;
+  border-color: rgba(255,215,0,.45) !important;
+  color: #FFD700 !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(255,215,0,.12);
 }
 </style>
 </head>
@@ -161,6 +166,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <!-- TOPBAR -->
 <div class="tr-topbar">
   <div class="tr-tb-left">
+    <button class="tr-btn tr-btn-home" id="btnMenuHome" onclick="window.top.location.href='<?= ScriptApp.getService().getUrl() ?>'">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12L12 4l9 8"/><path d="M5 10v9a1 1 0 001 1h4v-5h4v5h4a1 1 0 001-1v-9"/></svg>
+      Home
+    </button>
+    <div class="tr-sep"></div>
     <div class="tr-tb-icon">
       <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fb923c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
@@ -174,7 +184,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <span id="nomeUsuario" style="font-size:12px;color:rgba(255,255,255,.35);"></span>
     <div class="tr-clock" id="trClock"></div>
     <div id="menuContainer"></div>
-    <button class="tr-btn tr-btn-ghost" id="btnMenuHome" onclick="window.top.location.href='<?= ScriptApp.getService().getUrl() ?>'">← Menu</button>
   </div>
 </div>
 

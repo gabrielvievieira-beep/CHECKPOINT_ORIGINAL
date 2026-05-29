@@ -3493,15 +3493,19 @@
       .cha-topbar-actions .cha-btn:not(.cha-btn-glossario) span:last-child { display: none; }
     }
 
-  /* ── Botão Menu Principal ─────────────────────────────────── */
-  #btnMenuHome {
-    height: 42px !important;
-    font-size: 14px !important;
-    padding: 0 22px !important;
-    font-weight: 700 !important;
-    border-radius: 10px !important;
+  .cha-btn-home {
+    background: rgba(255,215,0,.08);
+    border: 1px solid rgba(255,215,0,.22) !important;
+    color: rgba(255,215,0,.8);
+    flex-shrink: 0;
   }
-  #btnMenuHome svg { width: 16px !important; height: 16px !important; }
+  .cha-btn-home:hover {
+    background: rgba(255,215,0,.16) !important;
+    border-color: rgba(255,215,0,.45) !important;
+    color: #FFD700 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(255,215,0,.12);
+  }
   </style>
 </head>
 <body>
@@ -3535,6 +3539,11 @@
 <!-- ══ TOPBAR ══════════════════════════════════════════════ -->
 <div class="cha-topbar">
   <div class="cha-topbar-left">
+    <button class="cha-btn cha-btn-home" id="btnMenuHome" onclick="window.top.location.href='<?= ScriptApp.getService().getUrl() ?>'">
+      <svg viewBox="0 0 24 24"><path d="M3 12L12 4l9 8"/><path d="M5 10v9a1 1 0 001 1h4v-5h4v5h4a1 1 0 001-1v-9"/></svg>
+      Home
+    </button>
+    <div class="cha-topbar-sep"></div>
     <div class="cha-topbar-icon">
       <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
     </div>
@@ -3557,10 +3566,6 @@
   <div class="cha-topbar-actions">
     <div class="cha-live-clock" id="liveClock">--:--:--</div>
     <div class="cha-topbar-sep"></div>
-    <button class="cha-btn cha-btn-ghost" id="btnMenuHome" onclick="window.top.location.href='<?= ScriptApp.getService().getUrl() ?>'">
-      <svg viewBox="0 0 24 24"><path d="M3 12L12 4l9 8"/><path d="M5 10v9a1 1 0 001 1h4v-5h4v5h4a1 1 0 001-1v-9"/></svg>
-      Menu
-    </button>
     <div class="cha-datepick-wrap" title="Selecionar data">
       <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
       <input type="date" id="inputDataChamada" onchange="onDataChange(this.value)" />

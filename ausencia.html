@@ -85,7 +85,7 @@ body {
 .aus-btn-ghost svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
 
 /* ─── Layout ────────────────────────────────────────────────────── */
-.aus-body { padding: 28px 24px; max-width: 1000px; margin: 0 auto; }
+.aus-body { padding: 28px 24px; max-width: 1400px; margin: 0 auto; }
 
 /* ─── Page Title ────────────────────────────────────────────────── */
 .aus-page-header { margin-bottom: 24px; }
@@ -350,14 +350,30 @@ tbody tr:hover td { background: rgba(255,215,0,.03); }
 }
 .col-data { font-variant-numeric: tabular-nums; white-space: nowrap; }
 
-.btn-del {
-  background: none; border: none;
-  color: rgba(251,113,133,.5); cursor: pointer;
-  padding: 5px 8px; border-radius: 7px;
+.btn-edit {
+  background: none; border: 1px solid rgba(255,255,255,.15); border-radius: 7px;
+  color: rgba(255,255,255,.6); cursor: pointer;
+  padding: 5px 8px;
   transition: all .2s; display: flex; align-items: center; justify-content: center;
 }
-.btn-del:hover { background: rgba(251,113,133,.1); color: #fb7185; }
-.btn-del svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+.btn-edit:hover { background: rgba(99,102,241,.15); border-color: rgba(129,140,248,.4); color: #818cf8; }
+.btn-edit svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+
+.edit-banner {
+  display: flex; align-items: center; gap: 10px;
+  background: rgba(99,102,241,.08); border: 1px solid rgba(99,102,241,.2);
+  border-radius: 10px; padding: 10px 14px; margin-bottom: 20px;
+  font-size: 13px; color: rgba(129,140,248,.9);
+}
+.edit-banner svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; flex-shrink: 0; }
+.edit-banner strong { color: #fff; }
+.edit-banner .btn-cancelar-edicao {
+  margin-left: auto; background: none;
+  border: 1px solid rgba(99,102,241,.3); color: rgba(129,140,248,.7);
+  border-radius: 7px; padding: 4px 10px; font-size: 12px; font-weight: 600;
+  cursor: pointer; transition: all .2s;
+}
+.edit-banner .btn-cancelar-edicao:hover { background: rgba(99,102,241,.12); color: #818cf8; }
 
 .empty-state {
   text-align: center; padding: 52px 20px;
@@ -428,47 +444,6 @@ tbody tr:hover td { background: rgba(255,215,0,.03); }
 .aus-toast.info    { background: rgba(56,189,248,.15);  border: 1px solid rgba(56,189,248,.3);  color: #38bdf8; }
 .aus-toast svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2.5; flex-shrink: 0; }
 
-/* ─── Confirm Modal ─────────────────────────────────────────────── */
-.aus-modal-bg {
-  display: none; position: fixed; inset: 0;
-  background: rgba(0,0,0,.65); z-index: 800;
-  align-items: center; justify-content: center;
-  backdrop-filter: blur(4px);
-}
-.aus-modal-bg.show { display: flex; }
-.aus-modal {
-  background: rgba(10,16,34,.97);
-  border: 1px solid rgba(255,255,255,.1);
-  border-radius: 16px; padding: 28px 32px; max-width: 380px; width: 90%;
-  box-shadow: 0 20px 60px rgba(0,0,0,.6);
-}
-.aus-modal-ico {
-  width: 44px; height: 44px; border-radius: 12px;
-  background: rgba(251,113,133,.1);
-  border: 1px solid rgba(251,113,133,.2);
-  display: flex; align-items: center; justify-content: center;
-  margin: 0 auto 16px;
-}
-.aus-modal-ico svg { width: 22px; height: 22px; stroke: #fb7185; fill: none; stroke-width: 2; stroke-linecap: round; }
-.aus-modal h3 { margin: 0 0 8px; font-size: 16px; font-weight: 700; color: #fff; text-align: center; }
-.aus-modal p  { margin: 0 0 24px; font-size: 13px; color: rgba(255,255,255,.45); text-align: center; line-height: 1.6; }
-.aus-modal-actions { display: flex; gap: 10px; }
-.aus-modal-cancel {
-  flex: 1; padding: 10px; border-radius: 10px; border: none;
-  background: rgba(255,255,255,.07);
-  border: 1px solid rgba(255,255,255,.1);
-  color: rgba(255,255,255,.6); font-size: 13px; font-weight: 600;
-  cursor: pointer; transition: all .2s;
-}
-.aus-modal-cancel:hover { background: rgba(255,255,255,.12); color: #fff; }
-.aus-modal-confirm {
-  flex: 1; padding: 10px; border-radius: 10px; border: none;
-  background: rgba(251,113,133,.15);
-  border: 1px solid rgba(251,113,133,.3);
-  color: #fb7185; font-size: 13px; font-weight: 700;
-  cursor: pointer; transition: all .2s;
-}
-.aus-modal-confirm:hover { background: rgba(251,113,133,.25); }
 
 /* ─── Responsive ────────────────────────────────────────────────── */
 @media (max-width: 720px) {
@@ -532,16 +507,6 @@ tbody tr:hover td { background: rgba(255,215,0,.03); }
   color: #000000 !important;
 }
 
-/* Modal cancel button */
-.aus-modal-cancel {
-  background: rgba(255, 255, 255, 0.07) !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
-  color: rgba(255, 255, 255, 0.55) !important;
-}
-.aus-modal-cancel:hover {
-  background: rgba(255, 255, 255, 0.12) !important;
-  color: #fff !important;
-}
 
 /* ─── MOBILE ──────────────────────────────────────────────────── */
 @media (max-width: 768px) {
@@ -565,15 +530,24 @@ tbody tr:hover td { background: rgba(255,215,0,.03); }
   .aus-btn-ghost { padding: 6px 8px !important; }
 }
 
-  /* ── Botão Menu Principal ─────────────────────────────────── */
-  #btnMenuHome {
-    height: 42px !important;
-    font-size: 14px !important;
-    padding: 0 22px !important;
-    font-weight: 700 !important;
-    border-radius: 10px !important;
+  .aus-btn-home {
+    display: flex; align-items: center; gap: 6px;
+    padding: 0 14px; height: 32px; border-radius: 8px;
+    font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit;
+    background: rgba(255,215,0,.08);
+    border: 1px solid rgba(255,215,0,.22);
+    color: rgba(255,215,0,.8);
+    transition: all .2s; flex-shrink: 0;
   }
-  #btnMenuHome svg { width: 16px !important; height: 16px !important; }
+  .aus-btn-home:hover {
+    background: rgba(255,215,0,.16);
+    border-color: rgba(255,215,0,.45);
+    color: #FFD700;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(255,215,0,.12);
+  }
+  .aus-btn-home svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+  .aus-sep { width: 1px; height: 20px; background: rgba(255,255,255,.08); flex-shrink: 0; }
   </style>
 </head>
 <body>
@@ -581,6 +555,11 @@ tbody tr:hover td { background: rgba(255,215,0,.03); }
 <!-- ─── TOPBAR ──────────────────────────────────────────────────── -->
 <div class="aus-topbar">
   <div class="aus-tb-left">
+    <button class="aus-btn-home" id="btnMenuHome" onclick="window.top.location.href='<?= ScriptApp.getService().getUrl() ?>'">
+      <svg viewBox="0 0 24 24"><path d="M3 12L12 4l9 8"/><path d="M5 10v9a1 1 0 001 1h4v-5h4v5h4a1 1 0 001-1v-9"/></svg>
+      Home
+    </button>
+    <div class="aus-sep"></div>
     <div class="aus-tb-icon">
       <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#FFD700" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
@@ -600,10 +579,6 @@ tbody tr:hover td { background: rgba(255,215,0,.03); }
     <div class="dev-info-btn">ⓘ
       <div class="dev-info-tooltip">Desenvolvido por Gabriel Vieira &amp; Lucas Leal · MercadoLibre 2026</div>
     </div>
-    <button class="aus-btn-ghost" id="btnMenuHome" onclick="window.top.location.href='<?= ScriptApp.getService().getUrl() ?>'">
-      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
-      Menu
-    </button>
     <button class="aus-btn-ghost" style="background:rgba(99,102,241,.1);color:rgba(129,140,248,.85);border:1px solid rgba(99,102,241,.22);"
             onclick="window.open('<?= ScriptApp.getService().getUrl() ?>&page=glossario','_blank')" title="Termos e Justificativas">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
@@ -621,20 +596,6 @@ tbody tr:hover td { background: rgba(255,215,0,.03); }
   <span id="ausToastMsg"></span>
 </div>
 
-<!-- ─── MODAL CONFIRMAÇÃO ───────────────────────────────────────── -->
-<div class="aus-modal-bg" id="modalBg">
-  <div class="aus-modal">
-    <div class="aus-modal-ico">
-      <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
-    </div>
-    <h3>Excluir Ausência</h3>
-    <p id="modalDesc">Confirma a exclusão desta ausência? Essa ação não pode ser desfeita.</p>
-    <div class="aus-modal-actions">
-      <button class="aus-modal-cancel" onclick="fecharModal()">Cancelar</button>
-      <button class="aus-modal-confirm" id="modalConfirmBtn">Excluir</button>
-    </div>
-  </div>
-</div>
 
 <!-- ─── CONTEÚDO ────────────────────────────────────────────────── -->
 <div class="aus-body">
@@ -659,6 +620,12 @@ tbody tr:hover td { background: rgba(255,215,0,.03); }
   <!-- ── TAB CADASTRAR ────────────────────────────────────────── -->
   <div class="aus-tab-panel active" id="tab-cadastrar">
     <div class="aus-card">
+
+      <div class="edit-banner" id="editBanner" style="display:none">
+        <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        <span>Editando ausência de <strong id="editBannerNome"></strong></span>
+        <button class="btn-cancelar-edicao" onclick="cancelarEdicao()">Cancelar edição</button>
+      </div>
 
       <div class="form-section-title">Informações do Colaborador</div>
 
@@ -1034,7 +1001,7 @@ tbody tr:hover td { background: rgba(255,215,0,.03); }
             <th onclick="sortBy('data_fim')">Fim <span class="sort-ico" id="sort-data_fim">↕</span></th>
             <th onclick="sortBy('dias')" style="text-align:center;">Dias <span class="sort-ico" id="sort-dias">↕</span></th>
             <th>CAD</th>
-            <th></th>
+            <th style="width:46px;"></th>
           </tr>
         </thead>
         <tbody id="tabelaAusencias">
@@ -1056,7 +1023,7 @@ let todasAusencias         = [];
 let ausenciasFiltradas     = [];
 let colaboradorSelecionado = null;
 let sortCol = 'data_inicio', sortAsc = false;
-let chaveParaExcluir = null;
+let chaveEditando = null;
 let toastTimer;
 
 // ── Init ────────────────────────────────────────────────────────────
@@ -1203,27 +1170,32 @@ function salvarAusencia() {
     cad:           document.getElementById('inputCad').value.trim()
   };
 
-  mostrarLoading('Salvando ausência...');
+  mostrarLoading(chaveEditando ? 'Atualizando ausência...' : 'Salvando ausência...');
   document.getElementById('btnSalvar').disabled = true;
 
-  google.script.run
-    .withSuccessHandler(res => {
-      esconderLoading();
-      document.getElementById('btnSalvar').disabled = false;
-      if (res && res.success) {
-        mostrarToast('Ausência salva com sucesso!', 'success');
-        limparFormulario();
-        carregarAusencias();
-      } else {
-        mostrarToast('Erro: ' + (res && res.message || 'Falha ao salvar.'), 'error');
-      }
-    })
-    .withFailureHandler(err => {
-      esconderLoading();
-      document.getElementById('btnSalvar').disabled = false;
-      mostrarToast('Erro: ' + err.message, 'error');
-    })
-    .salvarAusencia(dados);
+  const onSuccess = res => {
+    esconderLoading();
+    document.getElementById('btnSalvar').disabled = false;
+    if (res && res.success) {
+      mostrarToast(chaveEditando ? 'Ausência atualizada com sucesso!' : 'Ausência salva com sucesso!', 'success');
+      if (chaveEditando) cancelarEdicao(); else limparFormulario();
+      carregarAusencias();
+    } else {
+      mostrarToast('Erro: ' + (res && res.message || 'Falha ao salvar.'), 'error');
+    }
+  };
+  const onError = err => {
+    esconderLoading();
+    document.getElementById('btnSalvar').disabled = false;
+    mostrarToast('Erro: ' + err.message, 'error');
+  };
+
+  const runner = google.script.run.withSuccessHandler(onSuccess).withFailureHandler(onError);
+  if (chaveEditando) {
+    runner.atualizarAusencia(chaveEditando, dados);
+  } else {
+    runner.salvarAusencia(dados);
+  }
 }
 
 function limparFormulario() {
@@ -1332,11 +1304,10 @@ function renderizarTabela(lista) {
     return;
   }
 
-  tbody.innerHTML = lista.map(a => {
+  tbody.innerHTML = lista.map((a, idx) => {
     const dias     = a._dias || '—';
     const tagClass = tagCor(a.justificativa || '');
     const labelJ   = labelJustificativa(a.justificativa || '');
-    const chave    = a.chave || '';
     return `
       <tr>
         <td class="col-nome">
@@ -1351,8 +1322,8 @@ function renderizarTabela(lista) {
         <td class="col-dias">${fmt(dias)}</td>
         <td style="color:rgba(255,255,255,.35);font-size:11px;">${a.cad || a.responsavel || '—'}</td>
         <td>
-          <button class="btn-del" title="Excluir" onclick="abrirModal(${chave}, '${(a.colaborador||'').replace(/'/g,"\\'")}')">
-            <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+          <button class="btn-edit" title="Editar" onclick="editarAusencia(ausenciasFiltradas[${idx}])">
+            <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
           </button>
         </td>
       </tr>
@@ -1360,39 +1331,51 @@ function renderizarTabela(lista) {
   }).join('');
 }
 
-// ── Modal Exclusão ───────────────────────────────────────────────────
-function abrirModal(chave, nome) {
-  chaveParaExcluir = chave;
-  document.getElementById('modalDesc').textContent =
-    `Confirma a exclusão da ausência de ${nome}? Essa ação não pode ser desfeita.`;
-  document.getElementById('modalBg').classList.add('show');
-  document.getElementById('modalConfirmBtn').onclick = executarExclusao;
+// ── Edição de Ausência ───────────────────────────────────────────────
+function editarAusencia(a) {
+  chaveEditando = a.chave;
+
+  trocarTab('cadastrar');
+
+  document.getElementById('editBanner').style.display = 'flex';
+  document.getElementById('editBannerNome').textContent = a.colaborador || '';
+
+  document.getElementById('btnSalvar').innerHTML = `
+    <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+    Atualizar Ausência
+  `;
+
+  colaboradorSelecionado = {
+    id_groot:    a.idgroot,
+    colaborador: a.colaborador || '',
+    gestor:      a.gestor      || '',
+    turno:       a.escala      || ''
+  };
+  document.getElementById('inputColaborador').value = a.colaborador || '';
+  document.getElementById('inputGestor').value      = a.gestor      || '';
+  document.getElementById('inputEscala').value      = a.escala      || '';
+  document.getElementById('inputCad').value         = a.cad         || '';
+  document.getElementById('inputDataInicio').value  = a.data_inicio || '';
+  document.getElementById('inputDataFim').value     = a.data_fim    || '';
+  calcPreview();
+
+  const justVal = (a.justificativa || '').trim();
+  document.querySelectorAll('.just-chip').forEach(c => c.classList.remove('selected'));
+  document.getElementById('inputJustificativa').value = justVal;
+  const chip = [...document.querySelectorAll('.just-chip')].find(c => c.dataset.val === justVal);
+  if (chip) { chip.classList.add('selected'); chip.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+
+  document.getElementById('tab-cadastrar').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-function fecharModal() {
-  document.getElementById('modalBg').classList.remove('show');
-  chaveParaExcluir = null;
-}
-
-function executarExclusao() {
-  if (!chaveParaExcluir) return;
-  fecharModal();
-  mostrarLoading('Excluindo...');
-  google.script.run
-    .withSuccessHandler(res => {
-      esconderLoading();
-      if (res && res.success) {
-        mostrarToast('Ausência excluída com sucesso.', 'success');
-        carregarAusencias();
-      } else {
-        mostrarToast('Erro ao excluir: ' + (res && res.message || ''), 'error');
-      }
-    })
-    .withFailureHandler(err => {
-      esconderLoading();
-      mostrarToast('Erro: ' + err.message, 'error');
-    })
-    .excluirAusencia(chaveParaExcluir);
+function cancelarEdicao() {
+  chaveEditando = null;
+  document.getElementById('editBanner').style.display = 'none';
+  document.getElementById('btnSalvar').innerHTML = `
+    <svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+    Salvar Ausência
+  `;
+  limparFormulario();
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────
@@ -1458,10 +1441,6 @@ function mostrarToast(msg, tipo) {
   toastTimer = setTimeout(() => t.classList.remove('show'), 3800);
 }
 
-// Fechar modal ao clicar fora
-document.getElementById('modalBg').addEventListener('click', function(e) {
-  if (e.target === this) fecharModal();
-});
 </script>
 <div class="dev-footer">© 2026 Checkpoint BA01 · Gabriel Vieira &amp; Lucas Leal · MercadoLibre</div>
 </body>

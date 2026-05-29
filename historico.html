@@ -1030,15 +1030,19 @@ tbody.his-tbody tr:hover td { background:rgba(255,215,0,.03); }
   stroke: rgba(255, 215, 0, 0.6) !important;
 }
 
-  /* ── Botão Menu Principal ─────────────────────────────────── */
-  #btnMenuHome {
-    height: 42px !important;
-    font-size: 14px !important;
-    padding: 0 22px !important;
-    font-weight: 700 !important;
-    border-radius: 10px !important;
+  .his-btn-home {
+    background: rgba(255,215,0,.08);
+    border: 1px solid rgba(255,215,0,.22) !important;
+    color: rgba(255,215,0,.8) !important;
+    flex-shrink: 0;
   }
-  #btnMenuHome svg { width: 16px !important; height: 16px !important; }
+  .his-btn-home:hover {
+    background: rgba(255,215,0,.16) !important;
+    border-color: rgba(255,215,0,.45) !important;
+    color: #FFD700 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(255,215,0,.12);
+  }
   </style>
 </head>
 <body>
@@ -1055,6 +1059,11 @@ tbody.his-tbody tr:hover td { background:rgba(255,215,0,.03); }
 <!-- ─── TOPBAR ──────────────────────────────────────────────────── -->
 <div class="his-topbar">
   <div class="his-tb-left">
+    <button class="his-btn his-btn-home" id="btnMenuHome" onclick="navegar('')">
+      <svg viewBox="0 0 24 24"><path d="M3 12L12 4l9 8"/><path d="M5 10v9a1 1 0 001 1h4v-5h4v5h4a1 1 0 001-1v-9"/></svg>
+      Home
+    </button>
+    <div class="his-sep"></div>
     <div class="his-tb-icon">📋</div>
     <div class="his-tb-brand">Histórico <span>de Presença</span></div>
     <div class="his-sep"></div>
@@ -1074,10 +1083,6 @@ tbody.his-tbody tr:hover td { background:rgba(255,215,0,.03); }
     <button class="his-btn his-btn-blue" onclick="abrirMapaPresenca()">
       <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
       Heatmap de Presença
-    </button>
-    <button class="his-btn his-btn-ghost" id="btnMenuHome" onclick="navegar('')">
-      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
-      Menu
     </button>
     <button class="his-btn his-btn-ghost" style="background:rgba(99,102,241,.1);color:rgba(129,140,248,.85);border:1px solid rgba(99,102,241,.22);"
             onclick="window.open('<?= ScriptApp.getService().getUrl() ?>?page=glossario','_blank')" title="Termos e Justificativas">

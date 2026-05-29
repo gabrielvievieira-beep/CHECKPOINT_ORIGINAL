@@ -221,6 +221,20 @@ body {
     color: #f1f5f9;
 }
 
+.flw-btn-home {
+    background: rgba(255,215,0,.08);
+    border: 1px solid rgba(255,215,0,.22);
+    color: rgba(255,215,0,.8);
+    flex-shrink: 0;
+}
+.flw-btn-home:hover {
+    background: rgba(255,215,0,.16);
+    border-color: rgba(255,215,0,.45);
+    color: #FFD700;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(255,215,0,.12);
+}
+
 .flw-btn-gold {
     background: linear-gradient(135deg, #FFD700, #f59e0b);
     color: #111;
@@ -2618,6 +2632,11 @@ tr[data-turno="ADM"] .flw-rt-turno-label{ color: rgba(255,255,255,.82); }
 <!-- ── Topbar ──────────────────────────────────────────────────── -->
 <div class="flw-topbar">
     <div class="flw-tb-left">
+        <button class="flw-btn flw-btn-home" id="btnMenuHome" onclick="window.top.location.href='<?= ScriptApp.getService().getUrl() ?>'">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12L12 4l9 8"/><path d="M5 10v9a1 1 0 001 1h4v-5h4v5h4a1 1 0 001-1v-9"/></svg>
+            Home
+        </button>
+        <div style="width:1px;height:20px;background:rgba(255,255,255,.08);flex-shrink:0;"></div>
         <div class="flw-tb-icon">
             <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#111" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
@@ -2643,10 +2662,6 @@ tr[data-turno="ADM"] .flw-rt-turno-label{ color: rgba(255,255,255,.82); }
         <span id="nomeUsuario" style="font-size:12px;color:rgba(255,255,255,.4);"></span>
         <div class="flw-clock" id="flwClock"></div>
         <div id="menuContainer"></div>
-        <button class="flw-btn flw-btn-ghost"
-                onclick="window.top.location.href='<?= ScriptApp.getService().getUrl() ?>'">
-            ← Menu
-        </button>
         <button class="flw-btn flw-btn-ghost" style="background:rgba(99,102,241,.1);color:rgba(129,140,248,.85);border:1px solid rgba(99,102,241,.22);"
                 onclick="window.open('<?= ScriptApp.getService().getUrl() ?>?page=glossario','_blank')" title="Glossário de Justificativas">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">

@@ -287,6 +287,109 @@ function getAusenciasProgramadasDia(data) {
 }
 
 /**
+ * Atualizar ausencia existente: apaga o registro antigo e insere o novo.
+ * @param {number} chaveAntiga
+ * @param {Object} dados - mesmo shape de salvarAusencia
+ */
+function atualizarAusencia(chaveAntiga, dados) {
+  try {
+    if (!dados || !dados.idgroot || !dados.dataInicio || !dados.dataFim || !dados.justificativa) {
+      return { success: false, message: 'Campos obrigatórios ausentes.' };
+    }
+
+    const token   = getTokenBigQuery();
+    const email   = getUsuarioEmail();
+    const agora   = new Date();
+    const hoje    = Utilities.formatDate(agora, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+    const idgroot = parseInt(String(dados.idgroot));
+
+    const dataRef  = new Date(dados.dataInicio + 'T00:00:00');
+    const ddmmyy   = Utilities.formatDate(dataRef, Session.getScriptTimeZone(), 'ddMMyy');
+    const chaveNova = parseInt(`${ddmmyy}${idgroot}`);
+
+    const apiEndpoint = `https://bigquery.googleapis.com/bigquery/v2/projects/${PROJECT_ID}/queries`;
+
+    // 1. Apagar registro antigo
+    const queryDel = `DELETE FROM \`${PROJECT_ID}.${DATASET_ID}.${TABLE_AUSENCIAS}\` WHERE CHAVE = ${parseInt(chaveAntiga)}`;
+    const resDel   = UrlFetchApp.fetch(apiEndpoint, {
+      method: 'POST', contentType: 'application/json',
+      headers: { 'Authorization': 'Bearer ' + token },
+      payload: JSON.stringify({ query: queryDel, useLegacySql: false, location: BQ_LOCATION })
+    });
+    const resultDel = JSON.parse(resDel.getContentText());
+    if (resultDel.error) throw new Error('Erro ao remover registro antigo: ' + resultDel.error.message);
+
+    // 2. Inserir registro atualizado
+    const queryIns = `
+      INSERT INTO \`${PROJECT_ID}.${DATASET_ID}.${TABLE_AUSENCIAS}\`
+        (DATA, IDGROOT, CHAVE, COLABORADOR, GESTOR, ESCALA,
+         JUSTIFICATIVA, DATA_INICIO, DATA_FIM, RESPONSAVEL, PROGRAMADO_EM, CAD)
+      VALUES (
+        DATE '${dados.dataInicio}',
+        ${idgroot},
+        ${chaveNova},
+        '${escaparAspas(dados.colaborador   || '')}',
+        '${escaparAspas(dados.gestor        || '')}',
+        '${escaparAspas(dados.escala        || '')}',
+        '${escaparAspas(dados.justificativa)}',
+        DATE '${dados.dataInicio}',
+        DATE '${dados.dataFim}',
+        '${email}',
+        DATE '${hoje}',
+        '${escaparAspas(dados.cad           || email)}'
+      )
+    `;
+    const resIns   = UrlFetchApp.fetch(apiEndpoint, {
+      method: 'POST', contentType: 'application/json',
+      headers: { 'Authorization': 'Bearer ' + token },
+      payload: JSON.stringify({ query: queryIns, useLegacySql: false, location: BQ_LOCATION })
+    });
+    const resultIns = JSON.parse(resIns.getContentText());
+    if (resultIns.error) throw new Error(resultIns.error.message);
+
+    Logger.log('Ausencia atualizada: CHAVE antiga=' + chaveAntiga + ', nova=' + chaveNova + ', IDGROOT=' + idgroot);
+
+    // 3. Reconciliação retroativa (mesma lógica de salvarAusencia)
+    const _justUpper = dados.justificativa.toUpperCase().trim();
+    const _ehExcecao = _justUpper.startsWith('AF - ')  ||
+                       _justUpper.startsWith('FE - ')  ||
+                       _justUpper.startsWith('DSR - ') ||
+                       _justUpper === 'FJ - ATESTADO';
+    try {
+      const dataFimReconcilia = dados.dataFim < hoje ? dados.dataFim : hoje;
+      if (_ehExcecao && dados.dataInicio <= hoje) {
+        const queryRec = `
+          UPDATE \`${PROJECT_ID}.${DATASET_ID}.${TABLE_HISTORICO}\`
+          SET STATUS_PRESENCA = '${escaparAspas(dados.justificativa)}'
+          WHERE CAST(IDGROOT AS INT64) = ${idgroot}
+            AND DATA_ABS BETWEEN DATE '${dados.dataInicio}' AND DATE '${dataFimReconcilia}'
+            AND (STATUS_PRESENCA = 'FI'
+                 OR STATUS_PRESENCA IS NULL
+                 OR TRIM(STATUS_PRESENCA) = ''
+                 OR TRIM(STATUS_PRESENCA) = 'VAZIO - Justificativa não encontrada')
+        `;
+        const resRec    = UrlFetchApp.fetch(apiEndpoint, {
+          method: 'POST', contentType: 'application/json',
+          headers: { 'Authorization': 'Bearer ' + token },
+          payload: JSON.stringify({ query: queryRec, useLegacySql: false, location: BQ_LOCATION })
+        });
+        const resultRec = JSON.parse(resRec.getContentText());
+        if (resultRec.error) Logger.log('[atualizarAusencia] Reconciliação falhou: ' + resultRec.error.message);
+        else Logger.log('[atualizarAusencia] Reconciliação OK — IDGROOT=' + idgroot + ' | ' + dados.dataInicio + ' a ' + dataFimReconcilia);
+      }
+    } catch (errRec) {
+      Logger.log('[atualizarAusencia] Exceção na reconciliação: ' + errRec.toString());
+    }
+
+    return { success: true };
+
+  } catch (error) {
+    Logger.log('Erro ao atualizar ausencia: ' + error.toString());
+    return { success: false, message: error.toString() };
+  }
+}
+
+/**
  * Excluir ausencia pela CHAVE (INTEGER unico: DDMMYY + IDGROOT)
  * @param {number} chave
  */
