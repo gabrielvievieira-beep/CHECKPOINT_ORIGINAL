@@ -86,6 +86,8 @@ function getTurmaFolgaData_(dataStr) {
 }
 
 // ── Buscar todas as escalas em folga para uma data (fonte: CP_ESCALAS_ROTATIVAS) ─
+// Lógica: a tabela registra apenas dias de TRABALHO (FOLGA=false).
+// Folga = escalas que existem na tabela mas NÃO aparecem para a data consultada.
 function getTurmasEmFolgaDia_(dataStr) {
   try {
     const token = getTokenBigQuery();
@@ -95,8 +97,16 @@ function getTurmasEmFolgaDia_(dataStr) {
         method: 'POST', contentType: 'application/json',
         headers: { 'Authorization': 'Bearer ' + token },
         payload: JSON.stringify({
-          query: `SELECT DISTINCT ESCALA FROM \`${PROJECT_ID}.${DATASET_ID}.${TABLE_ESCALAS}\`
-                  WHERE DATA = DATE '${dataStr}' AND FOLGA = true`,
+          query: `
+            SELECT DISTINCT ESCALA
+            FROM \`${PROJECT_ID}.${DATASET_ID}.${TABLE_ESCALAS}\`
+            WHERE ESCALA NOT IN (
+              SELECT DISTINCT ESCALA
+              FROM \`${PROJECT_ID}.${DATASET_ID}.${TABLE_ESCALAS}\`
+              WHERE DATA = DATE '${dataStr}'
+            )
+            AND ESCALA IS NOT NULL
+          `,
           useLegacySql: false, timeoutMs: 15000
         }),
         muteHttpExceptions: true
